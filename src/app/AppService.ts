@@ -1,24 +1,20 @@
 
 import { mat4 } from 'gl-matrix';
 
-import { CodeEditorEventTransformer } from './CodeEditorEventTransformer';
-import { CodeEditorRenderer } from './CodeEditorRenderer';
+import { AppEventTransformer } from './AppEventTransformer';
+import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { DebugRenderer } from './DebugRenderer';
+import { OverlayService } from './Overlay/OverlayService';
 
 import { Intersection } from '@/lib/math/Intersection';
-import { Rgb, Vec2 } from '@/lib/Primitives';
 import { Camera } from '@/lib/renderer/Camera';
-import { UIIcon } from '@/lib/UI/UIIcon';
-import { UIRenderer } from '@/lib/UI/UIRednerer';
 
 
 async function Delay(delay: number): Promise<void> {
     return new Promise(ok => setTimeout(ok, delay));
 }
 
-enum EditionDirection { Left, Up, Right, Down };
-
-export class CodeEditorService extends CodeEditorEventTransformer {
+export class AppService extends AppEventTransformer {
     private isRunning = true;
 
     private fovy = 60 / 180 * Math.PI;
@@ -27,19 +23,14 @@ export class CodeEditorService extends CodeEditorEventTransformer {
     private zFar = 500;
 
     private projection!: mat4;
-    private stickyProjection!: mat4;
     private camera: mat4;
 
-    private codeEditorRenderer: CodeEditorRenderer;
-
-    private readonly editionCellStyle: Rgb = [1, 0, 0];
-    private editionCell: Vec2 = { x: 0, y: 0 };
-    private editionDirection: EditionDirection = EditionDirection.Right;
+    private overlay!: OverlayService;
+    private codeEditor: CodeEditorService;
 
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
-    private ui!: UIRenderer;
 
     private constructor(private gl: WebGL2RenderingContext) {
         super();
@@ -51,23 +42,20 @@ export class CodeEditorService extends CodeEditorEventTransformer {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this.BuildProjection();
-        this.BuildStickyProjection();
 
-        this.codeEditorRenderer = new CodeEditorRenderer(gl);
-        this.codeEditorRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor = new CodeEditorService(gl);
+        this.codeEditor.ViewProjection = this.ViewProjection;
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
         this.debugRenderer.UploadAttributes(this.debugPoints);
-
-        this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
 
         const Debug = async () => {
             const text = 'Hello world! 1234567890$@';
 
             for (let n = 0; n < text.length; ++n) {
 
-                this.codeEditorRenderer.Symbol(text[n], n, 1);
+                this.codeEditor.Symbol(text[n], n, 1);
 
                 await Delay(10);
             }
@@ -76,7 +64,7 @@ export class CodeEditorService extends CodeEditorEventTransformer {
             const endCode = '~'.charCodeAt(0);
             const startRow = 3;
             for (let n = 0; n < endCode - startCode; ++n) {
-                this.codeEditorRenderer.Symbol(String.fromCharCode(n + startCode), n % 80, startRow + Math.floor(n / 80));
+                this.codeEditor.Symbol(String.fromCharCode(n + startCode), n % 80, startRow + Math.floor(n / 80));
 
                 await Delay(10);
             }
@@ -84,7 +72,7 @@ export class CodeEditorService extends CodeEditorEventTransformer {
             let x = true;
             while (x) {
                 for (let n = 0; n < 80; ++n) {
-                    this.codeEditorRenderer.Select(n, 6, [0, 0, n / 80]);
+                    this.codeEditor.Select(n, 6, [0, 0, n / 80]);
 
                     await Delay(50);
                 }
@@ -102,8 +90,8 @@ export class CodeEditorService extends CodeEditorEventTransformer {
 
     }
 
-    static async Create(gl: WebGL2RenderingContext): Promise<CodeEditorService> {
-        const service = new CodeEditorService(gl);
+    static async Create(gl: WebGL2RenderingContext): Promise<AppService> {
+        const service = new AppService(gl);
 
         await service.SetupUIRenderer();
 
@@ -112,11 +100,10 @@ export class CodeEditorService extends CodeEditorEventTransformer {
 
     Resize(): void {
         this.BuildProjection();
-        this.BuildStickyProjection();
+        this.overlay.Resize();
 
-        this.codeEditorRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.ViewProjection;
         this.debugRenderer.ViewProjection = this.ViewProjection;
-        this.ui.ViewProjection = this.stickyProjection;
     }
 
     OnCameraMove(e: MouseEvent): void {
@@ -131,28 +118,19 @@ export class CodeEditorService extends CodeEditorEventTransformer {
             this.camera,
             [delta.x, delta.y, 0]);
 
-        this.codeEditorRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.ViewProjection;
         this.debugRenderer.ViewProjection = this.ViewProjection;
     }
 
     OnSelect(e: MouseEvent): void {
+        this.codeEditor.Touch(e);
+
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
         const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.ViewProjection, this.gl.canvas);
 
         const intersection = Intersection.PlaneLine(
             { a: 0, b: 0, c: 1, d: 0 },
             { a: [posNear[0], posNear[1], posNear[2]], b: [posFar[0], posFar[1], posFar[2]] });
-
-        const column = Math.floor(intersection[0] / this.codeEditorRenderer.CellSize);
-        const row = this.codeEditorRenderer.Dimension.Rows - Math.floor(intersection[1] / this.codeEditorRenderer.CellSize) - 1;
-
-        if (column >= 0 && row >= 0 && column < this.codeEditorRenderer.Dimension.Columns && row < this.codeEditorRenderer.Dimension.Rows) {
-            this.codeEditorRenderer.Unselect(this.editionCell.x, this.editionCell.y);
-
-            this.editionCell.x = column;
-            this.editionCell.y = row;
-            this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
-        }
 
         this.debugPoints.push(posNear[0], posNear[1], posNear[2], intersection[0], intersection[1], intersection[2]);
 
@@ -172,79 +150,24 @@ export class CodeEditorService extends CodeEditorEventTransformer {
             this.camera,
             [0, 0, delta]);
 
-        this.codeEditorRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.ViewProjection;
         this.debugRenderer.ViewProjection = this.ViewProjection;
     }
 
     OnCellInput(e: KeyboardEvent): void {
-        this.codeEditorRenderer.Symbol(e.key, this.editionCell.x, this.editionCell.y);
-
-        this.MoveToNextEditionCell();
+        this.codeEditor.CellInput(e);
     }
 
     private async SetupUIRenderer(): Promise<void> {
-        this.ui = await UIRenderer.Create(this.gl, this.zFar);
-        this.ui.ViewProjection = this.stickyProjection;
-
-
-        const blueButton = this.ui.CreateButton(
-            { x: 10, y: 10 },
-            { width: 300, height: 100 },
-            0,
-            { fillColor: [0, 0, 1], outlineColor: [0, 1, 0] },
-            { icon: UIIcon.ARROW_UP, color: [0, 1, 0] });
-
-        const redButton = this.ui.CreateButton(
-            { x: 250, y: 50 },
-            { width: 300, height: 100 },
-            1,
-            { fillColor: [1, 0, 0], outlineColor: [0, 1, 0] },
-            { icon: UIIcon.SAVE, color: [0, 1, 0] });
+        this.overlay = await OverlayService.Create(this.gl, this.zNear, this.zFar);
 
         this.Start();
-    }
-
-    private MoveToNextEditionCell(): void {
-        this.codeEditorRenderer.Unselect(this.editionCell.x, this.editionCell.y);
-
-        switch (this.editionDirection) {
-            case EditionDirection.Left:
-                this.editionCell.x = this.editionCell.x === 0 ?
-                    this.codeEditorRenderer.Dimension.Columns - 1 :
-                    this.editionCell.x - 1;
-                break;
-            case EditionDirection.Up:
-                this.editionCell.y = this.editionCell.y === 0 ?
-                    this.codeEditorRenderer.Dimension.Rows - 1 :
-                    this.editionCell.y - 1;
-                break;
-            case EditionDirection.Right:
-                this.editionCell.x = this.editionCell.x === this.codeEditorRenderer.Dimension.Columns - 1 ?
-                    0 :
-                    this.editionCell.x + 1;
-                break;
-            case EditionDirection.Down:
-                this.editionCell.y = this.editionCell.y === this.codeEditorRenderer.Dimension.Rows - 1 ?
-                    0 :
-                    this.editionCell.y + 1;
-                break;
-        }
-
-        this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
     }
 
     private BuildProjection(): void {
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
         this.projection = mat4.perspective(mat4.create(), this.fovy, this.aspect, this.zNear, this.zFar);
-    }
-
-    private BuildStickyProjection(): void {
-        this.stickyProjection = mat4.ortho(
-            mat4.create(),
-            0, this.gl.canvas.width,
-            0, this.gl.canvas.height,
-            -this.zNear, -this.zFar);
     }
 
     private get ViewProjection(): mat4 {
@@ -263,12 +186,12 @@ export class CodeEditorService extends CodeEditorEventTransformer {
     private DrawFrame(): void {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        this.codeEditorRenderer.Draw();
+        this.codeEditor.Draw();
         this.debugRenderer.Draw();
 
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
 
-        this.ui.Draw();
+        this.overlay.Draw();
 
         if (this.isRunning) {
             requestAnimationFrame(() => this.DrawFrame())

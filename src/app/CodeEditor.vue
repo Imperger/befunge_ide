@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { onBeforeUnmount } from 'vue';
 
-import { CodeEditorService } from './CodeEditorService';
+import { AppService } from './AppService';
 
 import Webgl2Canvas from '@/lib/VueComponents/WebglCanvas.vue';
 
-let service!: CodeEditorService;
+let service!: AppService;
 
 
 onBeforeUnmount(() => service.Dispose());
 
 async function OnContextReady(context: WebGL2RenderingContext): Promise<void> {
-  service = await CodeEditorService.Create(context);
+  service = await AppService.Create(context);
   service.Resize();
 }
 

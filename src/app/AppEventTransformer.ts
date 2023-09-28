@@ -1,6 +1,6 @@
 import { MouseButtons } from "@/lib/DOM/MouseButtons";
 
-export abstract class CodeEditorEventTransformer {
+export abstract class AppEventTransformer {
     private isMovement = false;
 
     OnMouseMove(e: MouseEvent): void {

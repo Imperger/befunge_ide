@@ -9,6 +9,7 @@ export class CodeEditorRenderer {
     private editorGridRenderer: EditorGridRenderer;
     private editorGridCellsOutlineRenderer: EditorGridCellsOutlineRenderer;
     private selectionRenderer: SelectionRenderer;
+    private viewProjection!: Mat4 | Float32Array;
 
     constructor(gl: WebGL2RenderingContext) {
         this.editorGridRenderer = new EditorGridRenderer(gl);
@@ -17,9 +18,15 @@ export class CodeEditorRenderer {
     }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
+        this.viewProjection = mat;
+
         this.editorGridRenderer.ViewProjection = mat;
         this.editorGridCellsOutlineRenderer.ViewProjection = mat;
         this.selectionRenderer.ViewProjection = mat;
+    }
+
+    get ViewProjection(): Mat4 | Float32Array {
+        return this.viewProjection;
     }
 
     Symbol(symbol: string, column: number, row: number): void {
