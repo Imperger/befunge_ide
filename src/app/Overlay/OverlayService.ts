@@ -29,21 +29,27 @@ export class OverlayService {
             { x: 10, y: 10 },
             { width: 300, height: 100 },
             0,
-            { fillColor: [0, 0, 1], outlineColor: [0, 1, 0] },
-            { icon: UIIcon.ARROW_UP, color: [0, 1, 0] });
+            { fillColor: [0.1607843137254902, 0.5019607843137255, 0.7254901960784313], outlineColor: [0, 1, 0] },
+            { icon: UIIcon.ARROW_UP, color: [0, 1, 0] },
+            () => console.log('Blue button'));
 
         const redButton = this.uiRenderer.CreateButton(
             { x: 250, y: 50 },
             { width: 300, height: 100 },
             1,
-            { fillColor: [1, 0, 0], outlineColor: [0, 1, 0] },
-            { icon: UIIcon.SAVE, color: [0, 1, 0] });
+            { fillColor: [0.8980392156862745, 0.0784313725490196, 0], outlineColor: [0, 1, 0] },
+            { icon: UIIcon.SAVE, color: [0, 1, 0] },
+            () => console.log('Red button'));
     }
 
     Resize(): void {
         this.BuildStickyProjection();
 
         this.uiRenderer.ViewProjection = this.stickyProjection;
+    }
+
+    Touch(e: MouseEvent): boolean {
+        return this.uiRenderer.Touch(e);
     }
 
     Draw(): void {

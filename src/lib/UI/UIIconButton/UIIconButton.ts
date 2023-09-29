@@ -24,4 +24,6 @@ export interface UIIconButton {
     Dimension: Dimension;
     Icon: UIIconStyle;
     Style: UIButtonStyle;
+
+    Touch(): void;
 }

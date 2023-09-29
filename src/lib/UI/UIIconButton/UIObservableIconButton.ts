@@ -5,7 +5,9 @@ import { UIComponent } from "../UIComponent";
 import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
 import { UIIconButton } from "./UIIconButton";
 
-import { Vec2, Rgb } from "@/lib/Primitives";
+import { Vec2 } from "@/lib/Primitives";
+
+export type TouchCallback = (sender: UIIconButton) => void;
 
 export type UpdateCallback = (component: UIObservableIconButton) => void;
 
@@ -16,6 +18,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         private zIndex: number,
         private style: UIButtonStyle,
         private iconStyle: UIIconStyle,
+        private touchCallback: TouchCallback,
         public Offset: number,
         private updater: UpdateCallback,
         private parent: UIComponent | null = null) { }
@@ -77,5 +80,9 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         this.style = { ...style };
 
         this.updater(this);
+    }
+
+    Touch(): void {
+        this.touchCallback(this);
     }
 }

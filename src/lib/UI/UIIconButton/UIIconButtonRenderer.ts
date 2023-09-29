@@ -1,7 +1,7 @@
 
 import { EnumSize } from "../../EnumSize";
 import { MemoryPoolTracker } from "../../MemoryPoolTracker";
-import { Vec2 } from "../../Primitives";
+import { Rgb, Vec2 } from "../../Primitives";
 import { PrimitiveBuilder } from "../../renderer/PrimitiveBuilder";
 import { PrimitivesRenderer } from "../../renderer/PrimitivesRenderer";
 import { Mat4 } from "../../renderer/ShaderProgram";
@@ -13,7 +13,7 @@ import FUIIconButton from './UIIconButton.frag';
 import VUIIconButton from './UIIconButton.vert';
 import FUIIconButtonOutline from './UIIconButtonOutline.frag';
 import VUIIconButtonOutline from './UIIconButtonOutline.vert';
-import { UIObservableIconButton } from "./UIObservableIconButton";
+import { TouchCallback, UIObservableIconButton } from "./UIObservableIconButton";
 
 import { NotNull } from "@/lib/NotNull";
 import { TextureAtlas } from "@/lib/renderer/TextureAtlas";
@@ -57,6 +57,12 @@ class UIButtonOutlineRenderer extends PrimitivesRenderer {
     }
 }
 
+interface TouchAnimationStart {
+    target: UIIconButton;
+    originFillColor: Rgb;
+    timestamp: number;
+}
+
 export class UIIconButtonRenderer extends PrimitivesRenderer {
     private static readonly IndicesPerPrimitive = 18;
 
@@ -72,6 +78,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
     private iconAtlas!: UIIconAtlas;
     private iconAtlasTexture!: WebGLTexture;
+
+    private touchStart: TouchAnimationStart[] = [];
 
     private constructor(gl: WebGL2RenderingContext, private zFar: number) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
@@ -150,7 +158,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         dimension: Dimension,
         zIndex: number,
         style: UIButtonStyle,
-        iconStyle: UIIconStyle): UIIconButton {
+        iconStyle: UIIconStyle,
+        touchCallback: TouchCallback): UIIconButton {
 
         const button = new UIObservableIconButton(
             position,
@@ -158,6 +167,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             zIndex,
             style,
             iconStyle,
+            (sender: UIIconButton) => this.TouchProxy(sender, touchCallback),
             this.vertexAttributesTracker.Allocate(),
             (component: UIObservableIconButton) => this.UpdateAttributes(component));
 
@@ -168,6 +178,21 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         return button;
     }
 
+    private TouchProxy(sender: UIIconButton, origin: TouchCallback): void {
+        const alreadyTouchedIdx = this.touchStart.findIndex(btn => btn.target === sender);
+
+        if (alreadyTouchedIdx !== -1) {
+            const animation = this.touchStart[alreadyTouchedIdx];
+            animation.target.Style = { ...animation.target.Style, fillColor: animation.originFillColor };
+
+            this.touchStart.splice(alreadyTouchedIdx, 1);
+        }
+
+        this.touchStart.push({ target: sender, originFillColor: sender.Style.fillColor, timestamp: Date.now() });
+
+        origin(sender);
+    }
+
     Destroy(button: UIIconButton): void {
 
     }
@@ -175,8 +200,53 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
     Draw(): void {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.iconAtlasTexture);
 
+        this.TouchAnimation();
+
         super.Draw();
         this.outline.Draw();
+    }
+
+    private TouchAnimation(): void {
+        const lightingDuration = 80;
+        const darkeningDuration = 100;
+        const brightFactor = 1.2;
+
+        const notFinished: TouchAnimationStart[] = [];
+        const finished: TouchAnimationStart[] = [];
+        for (const animation of this.touchStart) {
+            if (Date.now() - animation.timestamp <= lightingDuration + darkeningDuration) {
+                notFinished.push(animation);
+            } else {
+                finished.push(animation);
+            }
+        }
+
+        this.touchStart = notFinished;
+
+        finished.forEach(anim => anim.target.Style = { ...anim.target.Style, fillColor: anim.originFillColor });
+
+        for (const animation of this.touchStart) {
+            const fillColor: Rgb = [...animation.target.Style.fillColor];
+            const elapsed = Date.now() - animation.timestamp;
+
+            if (elapsed <= lightingDuration) {
+                const lightingProgress = elapsed / lightingDuration;
+                const bright = 1 + (brightFactor - 1) * lightingProgress;
+
+                fillColor[0] = Math.min(1, animation.originFillColor[0] * bright);
+                fillColor[1] = Math.min(1, animation.originFillColor[1] * bright);
+                fillColor[2] = Math.min(1, animation.originFillColor[2] * bright);
+            } else {
+                const darkeningProgress = (elapsed - lightingDuration) / darkeningDuration;
+                const bright = 1 + (brightFactor - 1) * (1 - darkeningProgress);
+
+                fillColor[0] = Math.min(1, animation.originFillColor[0] * bright);
+                fillColor[1] = Math.min(1, animation.originFillColor[1] * bright);
+                fillColor[2] = Math.min(1, animation.originFillColor[2] * bright);
+            }
+
+            animation.target.Style = { ...animation.target.Style, fillColor };
+        }
     }
 
     get IconButtons(): readonly UIIconButton[] {

@@ -123,7 +123,9 @@ export class AppService extends AppEventTransformer {
     }
 
     OnSelect(e: MouseEvent): void {
-        this.codeEditor.Touch(e);
+        if (!this.overlay.Touch(e)) {
+            this.codeEditor.Touch(e);
+        }
 
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
         const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.ViewProjection, this.gl.canvas);
