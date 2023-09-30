@@ -25,13 +25,22 @@ export class OverlayService {
     private async AsyncConstructor(): Promise<void> {
         this.uiRenderer = await UIRenderer.Create(this.gl, this.zFar);
 
+        let nextX = 0;
         const blueButton = this.uiRenderer.CreateButton(
             { x: 10, y: 10 },
             { width: 300, height: 100 },
             0,
             { fillColor: [0.1607843137254902, 0.5019607843137255, 0.7254901960784313], outlineColor: [0, 1, 0] },
             { icon: UIIcon.ARROW_UP, color: [0, 1, 0] },
-            () => console.log('Blue button'));
+            () => {
+                const blueButton = this.uiRenderer.CreateButton(
+                    { x: 10 + nextX++ * 310, y: 390 },
+                    { width: 300, height: 100 },
+                    0,
+                    { fillColor: [0.1607843137254902, 0.5019607843137255, 0.7254901960784313], outlineColor: [0, 1, 0] },
+                    { icon: UIIcon.ARROW_UP, color: [0, 1, 0] },
+                    c => /* console.log(`Blue button #${n}`) */c.Destroy());
+            });
 
         const redButton = this.uiRenderer.CreateButton(
             { x: 250, y: 50 },
@@ -40,6 +49,17 @@ export class OverlayService {
             { fillColor: [0.8980392156862745, 0.0784313725490196, 0], outlineColor: [0, 1, 0] },
             { icon: UIIcon.SAVE, color: [0, 1, 0] },
             () => console.log('Red button'));
+
+
+        for (let n = 0; n < 7; ++n) {
+            const blueButton = this.uiRenderer.CreateButton(
+                { x: 10 + n * 310, y: 500 },
+                { width: 300, height: 100 },
+                0,
+                { fillColor: [0.1607843137254902, 0.5019607843137255, 0.7254901960784313], outlineColor: [0, 1, 0] },
+                { icon: UIIcon.ARROW_UP, color: [0, 1, 0] },
+                c => /* console.log(`Blue button #${n}`) */c.Destroy());
+        }
     }
 
     Resize(): void {

@@ -55,6 +55,10 @@ class UIButtonOutlineRenderer extends PrimitivesRenderer {
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
     }
+
+    get Attributes(): Float32Array {
+        return this.attributes;
+    }
 }
 
 interface TouchAnimationStart {
@@ -134,12 +138,48 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             }
 
             OnShrink(inUseIndices: number[]): void {
-                // Update the offsets for all buttons
-                console.log('On shrink');
+                const buttonAttrs = new Array(UIIconButtonRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
+                const buttonOutlineAttrs = new Array(UIButtonOutlineRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
+
+                for (let n = 0; n < inUseIndices.length; ++n) {
+                    const offset = inUseIndices[n];
+
+                    for (let attribOffset = 0; attribOffset < UIIconButtonRenderer.AttributesPerComponent; ++attribOffset) {
+                        buttonAttrs[n * UIIconButtonRenderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * UIIconButtonRenderer.AttributesPerComponent + attribOffset];
+                    }
+
+                    for (let attribOffset = 0; attribOffset < UIButtonOutlineRenderer.AttributesPerComponent; ++attribOffset) {
+                        buttonOutlineAttrs[n * UIButtonOutlineRenderer.AttributesPerComponent + attribOffset] = this.renderer.outline.Attributes[offset * UIButtonOutlineRenderer.AttributesPerComponent + attribOffset];
+                    }
+                }
+
+                this.renderer.UploadAttributes(buttonAttrs);
+                this.renderer.outline.UploadAttributes(buttonOutlineAttrs);
+
+                this.renderer.iconButtons.forEach(btn => {
+                    const idx = inUseIndices.indexOf(btn.Offset);
+
+                    if (idx === -1) {
+                        throw new Error(`Can't find position for offset ${btn.Offset}`);
+                    }
+
+                    btn.Offset = idx;
+                });
             }
 
             OnExtend(extendedCapacity: number): void {
-                console.log('On extend', extendedCapacity);
+                const extendedButtonAttrs = Array.from(
+                    { length: extendedCapacity * UIIconButtonRenderer.AttributesPerComponent },
+                    (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
+
+                this.renderer.UploadAttributes(extendedButtonAttrs);
+
+
+                const extendedOutlineAttrs = Array.from(
+                    { length: extendedCapacity * UIButtonOutlineRenderer.AttributesPerComponent },
+                    (_, n) => n < this.renderer.outline.Attributes.length ? this.renderer.outline.Attributes[n] : 0);
+
+                this.renderer.outline.UploadAttributes(extendedOutlineAttrs);
             }
         })(this);
     }
@@ -169,7 +209,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             iconStyle,
             (sender: UIIconButton) => this.TouchProxy(sender, touchCallback),
             this.vertexAttributesTracker.Allocate(),
-            (component: UIObservableIconButton) => this.UpdateAttributes(component));
+            (component: UIObservableIconButton) => this.UpdateAttributes(component),
+            (component: UIObservableIconButton) => this.Destroy(component));
 
         this.iconButtons.push(button);
 
@@ -193,8 +234,18 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         origin(sender);
     }
 
-    Destroy(button: UIIconButton): void {
+    private Destroy(component: UIObservableIconButton): void {
+        const toDestroyIdx = this.iconButtons.indexOf(component);
 
+        if (toDestroyIdx === -1) {
+            return;
+        }
+
+        this.iconButtons.splice(toDestroyIdx, 1)
+   
+        this.UpdateAttributes(component);
+
+        this.vertexAttributesTracker.Free(component.Offset);
     }
 
     Draw(): void {
@@ -214,6 +265,10 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         const notFinished: TouchAnimationStart[] = [];
         const finished: TouchAnimationStart[] = [];
         for (const animation of this.touchStart) {
+            if (animation.target.Destroyed) {
+                continue;
+            }
+
             if (Date.now() - animation.timestamp <= lightingDuration + darkeningDuration) {
                 notFinished.push(animation);
             } else {

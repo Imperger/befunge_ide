@@ -11,7 +11,11 @@ export type TouchCallback = (sender: UIIconButton) => void;
 
 export type UpdateCallback = (component: UIObservableIconButton) => void;
 
+export type DeleterCallback = (component: UIObservableIconButton) => void;
+
 export class UIObservableIconButton implements UIComponent, UIIconButton {
+    private static UninitializedTag = -1;
+
     constructor(
         private position: Vec2,
         private dimension: Dimension,
@@ -21,6 +25,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         private touchCallback: TouchCallback,
         public Offset: number,
         private updater: UpdateCallback,
+        private deleter: DeleterCallback,
         private parent: UIComponent | null = null) { }
 
     get Position(): Vec2 {
@@ -82,7 +87,24 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         this.updater(this);
     }
 
+    get Destroyed(): boolean {
+        return this.Offset === UIObservableIconButton.UninitializedTag;
+    }
+
     Touch(): void {
         this.touchCallback(this);
+    }
+
+    Destroy(): void {
+        this.Uninitialize();
+
+        this.deleter(this);
+
+        this.Offset = UIObservableIconButton.UninitializedTag;
+    }
+
+    private Uninitialize(): void {
+        this.position = { x: 0, y: 0 };
+        this.dimension = { width: 0, height: 0 };
     }
 }

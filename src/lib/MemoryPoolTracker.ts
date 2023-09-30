@@ -36,7 +36,7 @@ export abstract class MemoryPoolTracker {
 
             this.pool = [
                 ...this.pool,
-                ...Array.from({ length: this.pool.length * MemoryPoolTracker.growthFactor - this.pool.length }, (_, n) => n + 1)
+                ...Array.from({ length: this.pool.length * MemoryPoolTracker.growthFactor - this.pool.length }, (_, n) => this.pool.length + n + 1)
             ];
             this.pool[this.pool.length - 1] = MemoryPoolTracker.NoFree;
 
@@ -53,17 +53,17 @@ export abstract class MemoryPoolTracker {
             return;
         }
 
-        if (this.size / this.Capacity <= MemoryPoolTracker.shrinkFactor) {
-            this.OnShrink(this.GatherInUseIndices());
-
-            this.Shrink();
-        }
-
         this.pool[index] = this.nextFree;
 
         this.nextFree = index;
 
         --this.size;
+
+        if (this.size / this.Capacity <= MemoryPoolTracker.shrinkFactor) {
+            this.OnShrink(this.GatherInUseIndices());
+
+            this.Shrink();
+        }
     }
 
 
@@ -82,7 +82,7 @@ export abstract class MemoryPoolTracker {
     private GatherInUseIndices(): number[] {
         const inUse: number[] = [];
 
-        for(let n = 0; n < this.pool.length; ++n) {
+        for (let n = 0; n < this.pool.length; ++n) {
             if (this.pool[n] === MemoryPoolTracker.InUse) {
                 inUse.push(n);
             }
