@@ -5,6 +5,7 @@ import { UIComponent } from "../UIComponent";
 import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
 import { UIIconButton } from "./UIIconButton";
 
+import { Observable, ObservableController } from "@/lib/Observable";
 import { Vec2 } from "@/lib/Primitives";
 
 export type TouchCallback = (sender: UIIconButton) => void;
@@ -16,6 +17,8 @@ export type DeleterCallback = (component: UIObservableIconButton) => void;
 export class UIObservableIconButton implements UIComponent, UIIconButton {
     private static UninitializedTag = -1;
 
+    private observable = new ObservableController<UIObservableIconButton>();
+
     constructor(
         private position: Vec2,
         private dimension: Dimension,
@@ -24,9 +27,14 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         private iconStyle: UIIconStyle,
         private touchCallback: TouchCallback,
         public Offset: number,
-        private updater: UpdateCallback,
         private deleter: DeleterCallback,
-        private parent: UIComponent | null = null) { }
+        private parent: UIComponent | null = null) {
+        parent?.Observable.Attach(() => this.observable.Notify(this));
+    }
+
+    get Observable(): Observable<UIObservableIconButton> {
+        return this.observable;
+    }
 
     get Position(): Vec2 {
         return this.position;
@@ -35,7 +43,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     set Position(position: Vec2) {
         this.position = position;
 
-        this.updater(this);
+        this.observable.Notify(this);
     }
 
     get AbsolutePosition(): Vec2 {
@@ -56,7 +64,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     set Dimension(dimension: Dimension) {
         this.dimension = dimension;
 
-        this.updater(this);
+        this.observable.Notify(this);
     }
 
     get ZIndex(): number {
@@ -74,7 +82,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     set Icon(style: UIIconStyle) {
         this.iconStyle = style;
 
-        this.updater(this);
+        this.observable.Notify(this);
     }
 
     get Style(): UIButtonStyle {
@@ -84,7 +92,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     set Style(style: UIButtonStyle) {
         this.style = { ...style };
 
-        this.updater(this);
+        this.observable.Notify(this);
     }
 
     get Destroyed(): boolean {

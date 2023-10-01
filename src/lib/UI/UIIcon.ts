@@ -2,11 +2,11 @@ import { TextureAtlas, TextureAtlasBuilder, UV } from "../renderer/TextureAtlas"
 
 export enum UIIcon { OPEN, SAVE, ARROW_RIGHT, ARROW_DOWN, ARROW_LEFT, ARROW_UP, DEBUGGER };
 
-interface UVExtra extends UV {
+export interface UVExtra extends UV {
     aspectRatio: number;
 }
 
-interface IconExtra<TId> {
+export interface IconExtra<TId> {
     id: TId;
     aspectRatio: number;
 }

@@ -87,13 +87,19 @@ export class AppService extends AppEventTransformer {
         }
 
         Debug();
+    }
 
+    private async AsyncConstructor(): Promise<void> {
+        this.overlay = await OverlayService.Create(this.gl, this.zNear, this.zFar);
+
+        this.overlay.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
+
+        this.Start();
     }
 
     static async Create(gl: WebGL2RenderingContext): Promise<AppService> {
         const service = new AppService(gl);
-
-        await service.SetupUIRenderer();
+        await service.AsyncConstructor();
 
         return service;
     }
@@ -158,12 +164,6 @@ export class AppService extends AppEventTransformer {
 
     OnCellInput(e: KeyboardEvent): void {
         this.codeEditor.CellInput(e);
-    }
-
-    private async SetupUIRenderer(): Promise<void> {
-        this.overlay = await OverlayService.Create(this.gl, this.zNear, this.zFar);
-
-        this.Start();
     }
 
     private BuildProjection(): void {

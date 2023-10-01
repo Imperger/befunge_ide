@@ -2,6 +2,7 @@ import { Intersection } from "../math/Intersection";
 import { Vec2 } from "../Primitives";
 import { Mat4 } from "../renderer/ShaderProgram";
 
+import { UIComponent } from "./UIComponent";
 import { Dimension, UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
 import { UIIconButtonRenderer } from "./UIIconButton/UIIconButtonRenderer";
 import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
@@ -26,8 +27,9 @@ export class UIRenderer {
         zIndex: number,
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
-        touchCallback: TouchCallback): UIIconButton {
-        const iconButton = this.iconButtonsRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback);
+        touchCallback: TouchCallback,
+        parent: UIComponent | null = null): UIIconButton {
+        const iconButton = this.iconButtonsRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
 
         this.iconButtons.push(iconButton);
 
@@ -41,7 +43,7 @@ export class UIRenderer {
     private TouchButtons(x: number, y: number): boolean {
         const intersected = this.iconButtons
             .filter(btn => Intersection.AABBRectanglePoint(
-                { x: btn.Position.x, y: btn.Position.y, width: btn.Dimension.width, height: btn.Dimension.height },
+                { x: btn.AbsolutePosition.x, y: btn.AbsolutePosition.y, width: btn.Dimension.width, height: btn.Dimension.height },
                 { x, y }))
             .sort((a, b) => b.ZIndex - a.ZIndex);
 

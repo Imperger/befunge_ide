@@ -6,7 +6,7 @@ import { Rgb, Vec2 } from "@/lib/Primitives";
 import { Camera } from "@/lib/renderer/Camera";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
-enum EditionDirection { Left, Up, Right, Down };
+export enum EditionDirection { Left, Up, Right, Down };
 
 export class CodeEditorService {
     private codeEditorRenderer: CodeEditorRenderer;
@@ -18,6 +18,14 @@ export class CodeEditorService {
         this.codeEditorRenderer = new CodeEditorRenderer(gl);
 
         this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
+    }
+
+    get EditionDirection(): EditionDirection {
+        return this.editionDirection;
+    }
+
+    set EditionDirection(direction: EditionDirection) {
+        this.editionDirection = direction;
     }
 
     Symbol(symbol: string, column: number, row: number): void {

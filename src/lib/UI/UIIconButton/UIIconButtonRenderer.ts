@@ -6,7 +6,8 @@ import { PrimitiveBuilder } from "../../renderer/PrimitiveBuilder";
 import { PrimitivesRenderer } from "../../renderer/PrimitivesRenderer";
 import { Mat4 } from "../../renderer/ShaderProgram";
 import { TypeSizeResolver } from "../../renderer/TypeSizeResolver";
-import { UIIconAtlas } from "../UIIcon";
+import { UIComponent } from "../UIComponent";
+import { UIIconAtlas, UVExtra } from "../UIIcon";
 
 import { Dimension, UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton";
 import FUIIconButton from './UIIconButton.frag';
@@ -199,7 +200,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         zIndex: number,
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
-        touchCallback: TouchCallback): UIIconButton {
+        touchCallback: TouchCallback,
+        parent: UIComponent | null): UIIconButton {
 
         const button = new UIObservableIconButton(
             position,
@@ -209,8 +211,10 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             iconStyle,
             (sender: UIIconButton) => this.TouchProxy(sender, touchCallback),
             this.vertexAttributesTracker.Allocate(),
-            (component: UIObservableIconButton) => this.UpdateAttributes(component),
-            (component: UIObservableIconButton) => this.Destroy(component));
+            (component: UIObservableIconButton) => this.Destroy(component),
+            parent);
+
+        button.Observable.Attach((component: UIObservableIconButton) => this.UpdateAttributes(component));
 
         this.iconButtons.push(button);
 
@@ -242,7 +246,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         }
 
         this.iconButtons.splice(toDestroyIdx, 1)
-   
+
         this.UpdateAttributes(component);
 
         this.vertexAttributesTracker.Free(component.Offset);
@@ -337,6 +341,12 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             throw new Error(`Can't find icon with id ${component.Icon.icon}`);
         }
 
+        return component.Dimension.width / component.Dimension.height >= 1 ?
+            this.ExtractContentAttributesWide(component, iconUV) :
+            this.ExtractContentAttributesTall(component, iconUV);
+    }
+
+    private ExtractContentAttributesWide(component: UIObservableIconButton, iconUV: UVExtra): number[] {
         const iconWidth = component.Dimension.height * iconUV.aspectRatio;
         const segmentWidth = (component.Dimension.width - iconWidth) / 2;
 
@@ -368,11 +378,43 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         return [...leftSegmentAttributes, ...iconAttributes, ...rightSegmentAttributes];
     }
 
+    private ExtractContentAttributesTall(component: UIObservableIconButton, iconUV: UVExtra): number[] {
+        const iconHeight = component.Dimension.width / iconUV.aspectRatio;
+        const segmentHeight = (component.Dimension.height - iconHeight) / 2;
+
+        const bottomSegmentAttributes = PrimitiveBuilder.AABBRectangle(
+            component.AbsolutePosition,
+            { width: component.Dimension.width, height: segmentHeight },
+            [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
+
+        const iconAttributes = PrimitiveBuilder.AABBRectangle(
+            { x: component.AbsolutePosition.x, y: component.AbsolutePosition.y + segmentHeight },
+            { width: component.Dimension.width, height: iconHeight },
+            [
+                [this.zFar - component.ZIndex - this.zFarIncluded],
+                component.Style.fillColor,
+                component.Icon.color,
+                {
+                    LeftBottom: [iconUV.A.x, iconUV.B.y],
+                    LeftTop: [iconUV.A.x, iconUV.A.y],
+                    RightTop: [iconUV.B.x, iconUV.A.y],
+                    RightBottom: [iconUV.B.x, iconUV.B.y]
+                }
+            ]);
+
+        const topSegmentAttributes = PrimitiveBuilder.AABBRectangle(
+            { x: component.AbsolutePosition.x, y: component.AbsolutePosition.y + segmentHeight + iconHeight },
+            { width: component.Dimension.width, height: segmentHeight },
+            [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
+
+        return [...bottomSegmentAttributes, ...iconAttributes, ...topSegmentAttributes];
+    }
+
     private ExtractOutlineAttributes(component: UIObservableIconButton): number[] {
         const width = 2;
 
         return PrimitiveBuilder.AABBFrame(
-            { x: component.Position.x - width, y: component.Position.y - width },
+            { x: component.AbsolutePosition.x - width, y: component.AbsolutePosition.y - width },
             { width: component.Dimension.width + 2 * width, height: component.Dimension.height + 2 * width },
             width, [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.outlineColor]);
     }
