@@ -9,8 +9,6 @@ import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
 import { UIObservablePositioningGroup } from "@/lib/UI/UIObservablePositioningGroup";
 import { UIRenderer } from "@/lib/UI/UIRednerer";
 
-
-
 interface EditDirection {
     group: UIObservablePositioningGroup;
     left: UIIconButton;
