@@ -95,6 +95,25 @@ export class OverlayService {
         this.currentDirectionControl = this.editDirectionControls.right;
     }
 
+    ForceEditDirection(direction: EditionDirection): void {
+        this.currentDirectionControl.Icon = {
+            ...this.currentDirectionControl.Icon,
+            color: OverlayService.IconColor
+        };
+
+        const control = direction === EditionDirection.Left ? this.editDirectionControls.left :
+            direction === EditionDirection.Up ? this.editDirectionControls.up :
+                direction === EditionDirection.Right ? this.editDirectionControls.right :
+                    this.editDirectionControls.down;
+
+        control.Icon = {
+            ...control.Icon,
+            color: OverlayService.CurrentDirrectionIconColor
+        };
+
+        this.currentDirectionControl = control;
+    }
+
     private UpdateEditDirection(sender: UIIconButton, direction: EditionDirection): void {
         if (sender === this.currentDirectionControl) {
             return;

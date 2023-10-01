@@ -93,6 +93,7 @@ export class AppService extends AppEventTransformer {
         this.overlay = await OverlayService.Create(this.gl, this.zNear, this.zFar);
 
         this.overlay.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
+        this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.ForceEditDirection(dir));
 
         this.Start();
     }

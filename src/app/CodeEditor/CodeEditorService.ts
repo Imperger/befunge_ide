@@ -2,6 +2,7 @@ import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { EditorGridDimension } from "./EditorGridRenderer";
 
 import { Intersection } from "@/lib/math/Intersection";
+import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
 import { Camera } from "@/lib/renderer/Camera";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
@@ -14,10 +15,16 @@ export class CodeEditorService {
     private editionCell: Vec2 = { x: 0, y: 0 };
     private editionDirection: EditionDirection = EditionDirection.Right;
 
+    private editDirectionObservable = new ObservableController<EditionDirection>();
+
     constructor(private gl: WebGL2RenderingContext) {
         this.codeEditorRenderer = new CodeEditorRenderer(gl);
 
         this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
+    }
+
+    get EditDirectionObservable(): Observable<EditionDirection> {
+        return this.editDirectionObservable;
     }
 
     get EditionDirection(): EditionDirection {
@@ -26,6 +33,8 @@ export class CodeEditorService {
 
     set EditionDirection(direction: EditionDirection) {
         this.editionDirection = direction;
+
+        this.editDirectionObservable.Notify(direction);
     }
 
     Symbol(symbol: string, column: number, row: number): void {
@@ -63,7 +72,25 @@ export class CodeEditorService {
     CellInput(e: KeyboardEvent): void {
         this.codeEditorRenderer.Symbol(e.key, this.editionCell.x, this.editionCell.y);
 
+        this.PostCellInputHook(e);
+
         this.MoveToNextEditionCell();
+    }
+
+    private PostCellInputHook(e: KeyboardEvent): void {
+        this.FollowCdoeFlowHelper(e);
+    }
+
+    private FollowCdoeFlowHelper(e: KeyboardEvent): void {
+        if (e.key === '<' && this.editionDirection !== EditionDirection.Left) {
+            this.EditionDirection = EditionDirection.Left;
+        } else if (e.key === '^' && this.editionDirection !== EditionDirection.Up) {
+            this.EditionDirection = EditionDirection.Up;
+        } else if (e.key === '>' && this.editionDirection !== EditionDirection.Right) {
+            this.EditionDirection = EditionDirection.Right;
+        } else if (e.key === 'v' && this.editionDirection !== EditionDirection.Down) {
+            this.EditionDirection = EditionDirection.Down;
+        }
     }
 
     private MoveToNextEditionCell(): void {
