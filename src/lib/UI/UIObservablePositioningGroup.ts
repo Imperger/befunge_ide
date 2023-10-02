@@ -8,6 +8,8 @@ import { UIComponent } from "./UIComponent";
 export class UIObservablePositioningGroup implements UIComponent {
     private observable = new ObservableController<UIObservablePositioningGroup>();
 
+    private scale = 1;
+
     constructor(
         private position: Vec2,
         private parent: UIComponent | null = null) { }
@@ -35,5 +37,15 @@ export class UIObservablePositioningGroup implements UIComponent {
         } else {
             return this.Position;
         }
+    }
+
+    get Scale(): number {
+        return this.scale;
+    }
+
+    set Scale(scale: number) {
+        this.scale = scale;
+
+        this.observable.Notify(this);
     }
 }

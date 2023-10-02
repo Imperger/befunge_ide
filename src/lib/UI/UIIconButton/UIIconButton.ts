@@ -1,3 +1,4 @@
+import { UIComponent } from "../UIComponent";
 import { UIIcon } from "../UIIcon";
 
 import { Rgb, Vec2 } from "@/lib/Primitives";
@@ -17,7 +18,7 @@ export interface UIIconStyle {
     color: Rgb;
 }
 
-export interface UIIconButton {
+export interface UIIconButton extends UIComponent {
     Position: Vec2;
     readonly AbsolutePosition: Vec2;
     ZIndex: number;

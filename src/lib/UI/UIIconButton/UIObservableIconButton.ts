@@ -19,6 +19,8 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
     private observable = new ObservableController<UIObservableIconButton>();
 
+    private scale = 1;
+
     constructor(
         private position: Vec2,
         private dimension: Dimension,
@@ -49,7 +51,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     get AbsolutePosition(): Vec2 {
         if (this.parent) {
             const parentPosition = [this.parent.AbsolutePosition.x, this.parent.AbsolutePosition.y] as const;
-            const absolutePosition = vec2.add(vec2.create(), parentPosition, [this.Position.x, this.Position.y]);
+            const absolutePosition = vec2.add(vec2.create(), parentPosition, [this.Position.x * this.Scale, this.Position.y * this.Scale]);
 
             return { x: absolutePosition[0], y: absolutePosition[1] };
         } else {
@@ -58,7 +60,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     }
 
     get Dimension(): Dimension {
-        return this.dimension;
+        return { width: this.dimension.width * this.Scale, height: this.dimension.height * this.Scale };
     }
 
     set Dimension(dimension: Dimension) {
@@ -91,6 +93,16 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
     set Style(style: UIButtonStyle) {
         this.style = { ...style };
+
+        this.observable.Notify(this);
+    }
+
+    get Scale(): number {
+        return this.parent === null ? this.scale : this.scale * this.parent.Scale;
+    }
+
+    set Scale(scale: number) {
+        this.scale = scale;
 
         this.observable.Notify(this);
     }
