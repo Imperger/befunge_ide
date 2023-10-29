@@ -1,6 +1,6 @@
 import { vec2 } from "gl-matrix";
 
-import { UIComponent } from "../UIComponent";
+import { UIComponent, UninitializedTag } from "../UIComponent";
 
 import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
 import { UIIconButton } from "./UIIconButton";
@@ -15,8 +15,6 @@ export type UpdateCallback = (component: UIObservableIconButton) => void;
 export type DeleterCallback = (component: UIObservableIconButton) => void;
 
 export class UIObservableIconButton implements UIComponent, UIIconButton {
-    private static UninitializedTag = -1;
-
     private observable = new ObservableController<UIObservableIconButton>();
 
     private scale = 1;
@@ -108,7 +106,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     }
 
     get Destroyed(): boolean {
-        return this.Offset === UIObservableIconButton.UninitializedTag;
+        return this.Offset === UninitializedTag;
     }
 
     Touch(): void {
@@ -120,7 +118,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
         this.deleter(this);
 
-        this.Offset = UIObservableIconButton.UninitializedTag;
+        this.Offset = UninitializedTag;
     }
 
     private Uninitialize(): void {
