@@ -8,6 +8,6 @@ export class PrintInteger implements Instruction {
   }
 
   Execute(cpu: CPU): void {
-    cpu.WriteIO(cpu.StackPop().toString());
+    cpu.WriteIO(cpu.StackPop().toString() + ' ');
   }
 }
