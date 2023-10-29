@@ -48,7 +48,7 @@ class UIButtonOutlineRenderer extends PrimitivesRenderer {
                 type: gl.FLOAT,
                 normalized: false,
                 stride,
-                offset: 2 * floatSize
+                offset: 3 * floatSize
             }],
             { indicesPerPrimitive: UIButtonOutlineRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
     }
