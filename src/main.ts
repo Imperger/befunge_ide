@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import { createApp } from 'vue';
 
 import '@fontsource/roboto/500.css';

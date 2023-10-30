@@ -1,7 +1,9 @@
 import { mat4 } from "gl-matrix";
 
+import { AppSettings } from "../AppSettings";
 import { EditionDirection } from "../CodeEditor/CodeEditorService";
 
+import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
@@ -21,6 +23,8 @@ export class OverlayService {
     private static IconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
     private static CurrentDirrectionIconColor: Rgb = [0.1607843137254902, 0.5019607843137255, 0.7254901960784313];
 
+    private settings: AppSettings;
+
     private uiRenderer!: UIRenderer;
 
     private stickyProjection!: mat4;
@@ -31,22 +35,22 @@ export class OverlayService {
 
     private editDirectionObservable = new ObservableController<EditionDirection>();
 
-    static async Create(gl: WebGL2RenderingContext, zNear: number, zFar: number): Promise<OverlayService> {
-        const instance = new OverlayService(gl, zNear, zFar);
+    static async Create(gl: WebGL2RenderingContext): Promise<OverlayService> {
+        const instance = new OverlayService(gl);
         await instance.AsyncConstructor();
 
         return instance;
     }
 
     private constructor(
-        private gl: WebGL2RenderingContext,
-        private zNear: number,
-        private zFar: number) {
+        private gl: WebGL2RenderingContext) {
+        this.settings = Inversify.get(AppSettings);
+
         this.BuildStickyProjection();
     }
 
     private async AsyncConstructor(): Promise<void> {
-        this.uiRenderer = await UIRenderer.Create(this.gl, this.zFar);
+        this.uiRenderer = await UIRenderer.Create(this.gl);
 
         this.SetupEditDirectionGroup();
     }
@@ -156,6 +160,6 @@ export class OverlayService {
             mat4.create(),
             0, this.gl.canvas.width,
             0, this.gl.canvas.height,
-            -this.zNear, -this.zFar);
+            -this.settings.ZNear, -this.settings.ZFar);
     }
 }

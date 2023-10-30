@@ -16,6 +16,8 @@ import FUIIconButtonOutline from './UIIconButtonOutline.frag';
 import VUIIconButtonOutline from './UIIconButtonOutline.vert';
 import { TouchCallback, UIObservableIconButton } from "./UIObservableIconButton";
 
+import { AppSettings } from "@/app/AppSettings";
+import { Inversify } from "@/Inversify";
 import { NotNull } from "@/lib/NotNull";
 import { TextureAtlas } from "@/lib/renderer/TextureAtlas";
 
@@ -75,6 +77,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
     private readonly zFarIncluded = 0.1;
 
+    private settings: AppSettings;
+
     private iconButtons: UIObservableIconButton[] = [];
 
     private outline: UIButtonOutlineRenderer;
@@ -86,7 +90,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
     private touchStart: TouchAnimationStart[] = [];
 
-    private constructor(gl: WebGL2RenderingContext, private zFar: number) {
+
+    private constructor(gl: WebGL2RenderingContext) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
 
         const stride = floatSize * EnumSize(UIIconButtonComponent);
@@ -126,6 +131,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
                 offset: 9 * floatSize
             }],
             { indicesPerPrimitive: UIIconButtonRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+
+        this.settings = Inversify.get(AppSettings);
 
         this.outline = new UIButtonOutlineRenderer(gl);
 
@@ -185,8 +192,8 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         })(this);
     }
 
-    static async Create(gl: WebGL2RenderingContext, zFar: number): Promise<UIIconButtonRenderer> {
-        const renderer = new UIIconButtonRenderer(gl, zFar);
+    static async Create(gl: WebGL2RenderingContext): Promise<UIIconButtonRenderer> {
+        const renderer = new UIIconButtonRenderer(gl);
 
         renderer.iconAtlas = await UIIconAtlas.Create();
 
@@ -353,13 +360,13 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         const leftSegmentAttributes = PrimitiveBuilder.AABBRectangle(
             component.AbsolutePosition,
             { width: segmentWidth, height: component.Dimension.height },
-            [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
+            [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
 
         const iconAttributes = PrimitiveBuilder.AABBRectangle(
             { x: component.AbsolutePosition.x + segmentWidth, y: component.AbsolutePosition.y },
             { width: iconWidth, height: component.Dimension.height },
             [
-                [this.zFar - component.ZIndex - this.zFarIncluded],
+                [this.settings.ZFar - component.ZIndex - this.zFarIncluded],
                 component.Style.fillColor,
                 component.Icon.color,
                 {
@@ -373,7 +380,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         const rightSegmentAttributes = PrimitiveBuilder.AABBRectangle(
             { x: component.AbsolutePosition.x + segmentWidth + iconWidth, y: component.AbsolutePosition.y },
             { width: segmentWidth, height: component.Dimension.height },
-            [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
+            [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
 
         return [...leftSegmentAttributes, ...iconAttributes, ...rightSegmentAttributes];
     }
@@ -385,13 +392,13 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         const bottomSegmentAttributes = PrimitiveBuilder.AABBRectangle(
             component.AbsolutePosition,
             { width: component.Dimension.width, height: segmentHeight },
-            [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
+            [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
 
         const iconAttributes = PrimitiveBuilder.AABBRectangle(
             { x: component.AbsolutePosition.x, y: component.AbsolutePosition.y + segmentHeight },
             { width: component.Dimension.width, height: iconHeight },
             [
-                [this.zFar - component.ZIndex - this.zFarIncluded],
+                [this.settings.ZFar - component.ZIndex - this.zFarIncluded],
                 component.Style.fillColor,
                 component.Icon.color,
                 {
@@ -405,7 +412,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         const topSegmentAttributes = PrimitiveBuilder.AABBRectangle(
             { x: component.AbsolutePosition.x, y: component.AbsolutePosition.y + segmentHeight + iconHeight },
             { width: component.Dimension.width, height: segmentHeight },
-            [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
+            [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.fillColor, component.Icon.color, [-1, -1]]);
 
         return [...bottomSegmentAttributes, ...iconAttributes, ...topSegmentAttributes];
     }
@@ -416,7 +423,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         return PrimitiveBuilder.AABBFrame(
             { x: component.AbsolutePosition.x - width, y: component.AbsolutePosition.y - width },
             { width: component.Dimension.width + 2 * width, height: component.Dimension.height + 2 * width },
-            width, [[this.zFar - component.ZIndex - this.zFarIncluded], component.Style.outlineColor]);
+            width, [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.outlineColor]);
     }
 
     private SetupAtlasTexture(): void {

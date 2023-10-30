@@ -2,10 +2,13 @@
 import { mat4 } from 'gl-matrix';
 
 import { AppEventTransformer } from './AppEventTransformer';
+import { AppSettings } from './AppSettings';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { DebugRenderer } from './DebugRenderer';
 import { OverlayService } from './Overlay/OverlayService';
 
+import { Inversify } from '@/Inversify';
+import { FontAtlas, FontAtlasBuilder } from '@/lib/font/FontAtlasBuilder';
 import { Intersection } from '@/lib/math/Intersection';
 import { Camera } from '@/lib/renderer/Camera';
 
@@ -17,10 +20,7 @@ async function Delay(delay: number): Promise<void> {
 export class AppService extends AppEventTransformer {
     private isRunning = true;
 
-    private fovy = 60 / 180 * Math.PI;
-    private aspect!: number;
-    private zNear = 1;
-    private zFar = 500;
+    private settings: AppSettings;
 
     private projection!: mat4;
     private camera: mat4;
@@ -34,8 +34,8 @@ export class AppService extends AppEventTransformer {
 
     private constructor(private gl: WebGL2RenderingContext) {
         super();
-        //this.camera = mat4.rotateY(mat4.create(), mat4.create(), 0.3141592653589793);
-        //console.log(this.camera);
+
+        this.settings = Inversify.get(AppSettings);
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
 
         gl.clearColor(1, 1, 1, 1);
@@ -150,7 +150,7 @@ export class AppService extends AppEventTransformer {
         const delta = e.deltaY * 0.5;
         const z = this.camera[14] + delta;
 
-        if (z >= this.zFar || z <= this.zNear) {
+        if (z >= this.settings.ZFar || z <= this.settings.ZNear) {
             return;
         }
 
@@ -168,9 +168,14 @@ export class AppService extends AppEventTransformer {
     }
 
     private BuildProjection(): void {
-        this.aspect = this.gl.canvas.width / this.gl.canvas.height;
+        this.settings.AspectRatio = this.gl.canvas.width / this.gl.canvas.height;
 
-        this.projection = mat4.perspective(mat4.create(), this.fovy, this.aspect, this.zNear, this.zFar);
+        this.projection = mat4.perspective(
+            mat4.create(),
+            this.settings.Fovy,
+            this.settings.AspectRatio,
+            this.settings.ZNear,
+            this.settings.ZFar);
     }
 
     private get ViewProjection(): mat4 {
