@@ -19,6 +19,10 @@ export abstract class MemoryPoolTracker {
         }
     }
 
+    /**
+     *
+     * @returns index in the pool array
+     */
     Allocate(): number {
         ++this.size;
 
