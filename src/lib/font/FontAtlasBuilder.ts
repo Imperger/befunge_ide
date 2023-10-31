@@ -58,8 +58,6 @@ class FontAtlasBuilderImpl {
     private options!: AtlasOptions;
     private context!: CanvasRenderingContext2D;
 
-    public Canvas!: HTMLCanvasElement;
-
     Build(options: AtlasOptions): FontAtlas {
         this.options = options;
 
@@ -96,11 +94,8 @@ class FontAtlasBuilderImpl {
         const context = canvas.getContext('2d') ?? NotNull('Failed to get context');
         context.font = `${this.options.Font.Size}px ${this.options.Font.Name}`;
         context.fillStyle = '#000';
-        
+
         this.context = context;
-
-        this.Canvas = canvas;
-
 
         return canvas;
     }
