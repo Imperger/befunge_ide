@@ -326,13 +326,24 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
     private UpdateAttributes(component: UIObservableIconButton): void {
         this.UpdateContentAttributes(component);
-        this.UpdateOutlineAttributes(component);
+
+        if (component.Destroyed) {
+            this.ResetOutlineAttributes(component);
+        } else {
+            this.UpdateOutlineAttributes(component);
+        }
     }
 
     private UpdateContentAttributes(component: UIObservableIconButton): void {
         this.UpdateComponentAttributes(
             this.ExtractContentAttributes(component),
             component.Offset * UIIconButtonRenderer.AttributesPerComponent);
+    }
+
+    private ResetOutlineAttributes(component: UIObservableIconButton): void {
+        this.outline.UpdateComponentAttributes(
+            new Array(UIButtonOutlineRenderer.IndicesPerPrimitive * EnumSize(UIIconButtonOutlineComponent)).fill(0),
+            component.Offset * UIButtonOutlineRenderer.AttributesPerComponent);
     }
 
     private UpdateOutlineAttributes(component: UIObservableIconButton): void {

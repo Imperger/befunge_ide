@@ -7,5 +7,3 @@ export interface UIComponent {
     Scale: number;
     Observable: Observable<UIComponent>;
 }
-
-export const UninitializedTag = -1;
