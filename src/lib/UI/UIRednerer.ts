@@ -1,3 +1,4 @@
+import { ArrayHelper } from "../ArrayHelper";
 import { Intersection } from "../math/Intersection";
 import { Vec2 } from "../Primitives";
 import { Mat4 } from "../renderer/ShaderProgram";
@@ -10,14 +11,14 @@ import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
 export class UIRenderer {
     private iconButtonsRenderer!: UIIconButtonRenderer;
 
-    private iconButtons: UIIconButton[] = [];
+    private constructor(private gl: WebGL2RenderingContext) {
+        this.labelsRenderer = new UILabelRenderer(gl);
+    }
 
-    private constructor(private gl: WebGL2RenderingContext) { }
-
-    static async Create(gl: WebGL2RenderingContext, zFar: number): Promise<UIRenderer> {
+    static async Create(gl: WebGL2RenderingContext): Promise<UIRenderer> {
         const renderer = new UIRenderer(gl);
 
-        renderer.iconButtonsRenderer = await UIIconButtonRenderer.Create(gl, zFar)
+        renderer.iconButtonsRenderer = await UIIconButtonRenderer.Create(gl);
 
         return renderer;
     }
@@ -31,8 +32,6 @@ export class UIRenderer {
         parent: UIComponent | null = null): UIIconButton {
         const iconButton = this.iconButtonsRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
 
-        this.iconButtons.push(iconButton);
-
         return iconButton;
     }
 
@@ -41,17 +40,18 @@ export class UIRenderer {
     }
 
     private TouchButtons(x: number, y: number): boolean {
-        const intersected = this.iconButtons
+        const intersected = this.iconButtonsRenderer.IconButtons
             .filter(btn => Intersection.AABBRectanglePoint(
                 { x: btn.AbsolutePosition.x, y: btn.AbsolutePosition.y, width: btn.Dimension.width, height: btn.Dimension.height },
-                { x, y }))
-            .sort((a, b) => b.ZIndex - a.ZIndex);
+                { x, y }));
 
         if (intersected.length === 0) {
             return false;
         }
 
-        intersected[0].Touch();
+        ArrayHelper
+            .Max(intersected, (a: UIIconButton, b: UIIconButton) => a.ZIndex < b.ZIndex)
+            .Touch();
 
         return true;
     }
