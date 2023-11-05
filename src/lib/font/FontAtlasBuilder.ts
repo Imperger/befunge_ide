@@ -126,7 +126,7 @@ class FontAtlasBuilderImpl {
         const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
         return {
-            x: pos.x - metrics.actualBoundingBoxLeft - metrics.width / 2,
+            x: pos.x - metrics.width / 2,
             y: pos.y - metrics.actualBoundingBoxDescent + height / 2
         };
     }
