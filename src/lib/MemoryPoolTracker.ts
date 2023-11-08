@@ -80,7 +80,7 @@ export abstract class MemoryPoolTracker {
     abstract OnExtend(extendedCapacity: number): void;
 
     private get HasFreeSlot(): boolean {
-        return this.nextFree !== MemoryPoolTracker.NoFree;
+        return this.nextFree < this.pool.length && this.nextFree !== MemoryPoolTracker.NoFree;
     }
 
     private GatherInUseIndices(): number[] {
