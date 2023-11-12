@@ -1,4 +1,3 @@
-## TODO
+## Befunge IDE
 
-- Selection cell by click on it
-- Solve character distortion when rendering
+Befunge source code editor, runner and debugger.
