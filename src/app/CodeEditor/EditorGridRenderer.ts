@@ -1,10 +1,12 @@
 
+import { AppResource } from '../AppResource';
+import { TextureCacheId } from '../TextureCacheId';
+
 import FGrid from './Grid.frag';
 import VGrid from './Grid.vert';
 
+import { Inversify } from '@/Inversify';
 import { EnumSize } from '@/lib/EnumSize';
-import { FontAtlas, FontAtlasBuilder } from '@/lib/font/FontAtlasBuilder';
-import { NotNull } from '@/lib/NotNull';
 import { Rgb, Rgba, Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
@@ -23,8 +25,9 @@ export class EditorGridRenderer extends PrimitivesRenderer {
 
     public readonly Dimension: EditorGridDimension = { Columns: 80, Rows: 25 };
 
-    private fontAtlas!: FontAtlas;
     private fontAtlasTexture!: WebGLTexture;
+
+    private resource: AppResource;
 
     constructor(gl: WebGL2RenderingContext) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
@@ -58,6 +61,8 @@ export class EditorGridRenderer extends PrimitivesRenderer {
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
+        this.resource = Inversify.get(AppResource);
+
         this.SetupRenderer();
     }
 
@@ -71,7 +76,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
                 const cell = this.BuildCell(
                     { x: col * this.CellSize, y: row * this.CellSize },
                     [1, 0, 0],
-                    'H');
+                    ' ');
 
                 vertexList.push(...cell);
             }
@@ -84,7 +89,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         row = this.Dimension.Rows - row - 1;
 
         const cellAttrs = this.PrimitiveAttributes(row * this.Dimension.Columns + column);
-        const symbolUV = this.fontAtlas.LookupUV(symbol);
+        const symbolUV = this.resource.FontAtlas.LookupUV(symbol);
 
         const UVOffset = 5;
         const UVStartOffset = cellAttrs.offset + UVOffset;
@@ -128,9 +133,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
     }
 
     private SetupAtlasTexture(): void {
-        this.fontAtlas = FontAtlasBuilder.Build({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: 72 } });
-
-        this.fontAtlasTexture = this.gl.createTexture() ?? NotNull('Failed to create font atlas texture');
+        this.fontAtlasTexture = this.resource.TextureCache.Create(TextureCacheId.ASCIIAtlas, this.gl);
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.fontAtlasTexture);
 
@@ -139,7 +142,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.fontAtlas.Image);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.resource.FontAtlas.Image);
     }
 
     private BuildCell(
@@ -147,7 +150,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         color: Rgb | Rgba,
         symbol: string
     ): number[] {
-        const uv = this.fontAtlas.LookupUV(symbol);
+        const uv = this.resource.FontAtlas.LookupUV(symbol);
 
         return PrimitiveBuilder.AABBRectangle(
             position,
