@@ -1,39 +1,29 @@
 import { mat4 } from "gl-matrix";
 
 import { AppSettings } from "../AppSettings";
-import { EditionDirection } from "../CodeEditor/CodeEditorService";
+
+import { DebugControls } from "./DebugControls";
+import { EditDirectionControls } from "./EditDirectionControls";
+import { OutputControls } from "./OutputControls";
 
 import { Inversify } from "@/Inversify";
-import { Observable, ObservableController } from "@/lib/Observable";
-import { Rgb } from "@/lib/Primitives";
-import { UIIcon } from "@/lib/UI/UIIcon";
-import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
-import { UIObservablePositioningGroup } from "@/lib/UI/UIObservablePositioningGroup";
+import { UILabel } from "@/lib/UI/UILabel/UILabel";
 import { UIRenderer } from "@/lib/UI/UIRednerer";
 
-interface EditDirection {
-    group: UIObservablePositioningGroup;
-    left: UIIconButton;
-    up: UIIconButton;
-    right: UIIconButton;
-    down: UIIconButton;
-}
-
 export class OverlayService {
-    private static IconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
-    private static CurrentDirrectionIconColor: Rgb = [0.1607843137254902, 0.5019607843137255, 0.7254901960784313];
-
     private settings: AppSettings;
 
     private uiRenderer!: UIRenderer;
 
     private stickyProjection!: mat4;
 
-    private editDirectionControls!: EditDirection;
+    private outputLabel!: UILabel;
 
-    private currentDirectionControl!: UIIconButton;
+    private editDirectionControls!: EditDirectionControls;
 
-    private editDirectionObservable = new ObservableController<EditionDirection>();
+    private debugControls!: DebugControls;
+
+    private outputControls!: OutputControls;
 
     static async Create(gl: WebGL2RenderingContext): Promise<OverlayService> {
         const instance = new OverlayService(gl);
@@ -52,99 +42,30 @@ export class OverlayService {
     private async AsyncConstructor(): Promise<void> {
         this.uiRenderer = await UIRenderer.Create(this.gl);
 
-        this.SetupEditDirectionGroup();
+        this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
+        this.debugControls = new DebugControls(this.uiRenderer);
+        this.outputControls = new OutputControls(this.uiRenderer);
     }
 
-    private SetupEditDirectionGroup(): void {
-        const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
-        const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
-        const group = new UIObservablePositioningGroup({ x: 10, y: 500 });
-
-        this.editDirectionControls = {
-            group,
-            left: this.uiRenderer.CreateButton(
-                { x: 0, y: 160 },
-                { width: 150, height: 100 },
-                1,
-                { fillColor, outlineColor },
-                { icon: UIIcon.ARROW_LEFT, color: OverlayService.IconColor },
-                sender => this.UpdateEditDirection(sender, EditionDirection.Left),
-                group),
-            up: this.uiRenderer.CreateButton(
-                { x: 105, y: 270 },
-                { width: 100, height: 150 },
-                1,
-                { fillColor, outlineColor },
-                { icon: UIIcon.ARROW_UP, color: OverlayService.IconColor },
-                sender => this.UpdateEditDirection(sender, EditionDirection.Up),
-                group),
-            right: this.uiRenderer.CreateButton(
-                { x: 160, y: 160 },
-                { width: 150, height: 100 },
-                1,
-                { fillColor, outlineColor },
-                { icon: UIIcon.ARROW_RIGHT, color: OverlayService.CurrentDirrectionIconColor },
-                sender => this.UpdateEditDirection(sender, EditionDirection.Right),
-                group),
-            down: this.uiRenderer.CreateButton(
-                { x: 105, y: 0 },
-                { width: 100, height: 150 },
-                1,
-                { fillColor, outlineColor },
-                { icon: UIIcon.ARROW_DOWN, color: OverlayService.IconColor },
-                sender => this.UpdateEditDirection(sender, EditionDirection.Down),
-                group)
-        };
-
-        this.currentDirectionControl = this.editDirectionControls.right;
+    get EditDirectionControls(): EditDirectionControls {
+        return this.editDirectionControls;
     }
 
-    ForceEditDirection(direction: EditionDirection): void {
-        this.currentDirectionControl.Icon = {
-            ...this.currentDirectionControl.Icon,
-            color: OverlayService.IconColor
-        };
-
-        const control = direction === EditionDirection.Left ? this.editDirectionControls.left :
-            direction === EditionDirection.Up ? this.editDirectionControls.up :
-                direction === EditionDirection.Right ? this.editDirectionControls.right :
-                    this.editDirectionControls.down;
-
-        control.Icon = {
-            ...control.Icon,
-            color: OverlayService.CurrentDirrectionIconColor
-        };
-
-        this.currentDirectionControl = control;
+    get DebugControls(): DebugControls {
+        return this.debugControls;
     }
 
-    private UpdateEditDirection(sender: UIIconButton, direction: EditionDirection): void {
-        if (sender === this.currentDirectionControl) {
-            return;
-        }
-
-        this.currentDirectionControl.Icon = {
-            ...this.currentDirectionControl.Icon,
-            color: OverlayService.IconColor
-        };
-
-        sender.Icon = {
-            ...sender.Icon,
-            color: OverlayService.CurrentDirrectionIconColor
-        };
-
-        this.currentDirectionControl = sender;
-        this.editDirectionObservable.Notify(direction)
-    }
-
-    get EditDirectionObservable(): Observable<EditionDirection> {
-        return this.editDirectionObservable;
+    get OutputControls(): OutputControls {
+        return this.outputControls;
     }
 
     Resize(): void {
         this.BuildStickyProjection();
 
         this.uiRenderer.ViewProjection = this.stickyProjection;
+
+        this.editDirectionControls.Resize();
+        this.debugControls.Resize();
     }
 
     Touch(e: MouseEvent): boolean {
