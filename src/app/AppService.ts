@@ -3,13 +3,15 @@ import { mat4 } from 'gl-matrix';
 
 import { AppEventTransformer } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
+import { BefungeToolbox } from './BefungeToolbox';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { DebugRenderer } from './DebugRenderer';
 import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
-import { FontAtlas, FontAtlasBuilder } from '@/lib/font/FontAtlasBuilder';
+import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
+import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
 import { Intersection } from '@/lib/math/Intersection';
 import { Camera } from '@/lib/renderer/Camera';
 
@@ -29,6 +31,9 @@ export class AppService extends AppEventTransformer {
     private overlay!: OverlayService;
     private codeEditor: CodeEditorService;
 
+    private befungeToolbox: BefungeToolbox;
+    private memoryLimit: MemoryLimit = { Width: 80, Height: 25 };
+
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
@@ -37,6 +42,7 @@ export class AppService extends AppEventTransformer {
         super();
 
         this.settings = Inversify.get(AppSettings);
+
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
 
         gl.clearColor(1, 1, 1, 1);
@@ -49,6 +55,8 @@ export class AppService extends AppEventTransformer {
 
         const sourceMemory = Inversify.get(SourceCodeMemory);
         sourceMemory.Initialize(ArrayMemory, this.memoryLimit);
+
+        this.befungeToolbox = new BefungeToolbox();
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
@@ -90,14 +98,16 @@ export class AppService extends AppEventTransformer {
             }
         }
 
-        Debug();
+        //Debug();
     }
 
     private async AsyncConstructor(): Promise<void> {
-        this.overlay = await OverlayService.Create(this.gl, this.zNear, this.zFar);
+        this.overlay = await OverlayService.Create(this.gl);
 
-        this.overlay.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
-        this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.ForceEditDirection(dir));
+        this.overlay.EditDirectionControls.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
+        this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
+
+        this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
 
         this.Start();
     }
@@ -110,6 +120,8 @@ export class AppService extends AppEventTransformer {
     }
 
     Resize(): void {
+        this.settings.ViewDimension = { Width: this.gl.canvas.width, Height: this.gl.canvas.height };
+
         this.BuildProjection();
         this.overlay.Resize();
 
@@ -192,6 +204,7 @@ export class AppService extends AppEventTransformer {
     }
 
     private Start(): void {
+        this.overlay.OutputControls.Output = 'HelloWOrld'
         requestAnimationFrame(() => this.DrawFrame())
     }
 
@@ -208,5 +221,15 @@ export class AppService extends AppEventTransformer {
         if (this.isRunning) {
             requestAnimationFrame(() => this.DrawFrame())
         }
+    }
+
+    private ExecuteCode(): void {
+        this.befungeToolbox.Reset(this.memoryLimit, Inversify.get(SourceCodeMemory).Clone());
+
+        if (!this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
+            console.log('Terminated due timeout');
+        }
+
+        this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
     }
 }
