@@ -1,6 +1,6 @@
 import { TextureAtlas, TextureAtlasBuilder, UV } from "../renderer/TextureAtlas";
 
-export enum UIIcon { OPEN, SAVE, ARROW_RIGHT, ARROW_DOWN, ARROW_LEFT, ARROW_UP, DEBUGGER };
+export enum UIIcon { Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger, Play };
 
 export interface UVExtra extends UV {
     aspectRatio: number;
@@ -20,22 +20,22 @@ export class UIIconAtlas {
 
     LookupUV(id: UIIcon): UVExtra {
         switch (id) {
-            case UIIcon.ARROW_LEFT:
+            case UIIcon.ArrowLeft:
                 {
-                    const uv = this.atlas.LookupUV(UIIcon.ARROW_RIGHT);
+                    const uv = this.atlas.LookupUV(UIIcon.ArrowRight);
                     return {
                         A: { x: uv.B.x, y: uv.B.y },
                         B: { x: uv.A.x, y: uv.A.y },
-                        aspectRatio: this.ExtractAspectRatio(UIIcon.ARROW_RIGHT)
+                        aspectRatio: this.ExtractAspectRatio(UIIcon.ArrowRight)
                     };
                 }
-            case UIIcon.ARROW_UP:
+            case UIIcon.ArrowUp:
                 {
-                    const uv = this.atlas.LookupUV(UIIcon.ARROW_DOWN);
+                    const uv = this.atlas.LookupUV(UIIcon.ArrowDown);
                     return {
                         A: { x: uv.B.x, y: uv.B.y },
                         B: { x: uv.A.x, y: uv.A.y },
-                        aspectRatio: this.ExtractAspectRatio(UIIcon.ARROW_DOWN)
+                        aspectRatio: this.ExtractAspectRatio(UIIcon.ArrowDown)
                     };
                 }
             default:
@@ -56,28 +56,33 @@ export class UIIconAtlas {
 
         const icons = [
             {
-                id: UIIcon.ARROW_RIGHT,
+                id: UIIcon.ArrowRight,
                 filename: 'ui_icons/arrow_right.svg',
                 dimension: { width: 128, height: 128 }
             },
             {
-                id: UIIcon.ARROW_DOWN,
+                id: UIIcon.ArrowDown,
                 filename: 'ui_icons/arrow_down.svg',
                 dimension: { width: 128, height: 128 }
             },
             {
-                id: UIIcon.DEBUGGER,
+                id: UIIcon.Debugger,
                 filename: 'ui_icons/bug.svg',
                 dimension: { width: 128, height: 128 }
             },
             {
-                id: UIIcon.OPEN,
+                id: UIIcon.Open,
                 filename: 'ui_icons/open.svg',
                 dimension: { width: 128, height: 128 }
             },
             {
-                id: UIIcon.SAVE,
+                id: UIIcon.Save,
                 filename: 'ui_icons/save.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Play,
+                filename: 'ui_icons/play.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];
