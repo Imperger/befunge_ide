@@ -6,6 +6,7 @@ import { AppSettings } from './AppSettings';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { DebugRenderer } from './DebugRenderer';
 import { OverlayService } from './Overlay/OverlayService';
+import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
 import { FontAtlas, FontAtlasBuilder } from '@/lib/font/FontAtlasBuilder';
@@ -45,6 +46,9 @@ export class AppService extends AppEventTransformer {
 
         this.codeEditor = new CodeEditorService(gl);
         this.codeEditor.ViewProjection = this.ViewProjection;
+
+        const sourceMemory = Inversify.get(SourceCodeMemory);
+        sourceMemory.Initialize(ArrayMemory, this.memoryLimit);
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;

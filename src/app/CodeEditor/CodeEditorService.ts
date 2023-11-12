@@ -1,6 +1,9 @@
+import { SourceCodeMemory } from "../SourceCodeMemory";
+
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { EditorGridDimension } from "./EditorGridRenderer";
 
+import { Inversify } from "@/Inversify";
 import { Intersection } from "@/lib/math/Intersection";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
@@ -71,6 +74,8 @@ export class CodeEditorService {
 
     CellInput(e: KeyboardEvent): void {
         this.codeEditorRenderer.Symbol(e.key, this.editionCell.x, this.editionCell.y);
+
+        Inversify.get(SourceCodeMemory).Write(this.editionCell, e.key.charCodeAt(0));
 
         this.PostCellInputHook(e);
 
