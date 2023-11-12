@@ -78,10 +78,10 @@ export class CodeEditorService {
     }
 
     private PostCellInputHook(e: KeyboardEvent): void {
-        this.FollowCdoeFlowHelper(e);
+        this.FollowCodeFlowHelper(e);
     }
 
-    private FollowCdoeFlowHelper(e: KeyboardEvent): void {
+    private FollowCodeFlowHelper(e: KeyboardEvent): void {
         if (e.key === '<' && this.editionDirection !== EditionDirection.Left) {
             this.EditionDirection = EditionDirection.Left;
         } else if (e.key === '^' && this.editionDirection !== EditionDirection.Up) {
