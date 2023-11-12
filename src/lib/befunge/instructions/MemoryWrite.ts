@@ -12,6 +12,6 @@ export class MemoryWrite implements Instruction {
     const x = cpu.StackPop();
     const value = cpu.StackPop();
 
-    cpu.WriteMemory({ X: x, Y: y }, value);
+    cpu.WriteMemory({ x: x, y: y }, value);
   }
 }

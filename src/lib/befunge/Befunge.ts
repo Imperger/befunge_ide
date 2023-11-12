@@ -32,19 +32,17 @@ import {
   NoOperation
 } from './instructions';
 import { IOPort } from './IOPort';
-import { ArrayMemory } from './memory/ArrayMemory';
 import { Memory, Pointer } from './memory/Memory';
 import { MemoryLimit } from './memory/MemoryLimit';
 
 export class Befunge {
-  private memory: Memory;
-
   private io: IOPort;
 
   private cpu: CPU;
 
-  constructor(private memoryLimit: MemoryLimit) {
-    this.memory = new ArrayMemory(memoryLimit);
+  private instructionsExecuted = 0;
+
+  constructor(private memoryLimit: MemoryLimit, private memory: Memory) {
     this.io = new IOPort();
     this.cpu = new CPUImpl(this.memory, this.io, [
       new Add(),
@@ -90,15 +88,15 @@ export class Befunge {
       }
     }
 
-    const ptr: Pointer = { X: 0, Y: 0 };
+    const ptr: Pointer = { x: 0, y: 0 };
 
     for (const symbol of code) {
       if (symbol === '\n') {
-        ptr.X = 0;
-        ++ptr.Y;
+        ptr.x = 0;
+        ++ptr.y;
       } else {
         this.memory.Write(ptr, symbol.charCodeAt(0));
-        ++ptr.X;
+        ++ptr.x;
       }
     }
   }
@@ -107,10 +105,33 @@ export class Befunge {
     this.io.InputWrite(input);
   }
 
+  /**
+   * Execute code loaded by `LoadExecutable`.
+   * Second call to `Run` or `RunFor` with same instance is forbidden, you should create new instance to each execution
+   */
   Run(): void {
     while (!this.cpu.IsHalted) {
       this.cpu.ExecuteNext();
     }
+  }
+
+  /**
+   * Execute code loaded by `LoadExecutable` until end or timeout.
+   * Second call to `Run` or `RunFor` with same instance is forbidden, you should create new instance to each execution
+   * @param timeout timeout
+   * @returns true if the program successfully finished, false if it terminated due to the timeout
+   */
+  RunFor(timeout: number): boolean {
+    const startTime = Date.now();
+    const instructionsSkipPerTimeoutCheck = 100000;
+
+    for (this.instructionsExecuted = 0;
+      !this.cpu.IsHalted && (this.instructionsExecuted % instructionsSkipPerTimeoutCheck !== 0 || Date.now() - startTime < timeout);
+      ++this.instructionsExecuted) {
+      this.cpu.ExecuteNext();
+    }
+
+    return this.IsHalted;
   }
 
   RunNext(): void {
@@ -121,6 +142,16 @@ export class Befunge {
     let output = '';
 
     while (this.io.HasOutput) {
+      output += this.io.OutputRead();
+    }
+
+    return output;
+  }
+
+  CollectOutputUntil(maxLength: number): string {
+    let output = '';
+
+    for (let readed = 0; this.io.HasOutput && readed < maxLength; ++readed) {
       output += this.io.OutputRead();
     }
 

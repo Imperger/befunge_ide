@@ -47,12 +47,20 @@ export class ArrayMemory implements Memory {
     this.limit = limit;
   }
 
+  Clone(): Memory {
+    const copy = new ArrayMemory(this.limit);
+
+    copy.memory.set(this.memory);
+
+    return copy;
+  }
+
   private PointerToIndex(ptr: Pointer): number {
-    return ptr.Y * this.limit.Width + ptr.X;
+    return ptr.y * this.limit.Width + ptr.x;
   }
 
   private IsPointerOutOfBound(ptr: Pointer): boolean {
-    return ptr.X >= this.limit.Width || ptr.Y >= this.limit.Height;
+    return ptr.x >= this.limit.Width || ptr.y >= this.limit.Height;
   }
 
   private CopyMemoryTo(dst: ArrayMemory): void {
@@ -61,7 +69,7 @@ export class ArrayMemory implements Memory {
 
     for (let x = 0; x < copyingWidth; ++x) {
       for (let y = 0; y < copyingHeight; ++y) {
-        const ptr: Pointer = { X: x, Y: y };
+        const ptr: Pointer = { x: x, y: y };
 
         dst.Write(ptr, this.Read(ptr));
       }

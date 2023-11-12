@@ -6,7 +6,7 @@ import { CPU, PCDirection } from './CPU';
 
 export class CPUImpl implements CPU {
   private pcDirection = PCDirection.Right;
-  private pcLocation: Pointer = { X: 0, Y: 0 };
+  private pcLocation: Pointer = { x: 0, y: 0 };
   private stack: number[] = [];
   private isStringMode = false;
   private isHalted = false;

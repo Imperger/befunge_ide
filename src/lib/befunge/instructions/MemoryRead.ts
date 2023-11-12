@@ -11,6 +11,6 @@ export class MemoryRead implements Instruction {
     const y = cpu.StackPop();
     const x = cpu.StackPop();
 
-    cpu.StackPush(cpu.ReadMemory({ X: x, Y: y }));
+    cpu.StackPush(cpu.ReadMemory({ x: x, y: y }));
   }
 }

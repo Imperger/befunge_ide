@@ -10,18 +10,18 @@ export class ModuloPointerArithmetics implements PointerArithmetics {
   Move(ptr: Pointer, dir: PCDirection): Pointer {
     switch (dir) {
       case PCDirection.Right:
-        return { X: (ptr.X + 1) % this.memoryLimit.Width, Y: ptr.Y };
+        return { x: (ptr.x + 1) % this.memoryLimit.Width, y: ptr.y };
       case PCDirection.Left:
         return {
-          X: ptr.X === 0 ? this.memoryLimit.Width - 1 : ptr.X - 1,
-          Y: ptr.Y
+          x: ptr.x === 0 ? this.memoryLimit.Width - 1 : ptr.x - 1,
+          y: ptr.y
         };
       case PCDirection.Down:
-        return { X: ptr.X, Y: (ptr.Y + 1) % this.memoryLimit.Height };
+        return { x: ptr.x, y: (ptr.y + 1) % this.memoryLimit.Height };
       case PCDirection.Up:
         return {
-          X: ptr.X,
-          Y: ptr.Y === 0 ? this.memoryLimit.Height - 1 : ptr.Y - 1
+          x: ptr.x,
+          y: ptr.y === 0 ? this.memoryLimit.Height - 1 : ptr.y - 1
         };
     }
   }

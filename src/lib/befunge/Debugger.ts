@@ -68,16 +68,16 @@ export class Debugger {
 
   SetBreakpoint(brk: BreakpointCondition): BreakpointReleaser {
     if (brk.PC) {
-      let column = this.pcLocationBrk.get(brk.PC.Location.X);
+      let column = this.pcLocationBrk.get(brk.PC.Location.x);
 
       if (!column) {
         column = new Map<number, BreakpointCondition[]>();
-        column.set(brk.PC.Location.Y, []);
+        column.set(brk.PC.Location.y, []);
 
-        this.pcLocationBrk.set(brk.PC.Location.X, column);
+        this.pcLocationBrk.set(brk.PC.Location.x, column);
       }
 
-      column.get(brk.PC.Location.Y)?.push(brk);
+      column.get(brk.PC.Location.y)?.push(brk);
     }
 
     if (brk.Stack && (brk.Stack.Size || brk.Stack.Value)) {
@@ -89,12 +89,12 @@ export class Debugger {
 
   private BreakpointReleaser(brk: BreakpointCondition): void {
     if (brk.PC) {
-      const column = this.pcLocationBrk.get(brk.PC.Location.X);
-      const brks = column?.get(brk.PC.Location.Y);
+      const column = this.pcLocationBrk.get(brk.PC.Location.x);
+      const brks = column?.get(brk.PC.Location.y);
 
       if (brks) {
         if (brks.length === 1) {
-          column?.delete(brk.PC.Location.Y);
+          column?.delete(brk.PC.Location.y);
         } else {
           const toRemove = brks.indexOf(brk);
 
@@ -123,13 +123,13 @@ export class Debugger {
       return [];
     }
 
-    const column = this.pcLocationBrk.get(this.target.PC.Location.X);
+    const column = this.pcLocationBrk.get(this.target.PC.Location.x);
 
     if (!column) {
       return [];
     }
 
-    const brks = column.get(this.target.PC.Location.Y);
+    const brks = column.get(this.target.PC.Location.y);
 
     return (
       brks?.filter(brk => {
