@@ -7,9 +7,12 @@ import { UIComponent } from "./UIComponent";
 import { Dimension, UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
 import { UIIconButtonRenderer } from "./UIIconButton/UIIconButtonRenderer";
 import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
+import { UILabel } from "./UILabel/UILabel";
+import { UILabelRenderer } from "./UILabel/UILabelRenderer";
 
 export class UIRenderer {
     private iconButtonsRenderer!: UIIconButtonRenderer;
+    private labelsRenderer!: UILabelRenderer;
 
     private constructor(private gl: WebGL2RenderingContext) {
         this.labelsRenderer = new UILabelRenderer(gl);
@@ -33,6 +36,14 @@ export class UIRenderer {
         const iconButton = this.iconButtonsRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
 
         return iconButton;
+    }
+
+    CreateLabel(position: Vec2,
+        zIndex: number,
+        text: string,
+        lineHeight: number,
+        parent: UIComponent | null = null): UILabel {
+        return this.labelsRenderer.Create(position, zIndex, text, lineHeight, parent);
     }
 
     Touch(e: MouseEvent): boolean {
@@ -59,9 +70,11 @@ export class UIRenderer {
 
     Draw(): void {
         this.iconButtonsRenderer.Draw();
+        this.labelsRenderer.Draw();
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {
         this.iconButtonsRenderer.ViewProjection = projection;
+        this.labelsRenderer.ViewProjection = projection;
     }
 }
