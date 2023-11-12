@@ -77,6 +77,8 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
     set ZIndex(zIndex: number) {
         this.zIndex = zIndex;
+
+        this.observable.Notify(this);
     }
 
     get Icon(): UIIconStyle {
