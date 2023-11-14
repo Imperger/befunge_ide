@@ -89,6 +89,14 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 renderer.UploadAttributes(Array.from({ length: UILabelRenderer.AttributesPerComponent * initialCapacity }, () => 0));
             }
 
+            Free(index: number): void {
+                const emptyAttrs = new Array(UILabelRenderer.AttributesPerComponent).fill(0);
+
+                this.renderer.UpdateComponentAttributes(emptyAttrs, index * UILabelRenderer.AttributesPerComponent);
+
+                super.Free(index);
+            }
+
             OnShrink(inUseIndices: number[]): void {
                 const labelAttrs = new Array(UILabelRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
 
