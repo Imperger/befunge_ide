@@ -14,4 +14,5 @@ export interface UILabel extends UIComponent {
     get Style(): SymbolStyle[];
     LineHeight: number;
     StyleRange(begin: number, end: number, style: SymbolStyle): void;
+    Destroy(): void;
 }
