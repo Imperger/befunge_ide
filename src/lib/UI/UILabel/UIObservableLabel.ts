@@ -47,6 +47,10 @@ export class UIObservableLabel implements UIComponent, UILabel {
         this.observable.Notify(this);
     }
 
+    ReplaceOffset(old: number, offset: number): void {
+        this.offsets[this.offsets.indexOf(old)] = offset;
+    }
+
     get Style(): SymbolStyle[] {
         return this.symbolsStyle;
     }

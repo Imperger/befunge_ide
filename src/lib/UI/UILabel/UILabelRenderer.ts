@@ -116,6 +116,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
                     if (label !== undefined) {
                         this.renderer.labels.delete(oldOffset);
                         this.renderer.labels.set(offset, label);
+                        label.ReplaceOffset(oldOffset, offset);
                     }
                 });
             }
@@ -173,8 +174,8 @@ export class UILabelRenderer extends PrimitivesRenderer {
     }
 
     private GlyphFree(idx: number): void {
-        this.vertexAttributesTracker.Free(idx);
         this.labels.delete(idx);
+        this.vertexAttributesTracker.Free(idx);
     }
 
     private UpdateAttributes(component: UIObservableLabel): void {
