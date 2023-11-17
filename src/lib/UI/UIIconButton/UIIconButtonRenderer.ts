@@ -1,4 +1,6 @@
 
+import { inject, injectable } from "inversify";
+
 import { EnumSize } from "../../EnumSize";
 import { MemoryPoolTracker } from "../../MemoryPoolTracker";
 import { Rgb, Vec2 } from "../../Primitives";
@@ -17,8 +19,8 @@ import VUIIconButtonOutline from './UIIconButtonOutline.vert';
 import { TouchCallback, UIObservableIconButton } from "./UIObservableIconButton";
 
 import { AppSettings } from "@/app/AppSettings";
+import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
-import { NotNull } from "@/lib/NotNull";
 import { TextureAtlas } from "@/lib/renderer/TextureAtlas";
 
 enum UIIconButtonComponent { X, Y, Z, fillR, fillG, fillB, iconR, iconG, iconB, Ux, Uy };
@@ -70,10 +72,11 @@ interface TouchAnimationStart {
     timestamp: number;
 }
 
+@injectable()
 export class UIIconButtonRenderer extends PrimitivesRenderer {
-    private static readonly IndicesPerPrimitive = 18;
+    private readonly IndicesPerPrimitive;
 
-    private static readonly AttributesPerComponent = EnumSize(UIIconButtonComponent) * UIIconButtonRenderer.IndicesPerPrimitive;
+    private readonly AttributesPerComponent
 
     private readonly zFarIncluded = 0.1;
 
@@ -85,17 +88,17 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
     private vertexAttributesTracker: MemoryPoolTracker;
 
-    private iconAtlas!: UIIconAtlas;
-    private iconAtlasTexture!: WebGLTexture;
-
     private touchStart: TouchAnimationStart[] = [];
 
 
-    private constructor(gl: WebGL2RenderingContext) {
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
+        @inject(InjectionToken.IconAtlas) private iconAtlas: UIIconAtlas,
+        @inject(InjectionToken.IconAtlasTexture) private iconAtlasTexture: WebGLTexture) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
 
         const stride = floatSize * EnumSize(UIIconButtonComponent);
-
+        const indicesPerPrimitive = 18;
         super(gl,
             { fragment: FUIIconButton, vertex: VUIIconButton },
             [{
@@ -130,7 +133,10 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
                 stride,
                 offset: 9 * floatSize
             }],
-            { indicesPerPrimitive: UIIconButtonRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+
+        this.IndicesPerPrimitive = indicesPerPrimitive;
+        this.AttributesPerComponent = EnumSize(UIIconButtonComponent) * this.IndicesPerPrimitive;
 
         this.settings = Inversify.get(AppSettings);
 
@@ -141,19 +147,19 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
                 const initialCapacity = 2;
                 super(initialCapacity);
 
-                renderer.UploadAttributes(Array.from({ length: UIIconButtonRenderer.AttributesPerComponent * initialCapacity }, () => 0));
+                renderer.UploadAttributes(Array.from({ length: renderer.AttributesPerComponent * initialCapacity }, () => 0));
                 renderer.outline.UploadAttributes(Array.from({ length: UIButtonOutlineRenderer.AttributesPerComponent * initialCapacity }, () => 0));
             }
 
             OnShrink(inUseIndices: number[]): void {
-                const buttonAttrs = new Array(UIIconButtonRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
+                const buttonAttrs = new Array(this.renderer.AttributesPerComponent * inUseIndices.length).fill(0);
                 const buttonOutlineAttrs = new Array(UIButtonOutlineRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
 
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
 
-                    for (let attribOffset = 0; attribOffset < UIIconButtonRenderer.AttributesPerComponent; ++attribOffset) {
-                        buttonAttrs[n * UIIconButtonRenderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * UIIconButtonRenderer.AttributesPerComponent + attribOffset];
+                    for (let attribOffset = 0; attribOffset < this.renderer.AttributesPerComponent; ++attribOffset) {
+                        buttonAttrs[n * this.renderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * this.renderer.AttributesPerComponent + attribOffset];
                     }
 
                     for (let attribOffset = 0; attribOffset < UIButtonOutlineRenderer.AttributesPerComponent; ++attribOffset) {
@@ -177,7 +183,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
             OnExtend(extendedCapacity: number): void {
                 const extendedButtonAttrs = Array.from(
-                    { length: extendedCapacity * UIIconButtonRenderer.AttributesPerComponent },
+                    { length: extendedCapacity * this.renderer.AttributesPerComponent },
                     (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
 
                 this.renderer.UploadAttributes(extendedButtonAttrs);
@@ -190,16 +196,6 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
                 this.renderer.outline.UploadAttributes(extendedOutlineAttrs);
             }
         })(this);
-    }
-
-    static async Create(gl: WebGL2RenderingContext): Promise<UIIconButtonRenderer> {
-        const renderer = new UIIconButtonRenderer(gl);
-
-        renderer.iconAtlas = await UIIconAtlas.Create();
-
-        renderer.SetupAtlasTexture();
-
-        return renderer;
     }
 
     Create(position: Vec2,
@@ -337,7 +333,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
     private UpdateContentAttributes(component: UIObservableIconButton): void {
         this.UpdateComponentAttributes(
             this.ExtractContentAttributes(component),
-            component.Offset * UIIconButtonRenderer.AttributesPerComponent);
+            component.Offset * this.AttributesPerComponent);
     }
 
     private ResetOutlineAttributes(component: UIObservableIconButton): void {
@@ -436,17 +432,6 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             { width: component.Dimension.width + 2 * width, height: component.Dimension.height + 2 * width },
             width, [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.outlineColor]);
     }
-
-    private SetupAtlasTexture(): void {
-        this.iconAtlasTexture = this.gl.createTexture() ?? NotNull('Failed to create font atlas texture');
-        this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.iconAtlasTexture);
-
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.iconAtlas.Image);
-    }
 }
+
+Inversify.bind(UIIconButtonRenderer).toSelf().inSingletonScope();

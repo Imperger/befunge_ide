@@ -1,29 +1,62 @@
+import { inject, injectable } from "inversify";
+
 import { ArrayHelper } from "../ArrayHelper";
 import { Intersection } from "../math/Intersection";
 import { Vec2 } from "../Primitives";
 import { Mat4 } from "../renderer/ShaderProgram";
 
+import { Dimension, UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "./UIAlert/UIAlert";
+import { UIAlertRenderer } from "./UIAlert/UIAlertRenderer";
 import { UIComponent } from "./UIComponent";
-import { Dimension, UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
+import { UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
 import { UIIconButtonRenderer } from "./UIIconButton/UIIconButtonRenderer";
 import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
 import { UILabel } from "./UILabel/UILabel";
 import { UILabelRenderer } from "./UILabel/UILabelRenderer";
 
-export class UIRenderer {
-    private iconButtonsRenderer!: UIIconButtonRenderer;
-    private labelsRenderer!: UILabelRenderer;
+import { InjectionToken } from "@/app/InjectionToken";
+import { Inversify } from "@/Inversify";
 
-    private constructor(private gl: WebGL2RenderingContext) {
-        this.labelsRenderer = new UILabelRenderer(gl);
-    }
+export interface UICreator {
+    CreateButton(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        style: UIButtonStyle,
+        iconStyle: UIIconStyle,
+        touchCallback: TouchCallback,
+        parent: UIComponent | null): UIIconButton;
 
-    static async Create(gl: WebGL2RenderingContext): Promise<UIRenderer> {
-        const renderer = new UIRenderer(gl);
+    CreateButton(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        style: UIButtonStyle,
+        iconStyle: UIIconStyle,
+        touchCallback: TouchCallback,
+        parent: UIComponent | null): UIIconButton;
 
-        renderer.iconButtonsRenderer = await UIIconButtonRenderer.Create(gl);
+    CreateLabel(position: Vec2,
+        zIndex: number,
+        text: string,
+        lineHeight: number,
+        parent: UIComponent | null): UILabel;
 
-        return renderer;
+    CreateAlert(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        icon: UIAlertIconStyle,
+        text: UIAlertText,
+        style: UIAlertStyle,
+        parent: UIComponent | null): UIAlert
+}
+
+@injectable()
+export class UIRenderer implements UICreator {
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
+        @inject(UIIconButtonRenderer) private iconButtonRenderer: UIIconButtonRenderer,
+        @inject(UIAlertRenderer) private alertRenderer: UIAlertRenderer,
+        @inject(UILabelRenderer) private labelsRenderer: UILabelRenderer) {
+        this.alertRenderer.UIRenderer = this;
     }
 
     CreateButton(position: Vec2,
@@ -33,7 +66,7 @@ export class UIRenderer {
         iconStyle: UIIconStyle,
         touchCallback: TouchCallback,
         parent: UIComponent | null = null): UIIconButton {
-        const iconButton = this.iconButtonsRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
+        const iconButton = this.iconButtonRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
 
         return iconButton;
     }
@@ -46,12 +79,22 @@ export class UIRenderer {
         return this.labelsRenderer.Create(position, zIndex, text, lineHeight, parent);
     }
 
+    CreateAlert(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        icon: UIAlertIconStyle,
+        text: UIAlertText,
+        style: UIAlertStyle,
+        parent: UIComponent | null = null): UIAlert {
+        return this.alertRenderer.Create(position, dimension, zIndex, icon, text, style, parent);
+    }
+
     Touch(e: MouseEvent): boolean {
         return this.TouchButtons(e.offsetX, this.gl.canvas.height - e.offsetY) || false;
     }
 
     private TouchButtons(x: number, y: number): boolean {
-        const intersected = this.iconButtonsRenderer.IconButtons
+        const intersected = this.iconButtonRenderer.IconButtons
             .filter(btn => Intersection.AABBRectanglePoint(
                 { x: btn.AbsolutePosition.x, y: btn.AbsolutePosition.y, width: btn.Dimension.width, height: btn.Dimension.height },
                 { x, y }));
@@ -69,12 +112,16 @@ export class UIRenderer {
 
 
     Draw(): void {
-        this.iconButtonsRenderer.Draw();
+        this.iconButtonRenderer.Draw();
         this.labelsRenderer.Draw();
+        this.alertRenderer.Draw();
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {
-        this.iconButtonsRenderer.ViewProjection = projection;
+        this.iconButtonRenderer.ViewProjection = projection;
         this.labelsRenderer.ViewProjection = projection;
+        this.alertRenderer.ViewProjection = projection;
     }
 }
+
+Inversify.bind(UIRenderer).toSelf().inSingletonScope();

@@ -1,4 +1,6 @@
 
+import { injectable, unmanaged } from 'inversify';
+
 import { NotNull } from '../NotNull';
 
 import { ShaderProgram } from './ShaderProgram';
@@ -49,6 +51,8 @@ export interface DataDescriptor {
   offset: number;
 }
 
+
+@injectable()
 export class PrimitivesRenderer {
   protected vbo!: WebGLBuffer;
   private vao!: WebGLVertexArrayObject;
@@ -60,10 +64,10 @@ export class PrimitivesRenderer {
   private attributeSetCount = 0;
 
   constructor(
-    protected readonly gl: WebGL2RenderingContext,
-    shaderSource: ShaderProgramSource,
-    attributes: AttributeDescription[],
-    private readonly primitiveDescription: PrimitiveDescription
+    @unmanaged() protected readonly gl: WebGL2RenderingContext,
+    @unmanaged() shaderSource: ShaderProgramSource,
+    @unmanaged() attributes: AttributeDescription[],
+    @unmanaged() private readonly primitiveDescription: PrimitiveDescription
   ) {
     this.Setup(shaderSource);
     this.SetupAttributes(attributes);

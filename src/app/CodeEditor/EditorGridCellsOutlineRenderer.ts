@@ -1,7 +1,12 @@
+import { inject, injectable } from 'inversify';
+
+import { InjectionToken } from '../InjectionToken';
+
 import FCellsOutline from './CellsOutline.frag';
 import VCellsOutline from './CellsOutline.vert';
 import { EditorGridRenderer } from "./EditorGridRenderer";
 
+import { Inversify } from '@/Inversify';
 import { EnumSize } from '@/lib/EnumSize';
 import { Rgb } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
@@ -11,11 +16,14 @@ import { TypeSizeResolver } from '@/lib/renderer/TypeSizeResolver';
 
 enum CodeCellOutlineComponent { X, Y, R, G, B };
 
+@injectable()
 export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
     private readonly outlineWidth = 0.2;
     private readonly cellOutlineColor: Rgb = [0.5647058823529412, 0.6431372549019608, 0.6823529411764706];
 
-    constructor(gl: WebGL2RenderingContext, private gridRenderer: EditorGridRenderer) {
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) protected gl: WebGL2RenderingContext,
+        @inject(EditorGridRenderer) private gridRenderer: EditorGridRenderer) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const gridStride = floatSize * EnumSize(CodeCellOutlineComponent);
 
@@ -70,7 +78,7 @@ export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
                     height: this.outlineWidth
                 },
                 [this.cellOutlineColor]);
-            
+
             vertexList.push(...rowAttrs);
         }
 
@@ -82,10 +90,12 @@ export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
                     height: this.gridRenderer.Dimension.Rows * this.gridRenderer.CellSize
                 },
                 [this.cellOutlineColor]);
-            
+
             vertexList.push(...colAttrs);
         }
 
         this.UploadAttributes(vertexList);
     }
 }
+
+Inversify.bind(EditorGridCellsOutlineRenderer).toSelf().inSingletonScope();

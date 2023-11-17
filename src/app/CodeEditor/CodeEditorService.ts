@@ -1,3 +1,6 @@
+import { inject, injectable } from "inversify";
+
+import { InjectionToken } from "../InjectionToken";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
@@ -12,16 +15,17 @@ import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
 export enum EditionDirection { Left, Up, Right, Down };
 
+@injectable()
 export class CodeEditorService {
-    private codeEditorRenderer: CodeEditorRenderer;
     private readonly editionCellStyle: Rgb = [1, 0, 0];
     private editionCell: Vec2 = { x: 0, y: 0 };
     private editionDirection: EditionDirection = EditionDirection.Right;
 
     private editDirectionObservable = new ObservableController<EditionDirection>();
 
-    constructor(private gl: WebGL2RenderingContext) {
-        this.codeEditorRenderer = new CodeEditorRenderer(gl);
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
+        @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer) {
 
         this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
     }
@@ -143,3 +147,5 @@ export class CodeEditorService {
         this.codeEditorRenderer.ViewProjection = proj;
     }
 }
+
+Inversify.bind(CodeEditorService).toSelf().inSingletonScope();

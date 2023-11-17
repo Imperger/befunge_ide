@@ -1,21 +1,21 @@
+import { inject, injectable } from "inversify";
+
 import { EditorGridCellsOutlineRenderer } from "./EditorGridCellsOutlineRenderer";
 import { EditorGridDimension, EditorGridRenderer } from "./EditorGridRenderer";
 import { SelectionRenderer } from "./SelectionRenderer";
 
+import { Inversify } from "@/Inversify";
 import { Rgb } from "@/lib/Primitives";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
+@injectable()
 export class CodeEditorRenderer {
-    private editorGridRenderer: EditorGridRenderer;
-    private editorGridCellsOutlineRenderer: EditorGridCellsOutlineRenderer;
-    private selectionRenderer: SelectionRenderer;
     private viewProjection!: Mat4 | Float32Array;
 
-    constructor(gl: WebGL2RenderingContext) {
-        this.editorGridRenderer = new EditorGridRenderer(gl);
-        this.editorGridCellsOutlineRenderer = new EditorGridCellsOutlineRenderer(gl, this.editorGridRenderer);
-        this.selectionRenderer = new SelectionRenderer(gl, this.editorGridRenderer.Dimension, this.editorGridRenderer.CellSize);
-    }
+    constructor(
+        @inject(EditorGridRenderer) private editorGridRenderer: EditorGridRenderer,
+        @inject(EditorGridCellsOutlineRenderer) private editorGridCellsOutlineRenderer: EditorGridCellsOutlineRenderer,
+        @inject(SelectionRenderer) private selectionRenderer: SelectionRenderer) { }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.viewProjection = mat;
@@ -55,3 +55,5 @@ export class CodeEditorRenderer {
         return this.editorGridRenderer.CellSize;
     }
 }
+
+Inversify.bind(CodeEditorRenderer).toSelf().inSingletonScope();

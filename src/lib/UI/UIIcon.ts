@@ -1,4 +1,9 @@
+import { injectable } from "inversify";
+
+import { AsyncConstructable, AsyncConstructorActivator } from "../DI/AsyncConstructorActivator";
 import { TextureAtlas, TextureAtlasBuilder, UV } from "../renderer/TextureAtlas";
+
+import { Inversify } from "@/Inversify";
 
 export enum UIIcon { Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger, Play };
 
@@ -11,12 +16,14 @@ export interface IconExtra<TId> {
     aspectRatio: number;
 }
 
-
-export class UIIconAtlas {
+@injectable()
+export class UIIconAtlas implements AsyncConstructable {
     private atlas!: TextureAtlas<UIIcon>;
     private iconExtras: IconExtra<UIIcon>[] = [];
 
-    private constructor() { }
+    async AsyncConstructor(): Promise<void> {
+        await this.BuildAtlas();
+    }
 
     LookupUV(id: UIIcon): UVExtra {
         switch (id) {
@@ -94,12 +101,6 @@ export class UIIconAtlas {
 
         this.atlas = await builder.Build();
     }
-
-    static async Create(): Promise<UIIconAtlas> {
-        const atlas = new UIIconAtlas();
-
-        await atlas.BuildAtlas();
-
-        return atlas;
-    }
 }
+
+Inversify.bind(UIIconAtlas).toSelf().inSingletonScope().onActivation(AsyncConstructorActivator);

@@ -1,5 +1,8 @@
+import { injectable } from "inversify";
+
 import { MouseButtons } from "@/lib/DOM/MouseButtons";
 
+@injectable()
 export abstract class AppEventTransformer {
     private isMovement = false;
 

@@ -1,7 +1,12 @@
-import { EditorGridDimension } from './EditorGridRenderer';
+import { inject, injectable } from 'inversify';
+
+import { InjectionToken } from '../InjectionToken';
+
+import { EditorGridRenderer } from './EditorGridRenderer';
 import FSelection from './Selection.frag';
 import VSelection from './Selection.vert';
 
+import { Inversify } from '@/Inversify';
 import { EnumSize } from '@/lib/EnumSize';
 import { Rgb } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
@@ -16,15 +21,15 @@ interface SelectionLocation {
     Row: number;
 }
 
+@injectable()
 export class SelectionRenderer extends PrimitivesRenderer {
     private static readonly IndicesPerPrimitive = 24;
 
     private readonly selected: SelectionLocation[] = [];
 
     constructor(
-        gl: WebGL2RenderingContext,
-        private dimension: EditorGridDimension,
-        private readonly cellSize: number) {
+        @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
+        @inject(EditorGridRenderer) private editorGridRenderer: EditorGridRenderer) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
 
         const selectionStride = floatSize * EnumSize(SelectionComponent);
@@ -54,9 +59,9 @@ export class SelectionRenderer extends PrimitivesRenderer {
     }
 
     Select(column: number, row: number, color: Rgb): void {
-        row = this.dimension.Rows - row - 1;
+        row = this.editorGridRenderer.Dimension.Rows - row - 1;
 
-        if (column < 0 || column >= this.dimension.Columns || row < 0 || row >= this.dimension.Rows) {
+        if (column < 0 || column >= this.editorGridRenderer.Dimension.Columns || row < 0 || row >= this.editorGridRenderer.Dimension.Rows) {
             return;
         }
 
@@ -87,8 +92,8 @@ export class SelectionRenderer extends PrimitivesRenderer {
             this.selected.push({ Column: column, Row: row });
 
             const selection = PrimitiveBuilder.AABBFrame(
-                { x: column * this.cellSize, y: row * this.cellSize },
-                { width: this.cellSize, height: this.cellSize },
+                { x: column * this.editorGridRenderer.CellSize, y: row * this.editorGridRenderer.CellSize },
+                { width: this.editorGridRenderer.CellSize, height: this.editorGridRenderer.CellSize },
                 0.5,
                 [color]);
 
@@ -97,9 +102,9 @@ export class SelectionRenderer extends PrimitivesRenderer {
     }
 
     Unselect(column: number, row: number): void {
-        row = this.dimension.Rows - row - 1;
+        row = this.editorGridRenderer.Dimension.Rows - row - 1;
 
-        const selectionIdx = this.selected.findIndex(x => x.Column === column && x.Row === row); 
+        const selectionIdx = this.selected.findIndex(x => x.Column === column && x.Row === row);
 
         if (selectionIdx === -1) {
             return;
@@ -120,3 +125,5 @@ export class SelectionRenderer extends PrimitivesRenderer {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
     }
 }
+
+Inversify.bind(SelectionRenderer).toSelf().inSingletonScope();

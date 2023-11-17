@@ -1,10 +1,12 @@
+import { inject, injectable, interfaces } from "inversify";
+
 import { NotNull } from "../NotNull";
 import { Vec2 } from "../Primitives";
 import { UV } from "../renderer/TextureAtlas";
 
 import { FontAtlas } from "./FontAtlasBuilder";
 
-import { AppResource } from "@/app/AppResource";
+import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
 
 interface GlyphMeshFontOptions {
@@ -55,16 +57,17 @@ export class FontGlyphCollection {
     }
 }
 
+@injectable()
 class FontGlyphCollectionBuilderImpl {
     private options!: GlyphMeshOptions;
-    private atlas!: FontAtlas;
     private context!: CanvasRenderingContext2D;
 
     private lib = new Map<string, GlyphMeshBlueprint>();
 
+    constructor(@inject(InjectionToken.FontAtlas) private fontAtlas: FontAtlas) { }
+
     Build(options: GlyphMeshOptions): FontGlyphCollection {
         this.options = options;
-        this.atlas = Inversify.get(AppResource).FontAtlas;
 
         const startCode = options.ASCIIRange.Start.charCodeAt(0);
         const endCode = options.ASCIIRange.End.charCodeAt(0);
@@ -102,7 +105,7 @@ class FontGlyphCollectionBuilderImpl {
     private BuildBlueprints(glyphCount: number) {
         for (let n = 0; n < glyphCount; ++n) {
             const symbol = String.fromCharCode(this.options.ASCIIRange.Start.charCodeAt(0) + n);
-            const atlasUV = this.atlas.LookupUV(symbol);
+            const atlasUV = this.fontAtlas.LookupUV(symbol);
             const metrics = this.context.measureText(symbol);
 
             const width = metrics.width;
@@ -147,10 +150,10 @@ class FontGlyphCollectionBuilderImpl {
     }
 }
 
-export class FontGlyphCollectionBuilder {
-    private constructor() { }
+Inversify.bind(FontGlyphCollectionBuilderImpl).toSelf().inRequestScope();
 
-    static Build(options: GlyphMeshOptions): FontGlyphCollection {
-        return new FontGlyphCollectionBuilderImpl().Build(options);
-    }
-}
+export type FontGlyphCollectionFactory = (options: GlyphMeshOptions) => FontGlyphCollection;
+
+Inversify
+    .bind<interfaces.Factory<FontGlyphCollection>>(InjectionToken.FontGlyphCollectionFactory)
+    .toFactory<FontGlyphCollection, [GlyphMeshOptions]>(ctx => (options: GlyphMeshOptions) => ctx.container.get(FontGlyphCollectionBuilderImpl).Build(options));

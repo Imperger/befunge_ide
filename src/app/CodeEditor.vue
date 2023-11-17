@@ -2,7 +2,10 @@
 import { onBeforeUnmount } from 'vue';
 
 import { AppService } from './AppService';
+import { GlobalDependencies } from './GlobalDependencies';
+import { InjectionToken } from './InjectionToken';
 
+import { Inversify } from '@/Inversify';
 import Webgl2Canvas from '@/lib/VueComponents/WebglCanvas.vue';
 
 let service!: AppService;
@@ -11,7 +14,13 @@ let service!: AppService;
 onBeforeUnmount(() => service.Dispose());
 
 async function OnContextReady(context: WebGL2RenderingContext): Promise<void> {
-  service = await AppService.Create(context);
+  Inversify
+    .bind<WebGL2RenderingContext>(InjectionToken.WebGLRenderingContext)
+    .toConstantValue(context);
+
+  await Inversify.getAsync(GlobalDependencies);
+
+  service = await Inversify.getAsync(AppService);
   service.Resize();
 }
 

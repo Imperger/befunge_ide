@@ -1,17 +1,20 @@
 
-import { AppResource } from '../AppResource';
-import { TextureCacheId } from '../TextureCacheId';
+import { inject, injectable } from 'inversify';
+
+import { InjectionToken } from '../InjectionToken';
 
 import FGrid from './Grid.frag';
 import VGrid from './Grid.vert';
 
 import { Inversify } from '@/Inversify';
 import { EnumSize } from '@/lib/EnumSize';
+import { FontAtlas } from '@/lib/font/FontAtlasBuilder';
 import { Rgb, Rgba, Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
 import { TypeSizeResolver } from '@/lib/renderer/TypeSizeResolver';
+
 
 enum CodeCellComponent { X, Y, R, G, B, Ux, Uy };
 
@@ -20,16 +23,16 @@ export interface EditorGridDimension {
     Rows: number;
 }
 
+@injectable()
 export class EditorGridRenderer extends PrimitivesRenderer {
     public readonly CellSize = 10;
 
     public readonly Dimension: EditorGridDimension = { Columns: 80, Rows: 25 };
 
-    private fontAtlasTexture!: WebGLTexture;
-
-    private resource: AppResource;
-
-    constructor(gl: WebGL2RenderingContext) {
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
+        @inject(InjectionToken.FontAtlas) private fontAtlas: FontAtlas,
+        @inject(InjectionToken.FontAtlasTexture) private fontAtlasTexture: WebGLTexture) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const gridStride = floatSize * EnumSize(CodeCellComponent);
 
@@ -61,8 +64,6 @@ export class EditorGridRenderer extends PrimitivesRenderer {
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
-        this.resource = Inversify.get(AppResource);
-
         this.SetupRenderer();
     }
 
@@ -89,7 +90,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         row = this.Dimension.Rows - row - 1;
 
         const cellAttrs = this.PrimitiveAttributes(row * this.Dimension.Columns + column);
-        const symbolUV = this.resource.FontAtlas.LookupUV(symbol);
+        const symbolUV = this.fontAtlas.LookupUV(symbol);
 
         const UVOffset = 5;
         const UVStartOffset = cellAttrs.offset + UVOffset;
@@ -132,25 +133,12 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         super.Draw();
     }
 
-    private SetupAtlasTexture(): void {
-        this.fontAtlasTexture = this.resource.TextureCache.Create(TextureCacheId.ASCIIAtlas, this.gl);
-        this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.fontAtlasTexture);
-
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.resource.FontAtlas.Image);
-    }
-
     private BuildCell(
         position: Vec2,
         color: Rgb | Rgba,
         symbol: string
     ): number[] {
-        const uv = this.resource.FontAtlas.LookupUV(symbol);
+        const uv = this.fontAtlas.LookupUV(symbol);
 
         return PrimitiveBuilder.AABBRectangle(
             position,
@@ -172,8 +160,8 @@ export class EditorGridRenderer extends PrimitivesRenderer {
     }
 
     private SetupRenderer(): void {
-        this.SetupAtlasTexture();
-
         this.Resize(this.Dimension.Columns, this.Dimension.Rows);
     }
 }
+
+Inversify.bind(EditorGridRenderer).toSelf().inSingletonScope();

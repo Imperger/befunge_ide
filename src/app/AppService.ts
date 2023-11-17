@@ -1,17 +1,20 @@
 
 import { mat4 } from 'gl-matrix';
+import { inject, injectable } from 'inversify';
 
 import { AppEventTransformer } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
 import { BefungeToolbox } from './BefungeToolbox';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { DebugRenderer } from './DebugRenderer';
+import { InjectionToken } from './InjectionToken';
 import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
+import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { Intersection } from '@/lib/math/Intersection';
 import { Camera } from '@/lib/renderer/Camera';
 
@@ -20,16 +23,12 @@ async function Delay(delay: number): Promise<void> {
     return new Promise(ok => setTimeout(ok, delay));
 }
 
-export class AppService extends AppEventTransformer {
+@injectable()
+export class AppService extends AppEventTransformer implements AsyncConstructable {
     private isRunning = true;
-
-    private settings: AppSettings;
 
     private projection!: mat4;
     private camera: mat4;
-
-    private overlay!: OverlayService;
-    private codeEditor: CodeEditorService;
 
     private befungeToolbox: BefungeToolbox;
     private memoryLimit: MemoryLimit = { Width: 80, Height: 25 };
@@ -38,10 +37,12 @@ export class AppService extends AppEventTransformer {
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
 
-    private constructor(private gl: WebGL2RenderingContext) {
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
+        @inject(AppSettings) private settings: AppSettings,
+        @inject(OverlayService) private overlay: OverlayService,
+        @inject(CodeEditorService) private codeEditor: CodeEditorService) {
         super();
-
-        this.settings = Inversify.get(AppSettings);
 
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
 
@@ -50,7 +51,6 @@ export class AppService extends AppEventTransformer {
 
         this.BuildProjection();
 
-        this.codeEditor = new CodeEditorService(gl);
         this.codeEditor.ViewProjection = this.ViewProjection;
 
         const sourceMemory = Inversify.get(SourceCodeMemory);
@@ -101,22 +101,13 @@ export class AppService extends AppEventTransformer {
         //Debug();
     }
 
-    private async AsyncConstructor(): Promise<void> {
-        this.overlay = await OverlayService.Create(this.gl);
-
+    async AsyncConstructor(): Promise<void> {
         this.overlay.EditDirectionControls.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
 
         this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
 
         this.Start();
-    }
-
-    static async Create(gl: WebGL2RenderingContext): Promise<AppService> {
-        const service = new AppService(gl);
-        await service.AsyncConstructor();
-
-        return service;
     }
 
     Resize(): void {
@@ -233,3 +224,5 @@ export class AppService extends AppEventTransformer {
         this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
     }
 }
+
+Inversify.bind(AppService).toSelf().inSingletonScope().onActivation(AsyncConstructorActivator);

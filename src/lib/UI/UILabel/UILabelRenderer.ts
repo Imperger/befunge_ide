@@ -1,3 +1,5 @@
+import { inject, injectable } from 'inversify';
+
 import { UIComponent } from '../UIComponent';
 
 import { UILabel } from './UILabel';
@@ -5,15 +7,13 @@ import FUILabel from './UILabel.frag';
 import VUILabel from './UILabel.vert';
 import { UIObservableLabel } from './UIObservableLabel';
 
-import { AppResource } from '@/app/AppResource';
 import { AppSettings } from '@/app/AppSettings';
-import { TextureCacheId } from '@/app/TextureCacheId';
+import { InjectionToken } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
 import { EnumSize } from "@/lib/EnumSize";
 import { ExceptionTrap } from '@/lib/ExceptionTrap';
-import { FontGlyphCollectionBuilder } from '@/lib/font/FontGlyphCollection';
+import { FontGlyphCollectionFactory } from '@/lib/font/FontGlyphCollection';
 import { MemoryPoolTracker } from '@/lib/MemoryPoolTracker';
-import { NotNull } from '@/lib/NotNull';
 import { Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
@@ -30,12 +30,11 @@ type Offset = number;
  * Note: In PrimitivesRenderer::PrimitiveAttributes method the index parameter means an individual symbol location but not a whole label component.
  *       It's because a label has dynamic attribute count that depends on text length.
  */
+@injectable()
 export class UILabelRenderer extends PrimitivesRenderer {
-    private static readonly IndicesPerPrimitive = 6;
+    private readonly IndicesPerPrimitive;
 
-    private static readonly AttributesPerComponent = EnumSize(UILabelComponent) * UILabelRenderer.IndicesPerPrimitive;
-
-    private settings: AppSettings;
+    private readonly AttributesPerComponent;
 
     private readonly zFarIncluded = 0.1;
 
@@ -43,11 +42,14 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
     private vertexAttributesTracker: MemoryPoolTracker;
 
-    private fontTexture: WebGLTexture;
-
-    constructor(gl: WebGL2RenderingContext) {
+    constructor(
+        @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
+        @inject(AppSettings) private settings: AppSettings,
+        @inject(InjectionToken.FontAtlasTexture) private fontTexture: WebGLTexture,
+        @inject(InjectionToken.FontGlyphCollectionFactory) private fontGlyphCollectionProvider: FontGlyphCollectionFactory) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UILabelComponent);
+        const indicesPerPrimitive = 6;
 
         super(gl,
             { fragment: FUILabel, vertex: VUILabel },
@@ -75,36 +77,35 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 stride,
                 offset: 6 * floatSize
             }],
-            { indicesPerPrimitive: UILabelRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
 
-        this.settings = Inversify.get(AppSettings);
-
-        this.fontTexture = Inversify.get(AppResource).TextureCache.Find(TextureCacheId.ASCIIAtlas) ?? NotNull('Failed to find font texture');
+        this.IndicesPerPrimitive = indicesPerPrimitive;
+        this.AttributesPerComponent = EnumSize(UILabelComponent) * this.IndicesPerPrimitive;
 
         this.vertexAttributesTracker = new (class extends MemoryPoolTracker {
             constructor(private renderer: UILabelRenderer) {
                 const initialCapacity = 256;
                 super(initialCapacity);
 
-                renderer.UploadAttributes(Array.from({ length: UILabelRenderer.AttributesPerComponent * initialCapacity }, () => 0));
+                renderer.UploadAttributes(Array.from({ length: renderer.AttributesPerComponent * initialCapacity }, () => 0));
             }
 
             Free(index: number): void {
-                const emptyAttrs = new Array(UILabelRenderer.AttributesPerComponent).fill(0);
+                const emptyAttrs = new Array(this.renderer.AttributesPerComponent).fill(0);
 
-                this.renderer.UpdateComponentAttributes(emptyAttrs, index * UILabelRenderer.AttributesPerComponent);
+                this.renderer.UpdateComponentAttributes(emptyAttrs, index * this.renderer.AttributesPerComponent);
 
                 super.Free(index);
             }
 
             OnShrink(inUseIndices: number[]): void {
-                const labelAttrs = new Array(UILabelRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
+                const labelAttrs = new Array(this.renderer.AttributesPerComponent * inUseIndices.length).fill(0);
 
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
 
-                    for (let attribOffset = 0; attribOffset < UILabelRenderer.AttributesPerComponent; ++attribOffset) {
-                        labelAttrs[n * UILabelRenderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * UILabelRenderer.AttributesPerComponent + attribOffset];
+                    for (let attribOffset = 0; attribOffset < this.renderer.AttributesPerComponent; ++attribOffset) {
+                        labelAttrs[n * this.renderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * this.renderer.AttributesPerComponent + attribOffset];
                     }
                 }
 
@@ -123,7 +124,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
             OnExtend(extendedCapacity: number): void {
                 const extendedLabelAttrs = Array.from(
-                    { length: extendedCapacity * UILabelRenderer.AttributesPerComponent },
+                    { length: extendedCapacity * this.renderer.AttributesPerComponent },
                     (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
 
                 this.renderer.UploadAttributes(extendedLabelAttrs);
@@ -179,7 +180,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
     }
 
     private UpdateAttributes(component: UIObservableLabel): void {
-        const fontGlyphCollection = FontGlyphCollectionBuilder.Build({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
+        const fontGlyphCollection = this.fontGlyphCollectionProvider({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
 
         for (let n = 0, { x, y } = component.AbsolutePosition; n < component.Text.length; ++n) {
             const symbol = component.Text[n];
@@ -213,9 +214,11 @@ export class UILabelRenderer extends PrimitivesRenderer {
                     }
                 ]);
 
-            this.UpdateComponentAttributes(attributes, offset * UILabelRenderer.AttributesPerComponent);
+            this.UpdateComponentAttributes(attributes, offset * this.AttributesPerComponent);
 
             x += glyphBlueprint.width;
         }
     }
 }
+
+Inversify.bind(UILabelRenderer).toSelf().inSingletonScope();
