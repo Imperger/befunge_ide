@@ -46,9 +46,9 @@ export class OverlayService implements AsyncConstructable {
             { x: 400, y: 400 },
             { width: 300, height: 100 },
             1,
-            { icon: UIIcon.Play, color: [1, 0, 0] },
-            { text: 'I\'m alert', lineHeight: 16 },
-            { fillColor: [0, 1, 0] });
+            { icon: UIIcon.Play, color: [1, 1, 1] },
+            { text: 'I\'m alert', lineHeight: 32, color: [1, 1, 1] },
+            { fillColor: [0.40784313725490196, 0.6235294117647059, 0.2196078431372549] });
     }
 
     get EditDirectionControls(): EditDirectionControls {

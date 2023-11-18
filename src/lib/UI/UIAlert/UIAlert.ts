@@ -15,6 +15,7 @@ export interface UIAlertIconStyle {
 
 export interface UIAlertText {
     text: string;
+    color: Rgb;
     lineHeight: number;
 }
 
