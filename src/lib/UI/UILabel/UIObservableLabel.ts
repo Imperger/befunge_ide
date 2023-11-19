@@ -1,6 +1,6 @@
 import { vec2 } from "gl-matrix";
 
-import { UIComponent } from "../UIComponent";
+import { Dimension, UIComponent } from "../UIComponent";
 
 import { SymbolStyle, UILabel } from "./UILabel";
 
@@ -22,6 +22,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
     private offsets: number[] = [];
 
     private observable = new ObservableController<UIObservableLabel>();
+
+    public dimension: Dimension = { width: 0, height: 0 };
 
     constructor(
         private position: Vec2,
@@ -116,6 +118,17 @@ export class UIObservableLabel implements UIComponent, UILabel {
         this.scale = scale;
 
         this.observable.Notify(this);
+    }
+
+    get Dimension(): Dimension {
+        return {
+            width: this.dimension.width * this.scale,
+            height: this.dimension.height * this.scale
+        };
+    }
+
+    UpdateTextDimension(dimension: Dimension): void {
+        this.dimension = dimension;
     }
 
     get Offsets(): number[] {

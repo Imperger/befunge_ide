@@ -248,6 +248,10 @@ export class UIAlertRenderer extends PrimitivesRenderer {
         this.uiRenderer = renderer;
     }
 
+    get Alerts(): readonly UIAlert[] {
+        return this.alerts;
+    }
+
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
         this.alertIcon.ViewProjection = mat;

@@ -1,7 +1,7 @@
 import { Observable, ObservableController } from "../Observable";
 import { Vec2 } from "../Primitives";
 
-import { UIComponent } from "./UIComponent";
+import { Dimension, UIComponent } from "./UIComponent";
 
 import { AppSettings } from "@/app/AppSettings";
 import { Inversify } from "@/Inversify";
@@ -60,6 +60,10 @@ export class UIObservablePositioningGroup implements UIComponent {
         this.scale = scale;
 
         this.observable.Notify(this);
+    }
+
+    get Dimension(): Dimension {
+        return { width: 0, height: 0 };
     }
 
     private HorizontalPositionRespectAnchor(viewWidth: number): number {

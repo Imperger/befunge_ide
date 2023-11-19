@@ -41,7 +41,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(AppSettings) private settings: AppSettings,
         @inject(OverlayService) private overlay: OverlayService,
-        @inject(CodeEditorService) private codeEditor: CodeEditorService) {
+        @inject(CodeEditorService) private codeEditor: CodeEditorService,
+        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory) {
         super();
 
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
@@ -195,7 +196,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private Start(): void {
-        this.overlay.OutputControls.Output = 'HelloWOrld'
+        this.overlay.OutputControls.Output = 'HelloWOrld \n1'
         requestAnimationFrame(() => this.DrawFrame())
     }
 
@@ -215,7 +216,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private ExecuteCode(): void {
-        this.befungeToolbox.Reset(this.memoryLimit, Inversify.get(SourceCodeMemory).Clone());
+        this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
 
         if (!this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
             console.log('Terminated due timeout');

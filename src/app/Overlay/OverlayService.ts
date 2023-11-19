@@ -89,5 +89,4 @@ export class OverlayService implements AsyncConstructable {
     }
 }
 
-
 Inversify.bind(OverlayService).toSelf().inSingletonScope().onActivation(AsyncConstructorActivator);

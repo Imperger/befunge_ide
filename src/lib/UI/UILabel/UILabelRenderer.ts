@@ -12,7 +12,7 @@ import { InjectionToken } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
 import { EnumSize } from "@/lib/EnumSize";
 import { ExceptionTrap } from '@/lib/ExceptionTrap';
-import { FontGlyphCollectionFactory } from '@/lib/font/FontGlyphCollection';
+import { FontGlyphCollection, FontGlyphCollectionFactory, GlyphMeshBlueprint } from '@/lib/font/FontGlyphCollection';
 import { MemoryPoolTracker } from '@/lib/MemoryPoolTracker';
 import { Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
@@ -37,6 +37,8 @@ export class UILabelRenderer extends PrimitivesRenderer {
     private readonly AttributesPerComponent;
 
     private readonly zFarIncluded = 0.1;
+
+    private readonly lineHeightGrowthFactor = 0.8;
 
     private labels = new Map<Offset, UIObservableLabel>();
 
@@ -132,6 +134,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
         })(this);
     }
 
+    get Labels(): readonly UILabel[] {
+        return [...new Set([...this.labels.values()]).values()];
+    }
+
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
     }
@@ -182,20 +188,24 @@ export class UILabelRenderer extends PrimitivesRenderer {
     private UpdateAttributes(component: UIObservableLabel): void {
         const fontGlyphCollection = this.fontGlyphCollectionProvider({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
 
-        for (let n = 0, { x, y } = component.AbsolutePosition; n < component.Text.length; ++n) {
+        let width = 0, height = 0;
+        const avgBaseOffset = UILabelRenderer.AverageBaseOffset(component, fontGlyphCollection);
+        const startBaseOffset = this.BaseStartOffset(component);
+
+        for (let n = 0, { x, y } = { x: component.AbsolutePosition.x, y: component.AbsolutePosition.y + startBaseOffset - avgBaseOffset }; n < component.Text.length; ++n) {
             const symbol = component.Text[n];
             const style = component.Style[n];
             const offset = component.Offsets[n];
 
             if (symbol === '\n') {
                 x = component.AbsolutePosition.x;
-                y -= component.LineHeight * 0.8;
+                y -= component.LineHeight * this.lineHeightGrowthFactor;
                 continue;
             }
 
-            const glyphBlueprint = ExceptionTrap
-                .Try(SelfBind(fontGlyphCollection, 'Lookup'), symbol)
-                .CatchFn(SelfBind(fontGlyphCollection, 'Lookup'), '?');
+            const glyphBlueprint = UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection);
+
+            height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset - y + glyphBlueprint.height);
 
             const attributes = PrimitiveBuilder.AABBRectangle(
                 { x, y: y + glyphBlueprint.baselineOffset.y },
@@ -217,7 +227,27 @@ export class UILabelRenderer extends PrimitivesRenderer {
             this.UpdateComponentAttributes(attributes, offset * this.AttributesPerComponent);
 
             x += glyphBlueprint.width;
+
+            width = Math.max(width, x - component.AbsolutePosition.x);
         }
+
+        component.UpdateTextDimension({ width, height });
+    }
+
+    private static AverageBaseOffset(component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
+        return [...component.Text]
+            .reduce((sum, symbol) => sum + UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection).baselineOffset.y, 0) / component.Text.length;
+    }
+
+    private static LookupGlyph(symbol: string, fontGlyphCollection: FontGlyphCollection): GlyphMeshBlueprint {
+        return ExceptionTrap
+            .Try(SelfBind(fontGlyphCollection, 'Lookup'), symbol)
+            .CatchFn(SelfBind(fontGlyphCollection, 'Lookup'), '?');
+    }
+
+    private BaseStartOffset(component: UIObservableLabel): number {
+        return [...component.Text]
+            .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight * this.lineHeightGrowthFactor;
     }
 }
 

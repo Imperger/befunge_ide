@@ -90,7 +90,12 @@ export class UIRenderer implements UICreator {
     }
 
     Touch(e: MouseEvent): boolean {
-        return this.TouchButtons(e.offsetX, this.gl.canvas.height - e.offsetY) || false;
+        const x = e.offsetX;
+        const y = this.gl.canvas.height - e.offsetY;
+
+        return this.TouchAlerts(x, y) ||
+            this.TouchButtons(x, y) ||
+            this.TouchLabels(x, y);
     }
 
     private TouchButtons(x: number, y: number): boolean {
@@ -106,6 +111,34 @@ export class UIRenderer implements UICreator {
         ArrayHelper
             .Max(intersected, (a: UIIconButton, b: UIIconButton) => a.ZIndex < b.ZIndex)
             .Touch();
+
+        return true;
+    }
+
+    private TouchLabels(x: number, y: number): boolean {
+        const intersected = this.labelsRenderer.Labels
+            .filter(label => Intersection.AABBRectanglePoint(
+                { x: label.AbsolutePosition.x, y: label.AbsolutePosition.y, width: label.Dimension.width, height: label.Dimension.height },
+                { x, y }));
+
+
+        if (intersected.length === 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private TouchAlerts(x: number, y: number): boolean {
+        const intersected = this.alertRenderer.Alerts
+            .filter(alert => Intersection.AABBRectanglePoint(
+                { x: alert.AbsolutePosition.x, y: alert.AbsolutePosition.y, width: alert.Dimension.width, height: alert.Dimension.height },
+                { x, y }));
+
+
+        if (intersected.length === 0) {
+            return false;
+        }
 
         return true;
     }

@@ -19,7 +19,7 @@ interface GlyphMeshOptions {
     Font: GlyphMeshFontOptions
 }
 
-interface GlyphMeshBlueprint {
+export interface GlyphMeshBlueprint {
     uv: UV; // exact glyph bound
     width: number;
     height: number;
