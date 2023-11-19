@@ -5,7 +5,10 @@ import { TextureAtlas, TextureAtlasBuilder, UV } from "../renderer/TextureAtlas"
 
 import { Inversify } from "@/Inversify";
 
-export enum UIIcon { Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger, Play };
+export enum UIIcon {
+    Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger, Play,
+    ExclamationCircle, ExclamationTriangle, CheckCircle
+};
 
 export interface UVExtra extends UV {
     aspectRatio: number;
@@ -90,6 +93,21 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Play,
                 filename: 'ui_icons/play.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.ExclamationCircle,
+                filename: 'ui_icons/exclamation_circle.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.ExclamationTriangle,
+                filename: 'ui_icons/exclamation_triangle.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.CheckCircle,
+                filename: 'ui_icons/check_circle.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];
