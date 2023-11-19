@@ -220,7 +220,6 @@ export class UIAlertRenderer extends PrimitivesRenderer {
             text,
             style,
             this.vertexAttributesTracker.Allocate(),
-            this.uiRenderer,
             (component: UIObservableAlert) => this.Destroy(component, alertText),
             parent);
 
@@ -258,16 +257,16 @@ export class UIAlertRenderer extends PrimitivesRenderer {
     }
 
     private UpdateComponent(component: UIObservableAlert, label: UILabel): void {
-        label.Position = this.LabelPosition(component);
+        label.Position = this.LabelPosition(component, label);
         label.Text = component.Text.text;
         label.LineHeight = component.Text.lineHeight;
         this.UpdateAttributes(component);
     }
 
-    private LabelPosition(component: UIObservableAlert): Vec2 {
+    private LabelPosition(component: UIObservableAlert, label: UILabel): Vec2 {
         return {
             x: component.Position.x + 2 * this.iconMargin + this.AlertIconSideLength(component),
-            y: component.Position.y + component.Dimension.height / 2
+            y: component.Position.y + component.Dimension.height / 2 - label.Dimension.height / 2
         };
     }
 

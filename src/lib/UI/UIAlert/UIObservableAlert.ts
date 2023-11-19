@@ -1,7 +1,6 @@
 import { vec2 } from "gl-matrix";
 
 import { UIComponent } from "../UIComponent";
-import { UICreator } from "../UIRednerer";
 
 import { Dimension, UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "./UIAlert";
 
@@ -26,7 +25,6 @@ export class UIObservableAlert implements UIComponent, UIAlert {
         private text: UIAlertText,
         private style: UIAlertStyle,
         public Offset: number,
-        private uiRenderer: UICreator,
         private deleter: DeleterCallback,
         private parent: UIComponent | null = null) {
         parent?.Observable.Attach(() => this.observable.Notify(this));
