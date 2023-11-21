@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { UIComponent } from '../UIComponent';
+import { UIObservablePositioningGroup } from '../UIObservablePositioningGroup';
 
 import { UILabel } from './UILabel';
 import FUILabel from './UILabel.frag';
@@ -146,7 +146,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
         zIndex: number,
         text: string,
         lineHeight: number,
-        parent: UIComponent | null): UILabel {
+        parent: UIObservablePositioningGroup | null): UILabel {
         const label = new UIObservableLabel(
             position,
             text,
@@ -157,6 +157,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 Free: (idx: number) => this.GlyphFree(idx)
             },
             parent);
+
+        if (parent !== null) {
+            parent.AppendChild(label);
+        }
 
         label.Observable.Attach((component: UIObservableLabel) => this.UpdateAttributes(component));
 

@@ -1,6 +1,7 @@
 import { vec2 } from "gl-matrix";
 
 import { Dimension, UIComponent } from "../UIComponent";
+import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
 import { SymbolStyle, UILabel } from "./UILabel";
 
@@ -31,7 +32,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
         private lineHeight: number,
         private zIndex: number,
         private glyphAllocator: GlyphAllocator,
-        private parent: UIComponent | null
+        private parent: UIObservablePositioningGroup | null
     ) {
         this.symbolsStyle = [];
         this.ResizeSymbolStyles();
@@ -141,6 +142,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     Destroy(): void {
         this.Uninitialize();
+
+        this.parent?.RemoveChild(this);
     }
 
     private Uninitialize(): void {

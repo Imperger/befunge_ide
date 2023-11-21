@@ -1,6 +1,7 @@
 import { vec2 } from "gl-matrix";
 
 import { UIComponent } from "../UIComponent";
+import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
 import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
 import { UIIconButton } from "./UIIconButton";
@@ -32,7 +33,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         private touchCallback: TouchCallback,
         public Offset: number,
         private deleter: DeleterCallback,
-        private parent: UIComponent | null = null) {
+        private parent: UIObservablePositioningGroup | null = null) {
         parent?.Observable.Attach(() => this.observable.Notify(this));
     }
 
@@ -121,6 +122,8 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
     Destroy(): void {
         this.Uninitialize();
+
+        this.parent?.RemoveChild(this);
 
         this.deleter(this);
 

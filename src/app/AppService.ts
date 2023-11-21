@@ -218,8 +218,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private ExecuteCode(): void {
         this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
 
-        if (!this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
-            console.log('Terminated due timeout');
+        if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
+            this.overlay.Snackbar.ShowSuccess(
+                `Ok\nInstructions executed: ${this.befungeToolbox.Interpreter.InstructionsExecuted}`);
+        } else {
+            this.overlay.Snackbar.ShowWarning('Terminated due timeout')
         }
 
         this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);

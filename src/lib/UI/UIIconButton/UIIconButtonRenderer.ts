@@ -8,8 +8,8 @@ import { PrimitiveBuilder } from "../../renderer/PrimitiveBuilder";
 import { PrimitivesRenderer } from "../../renderer/PrimitivesRenderer";
 import { Mat4 } from "../../renderer/ShaderProgram";
 import { TypeSizeResolver } from "../../renderer/TypeSizeResolver";
-import { UIComponent } from "../UIComponent";
 import { UIIconAtlas, UVExtra } from "../UIIcon";
+import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
 import { Dimension, UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton";
 import FUIIconButton from './UIIconButton.frag';
@@ -204,7 +204,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
         touchCallback: TouchCallback,
-        parent: UIComponent | null): UIIconButton {
+        parent: UIObservablePositioningGroup | null): UIIconButton {
 
         const button = new UIObservableIconButton(
             position,
@@ -216,6 +216,10 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             this.vertexAttributesTracker.Allocate(),
             (component: UIObservableIconButton) => this.Destroy(component),
             parent);
+
+        if(parent !== null) {
+            parent.AppendChild(button);
+        }
 
         button.Observable.Attach((component: UIObservableIconButton) => this.UpdateAttributes(component));
 

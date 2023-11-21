@@ -7,12 +7,12 @@ import { Mat4 } from "../renderer/ShaderProgram";
 
 import { Dimension, UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "./UIAlert/UIAlert";
 import { UIAlertRenderer } from "./UIAlert/UIAlertRenderer";
-import { UIComponent } from "./UIComponent";
 import { UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
 import { UIIconButtonRenderer } from "./UIIconButton/UIIconButtonRenderer";
 import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
 import { UILabel } from "./UILabel/UILabel";
 import { UILabelRenderer } from "./UILabel/UILabelRenderer";
+import { UIObservablePositioningGroup } from "./UIObservablePositioningGroup";
 
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
@@ -24,7 +24,7 @@ export interface UICreator {
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
         touchCallback: TouchCallback,
-        parent: UIComponent | null): UIIconButton;
+        parent: UIObservablePositioningGroup | null): UIIconButton;
 
     CreateButton(position: Vec2,
         dimension: Dimension,
@@ -32,13 +32,13 @@ export interface UICreator {
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
         touchCallback: TouchCallback,
-        parent: UIComponent | null): UIIconButton;
+        parent: UIObservablePositioningGroup | null): UIIconButton;
 
     CreateLabel(position: Vec2,
         zIndex: number,
         text: string,
         lineHeight: number,
-        parent: UIComponent | null): UILabel;
+        parent: UIObservablePositioningGroup | null): UILabel;
 
     CreateAlert(position: Vec2,
         dimension: Dimension,
@@ -46,7 +46,7 @@ export interface UICreator {
         icon: UIAlertIconStyle,
         text: UIAlertText,
         style: UIAlertStyle,
-        parent: UIComponent | null): UIAlert
+        parent: UIObservablePositioningGroup | null): UIAlert
 }
 
 @injectable()
@@ -65,17 +65,15 @@ export class UIRenderer implements UICreator {
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
         touchCallback: TouchCallback,
-        parent: UIComponent | null = null): UIIconButton {
-        const iconButton = this.iconButtonRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
-
-        return iconButton;
+        parent: UIObservablePositioningGroup | null = null): UIIconButton {
+        return this.iconButtonRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
     }
 
     CreateLabel(position: Vec2,
         zIndex: number,
         text: string,
         lineHeight: number,
-        parent: UIComponent | null = null): UILabel {
+        parent: UIObservablePositioningGroup | null = null): UILabel {
         return this.labelsRenderer.Create(position, zIndex, text, lineHeight, parent);
     }
 
@@ -85,7 +83,7 @@ export class UIRenderer implements UICreator {
         icon: UIAlertIconStyle,
         text: UIAlertText,
         style: UIAlertStyle,
-        parent: UIComponent | null = null): UIAlert {
+        parent: UIObservablePositioningGroup | null = null): UIAlert {
         return this.alertRenderer.Create(position, dimension, zIndex, icon, text, style, parent);
     }
 
@@ -145,9 +143,9 @@ export class UIRenderer implements UICreator {
 
 
     Draw(): void {
+        this.alertRenderer.Draw();
         this.iconButtonRenderer.Draw();
         this.labelsRenderer.Draw();
-        this.alertRenderer.Draw();
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {

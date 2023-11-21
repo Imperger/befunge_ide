@@ -11,6 +11,7 @@ uniform sampler2D u_icon;
 void main() 
 {
     vec4 text_color = texture(u_icon, v_glyph);
+    //out_color = mix(vec4(1.0, 0, 0, 1.0), vec4(v_color - text_color.xzy, 1.0), text_color.w);
 
-    out_color = mix(vec4(1.0, 0, 0, 1.0), vec4(v_color - text_color.xzy, 1.0), text_color.w);
+    out_color = vec4(v_color - text_color.xzy, text_color.w);
 }

@@ -2,7 +2,7 @@ import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
 import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
-import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
+import { HorizontalAnchor, UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
 import { UIRenderer } from "@/lib/UI/UIRednerer";
 
 export class DebugControls {
@@ -16,7 +16,7 @@ export class DebugControls {
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const executionButtonIconColor: Rgb = [0.40784313725490196, 0.6235294117647059, 0.2196078431372549];
-        this.group = new UIObservablePositioningGroup({ x: 800, y: 60 }, { vertical: VerticalAnchor.Top });
+        this.group = new UIObservablePositioningGroup({ x: 800, y: 60 }, { vertical: VerticalAnchor.Top, horizontal: HorizontalAnchor.Middle });
 
         this.executeButton = this.uiRenderer.CreateButton(
             { x: 0, y: 0 },

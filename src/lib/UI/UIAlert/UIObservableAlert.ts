@@ -1,6 +1,7 @@
 import { vec2 } from "gl-matrix";
 
 import { UIComponent } from "../UIComponent";
+import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
 import { Dimension, UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "./UIAlert";
 
@@ -10,12 +11,11 @@ import { Vec2 } from "@/lib/Primitives";
 export type DeleterCallback = (component: UIObservableAlert) => void;
 
 export class UIObservableAlert implements UIComponent, UIAlert {
-    private static UninitializedTag = -1;
-
     private observable = new ObservableController<UIObservableAlert>();
 
     private scale = 1;
 
+    private isDestroyed = false;
 
     constructor(
         private position: Vec2,
@@ -26,12 +26,16 @@ export class UIObservableAlert implements UIComponent, UIAlert {
         private style: UIAlertStyle,
         public Offset: number,
         private deleter: DeleterCallback,
-        private parent: UIComponent | null = null) {
+        private parent: UIObservablePositioningGroup | null = null) {
         parent?.Observable.Attach(() => this.observable.Notify(this));
     }
 
     Destroy(): void {
+        this.isDestroyed = true;
+
         this.Uninitialize();
+
+        this.parent?.RemoveChild(this);
 
         this.deleter(this);
     }
@@ -119,6 +123,10 @@ export class UIObservableAlert implements UIComponent, UIAlert {
         this.style = { ...style };
 
         this.observable.Notify(this);
+    }
+
+    get IsDestroyed(): boolean {
+        return this.isDestroyed;
     }
 
     private Uninitialize(): void {

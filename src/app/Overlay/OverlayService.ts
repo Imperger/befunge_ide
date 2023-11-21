@@ -7,10 +7,10 @@ import { InjectionToken } from "../InjectionToken";
 import { DebugControls } from "./DebugControls";
 import { EditDirectionControls } from "./EditDirectionControls";
 import { OutputControls } from "./OutputControls";
+import { SnackbarControls } from "./SnackbarControls";
 
 import { Inversify } from "@/Inversify";
 import { AsyncConstructable, AsyncConstructorActivator } from "@/lib/DI/AsyncConstructorActivator";
-import { UIIcon } from "@/lib/UI/UIIcon";
 import { UILabel } from "@/lib/UI/UILabel/UILabel";
 import { UIRenderer } from "@/lib/UI/UIRednerer";
 
@@ -30,7 +30,8 @@ export class OverlayService implements AsyncConstructable {
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
-        @inject(UIRenderer) private uiRenderer: UIRenderer) {
+        @inject(UIRenderer) private uiRenderer: UIRenderer,
+        @inject(SnackbarControls) private snackbarControls: SnackbarControls) {
         this.settings = Inversify.get(AppSettings);
 
         this.BuildStickyProjection();
@@ -41,14 +42,6 @@ export class OverlayService implements AsyncConstructable {
         this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
         this.debugControls = new DebugControls(this.uiRenderer);
         this.outputControls = new OutputControls(this.uiRenderer);
-
-        const alert = this.uiRenderer.CreateAlert(
-            { x: 400, y: 400 },
-            { width: 300, height: 100 },
-            1,
-            { icon: UIIcon.Play, color: [1, 1, 1] },
-            { text: 'I\'m alert', lineHeight: 32, color: [1, 1, 1] },
-            { fillColor: [0.40784313725490196, 0.6235294117647059, 0.2196078431372549] });
     }
 
     get EditDirectionControls(): EditDirectionControls {
@@ -61,6 +54,10 @@ export class OverlayService implements AsyncConstructable {
 
     get OutputControls(): OutputControls {
         return this.outputControls;
+    }
+
+    get Snackbar(): SnackbarControls {
+        return this.snackbarControls;
     }
 
     Resize(): void {

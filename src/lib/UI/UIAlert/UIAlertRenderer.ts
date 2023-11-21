@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 
-import { UIComponent } from '../UIComponent';
 import { UIIconAtlas } from '../UIIcon';
 import { Dimension } from '../UIIconButton/UIIconButton';
 import { UILabel } from '../UILabel/UILabel';
+import { UIObservablePositioningGroup } from '../UIObservablePositioningGroup';
 import { UICreator } from '../UIRednerer';
 
 import { UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from './UIAlert';
@@ -202,7 +202,7 @@ export class UIAlertRenderer extends PrimitivesRenderer {
         icon: UIAlertIconStyle,
         text: UIAlertText,
         style: UIAlertStyle,
-        parent: UIComponent | null = null): UIAlert {
+        parent: UIObservablePositioningGroup | null = null): UIAlert {
 
         const alertText = this.uiRenderer.CreateLabel(
             position,
@@ -222,6 +222,10 @@ export class UIAlertRenderer extends PrimitivesRenderer {
             this.vertexAttributesTracker.Allocate(),
             (component: UIObservableAlert) => this.Destroy(component, alertText),
             parent);
+
+        if (parent !== null) {
+            parent.AppendChild(alert);
+        }
 
         alert.Observable.Attach((component: UIObservableAlert) => this.UpdateComponent(component, alertText));
 
@@ -275,9 +279,17 @@ export class UIAlertRenderer extends PrimitivesRenderer {
             this.ExtractPanelAttributes(component),
             component.Offset * this.AttributesPerComponent);
 
-        this.alertIcon.UpdateComponentAttributes(
-            this.ExtractIconAttributes(component),
-            component.Offset * this.alertIcon.AttributesPerComponent);
+        if (component.IsDestroyed) {
+            const emptyAttrs = new Array(this.IndicesPerPrimitive * EnumSize(UIAlertIconComponent)).fill(0);
+
+            this.alertIcon.UpdateComponentAttributes(
+                emptyAttrs,
+                component.Offset * this.alertIcon.AttributesPerComponent);
+        } else {
+            this.alertIcon.UpdateComponentAttributes(
+                this.ExtractIconAttributes(component),
+                component.Offset * this.alertIcon.AttributesPerComponent);
+        }
     }
 
     private ExtractPanelAttributes(component: UIObservableAlert): number[] {

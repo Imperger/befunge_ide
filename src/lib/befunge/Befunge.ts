@@ -170,6 +170,10 @@ export class Befunge {
     return this.cpu.IsHalted;
   }
 
+  get InstructionsExecuted(): number {
+    return this.instructionsExecuted;
+  }
+
   private get IsMemoryLimitDynamic(): boolean {
     return (
       this.memoryLimit.Width === Number.POSITIVE_INFINITY ||
