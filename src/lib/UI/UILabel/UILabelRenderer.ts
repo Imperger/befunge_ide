@@ -38,8 +38,6 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
     private readonly zFarIncluded = 0.1;
 
-    private readonly lineHeightGrowthFactor = 0.8;
-
     private labels = new Map<Offset, UIObservableLabel>();
 
     private vertexAttributesTracker: MemoryPoolTracker;
@@ -203,7 +201,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
             if (symbol === '\n') {
                 x = component.AbsolutePosition.x;
-                y -= component.LineHeight * this.lineHeightGrowthFactor;
+                y -= component.LineHeight;
                 continue;
             }
 
@@ -251,7 +249,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
     private BaseStartOffset(component: UIObservableLabel): number {
         return [...component.Text]
-            .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight * this.lineHeightGrowthFactor;
+            .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight;
     }
 }
 
