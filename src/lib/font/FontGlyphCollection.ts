@@ -34,9 +34,6 @@ interface AtlasCellDescriptor {
 interface GlyphBoundary {
     width: number;
     height: number;
-    actualHeight: number;
-    fontBoundingBoxDescent: number;
-    actualBoundingBoxDescent: number;
 }
 
 export class FontGlyphCollection {
@@ -109,13 +106,12 @@ class FontGlyphCollectionBuilderImpl {
             const metrics = this.context.measureText(symbol);
 
             const width = metrics.width;
-            const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-
-            const actualHeight = metrics.actualBoundingBoxDescent + metrics.actualBoundingBoxAscent;
+            const extraHeight = this.options.Font.Size / 6.4; // FIXME Added extra height because whem lineHeight has value <= 32 font texture doesnt capture whole glyph
+            const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent + extraHeight;
 
             const uv = this.AtlasCellToGlyphUV(
                 { uv: atlasUV, sideLength: this.GlyphCellSize() },
-                { width, height, actualHeight, fontBoundingBoxDescent: metrics.fontBoundingBoxDescent, actualBoundingBoxDescent: metrics.actualBoundingBoxDescent });
+                { width, height });
 
             const baselineOffset = {
                 x: 0,
