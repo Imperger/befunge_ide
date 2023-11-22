@@ -2,7 +2,7 @@ import { Instruction } from '../instructions/Instruction';
 import { IOPort } from '../IOPort';
 import { Memory, Pointer } from '../memory/Memory';
 
-import { CPU, PCDirection } from './CPU';
+import { CPU, IllegalInstructionException, PCDirection } from './CPU';
 
 export class CPUImpl implements CPU {
   private pcDirection = PCDirection.Right;
@@ -80,8 +80,10 @@ export class CPUImpl implements CPU {
 
     if (this.isStringMode && instruction !== '"'.charCodeAt(0)) {
       this.stack.push(instruction);
-    } else {
+    } else if (this.KnownInstruction(instruction)) {
       this.instructionSet[instruction].Execute(this);
+    } else {
+      throw new IllegalInstructionException(this.pcLocation, instruction, String.fromCharCode(instruction))
     }
 
     this.SkipNext();
@@ -120,5 +122,9 @@ export class CPUImpl implements CPU {
 
   get IsHalted(): boolean {
     return this.isHalted;
+  }
+
+  private KnownInstruction(instruction: number): boolean {
+    return this.instructionSet[instruction] !== undefined;
   }
 }
