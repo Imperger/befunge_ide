@@ -15,6 +15,7 @@ import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
+import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
 import { Camera } from '@/lib/renderer/Camera';
 
@@ -54,8 +55,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.codeEditor.ViewProjection = this.ViewProjection;
 
-        const sourceMemory = Inversify.get(SourceCodeMemory);
-        sourceMemory.Initialize(ArrayMemory, this.memoryLimit);
+        this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
 
         this.befungeToolbox = new BefungeToolbox();
 
@@ -107,6 +107,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
 
         this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
+
+        this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
 
         this.Start();
     }
@@ -196,7 +198,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private Start(): void {
-        this.overlay.OutputControls.Output = 'HelloWOrld \n1'
+        this.overlay.OutputControls.Output = 'HelloWOrld \nTerminated due timeout\n1'
         requestAnimationFrame(() => this.DrawFrame())
     }
 
@@ -204,7 +206,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         this.codeEditor.Draw();
-        this.debugRenderer.Draw();
+        //this.debugRenderer.Draw();
 
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
 
@@ -218,14 +220,46 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private ExecuteCode(): void {
         this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
 
-        if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
-            this.overlay.Snackbar.ShowSuccess(
-                `Ok\nInstructions executed: ${this.befungeToolbox.Interpreter.InstructionsExecuted}`);
-        } else {
-            this.overlay.Snackbar.ShowWarning('Terminated due timeout')
-        }
+        try {
+            if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
+                this.overlay.Snackbar.ShowSuccess(`Ok\nInstructions executed: ${this.befungeToolbox.Interpreter.InstructionsExecuted}`);
+            } else {
+                this.overlay.Snackbar.ShowWarning('Terminated due timeout');
+            }
 
-        this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+            this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+        } catch (e) {
+            if (e instanceof Error) {
+                this.overlay.Snackbar.ShowError(e.message)
+            }
+        }
+    }
+
+    private async OpenFileFromDisk(): Promise<void> {
+        const sourceCode = await UserFileLoader.ReadAsText();
+
+        this.LoadSourceCodeToEditor(sourceCode);
+    }
+
+    private LoadSourceCodeToEditor(sourceCode: string): void {
+        this.ResetSourceCodeEditor();
+
+        const linesOfCode = sourceCode.split(/\r?\n/);
+
+        for (let row = 0; row < linesOfCode.length; ++row) {
+            const line = linesOfCode[row];
+            for (let column = 0; column < line.length; ++column) {
+                const symbol = line[column];
+
+                this.editorSourceCode.Write({ x: column, y: row }, symbol.charCodeAt(0));
+                this.codeEditor.Symbol(symbol, column, row);
+            }
+        }
+    }
+
+    private ResetSourceCodeEditor(): void {
+        this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
+        this.codeEditor.Clear();
     }
 }
 

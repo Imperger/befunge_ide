@@ -21,7 +21,7 @@ export class SnackbarControls {
 
     private lineHeight = 32;
 
-    private showTime = 4000;
+    private showTime = 5000;
 
     private hideTimer = -1;
 

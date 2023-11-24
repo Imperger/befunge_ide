@@ -35,7 +35,7 @@ export class EditDirectionControls {
         this.group = new UIObservablePositioningGroup(
             {
                 x: 10,
-                y: 2 * buttonWidth + 3 * buttonMargin + btnHeight
+                y: 2 * buttonWidth + 3 * buttonMargin + btnHeight + 100
             },
             { vertical: VerticalAnchor.Top });
 

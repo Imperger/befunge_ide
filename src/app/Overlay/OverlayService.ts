@@ -6,6 +6,7 @@ import { InjectionToken } from "../InjectionToken";
 
 import { DebugControls } from "./DebugControls";
 import { EditDirectionControls } from "./EditDirectionControls";
+import { FileControls } from "./FileControls";
 import { OutputControls } from "./OutputControls";
 import { SnackbarControls } from "./SnackbarControls";
 
@@ -28,6 +29,8 @@ export class OverlayService implements AsyncConstructable {
 
     private outputControls!: OutputControls;
 
+    private fileControls!: FileControls;
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(UIRenderer) private uiRenderer: UIRenderer,
@@ -42,6 +45,7 @@ export class OverlayService implements AsyncConstructable {
         this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
         this.debugControls = new DebugControls(this.uiRenderer);
         this.outputControls = new OutputControls(this.uiRenderer);
+        this.fileControls = new FileControls(this.uiRenderer);
     }
 
     get EditDirectionControls(): EditDirectionControls {
@@ -60,6 +64,10 @@ export class OverlayService implements AsyncConstructable {
         return this.snackbarControls;
     }
 
+    get FileControls(): FileControls {
+        return this.fileControls;
+    }
+
     Resize(): void {
         this.BuildStickyProjection();
 
@@ -67,6 +75,7 @@ export class OverlayService implements AsyncConstructable {
 
         this.editDirectionControls.Resize();
         this.debugControls.Resize();
+        this.fileControls.Resize();
     }
 
     Touch(e: MouseEvent): boolean {

@@ -86,6 +86,14 @@ export class CodeEditorService {
         this.MoveToNextEditionCell();
     }
 
+    Clear(): void {
+        for (let row = 0; row < this.codeEditorRenderer.Dimension.Rows; ++row) {
+            for (let column = 0; column < this.codeEditorRenderer.Dimension.Columns; ++column) {
+                this.Symbol(' ', column, row);
+            }
+        }
+    }
+
     private PostCellInputHook(e: KeyboardEvent): void {
         this.FollowCodeFlowHelper(e);
     }
