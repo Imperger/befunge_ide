@@ -17,7 +17,7 @@ export class SnackbarControls {
 
     private widthPercent = 0.25;
 
-    private contentColor: Rgb = [1, 1, 1];
+    private contentColor: Rgb = [0.9, 0.9, 0.9];
 
     private lineHeight = 32;
 
