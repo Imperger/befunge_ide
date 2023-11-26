@@ -217,7 +217,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             (component: UIObservableIconButton) => this.Destroy(component),
             parent);
 
-        if(parent !== null) {
+        if (parent !== null) {
             parent.AppendChild(button);
         }
 

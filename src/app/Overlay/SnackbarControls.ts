@@ -85,8 +85,6 @@ export class SnackbarControls {
         clearTimeout(this.hideTimer);
     }
 
-
-
     Resize(): void {
         this.group.Resize();
     }

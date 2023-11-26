@@ -26,7 +26,7 @@ export enum ComparsionCondition {
   Equal
 }
 
-interface BreakpointCondition {
+export interface BreakpointCondition {
   PC?: PcLocationCondition;
   Stack?: StackCondition;
 }
@@ -64,6 +64,23 @@ export class Debugger {
     }
 
     return [];
+  }
+
+  RunFor(timeout: number): BreakpointCondition[] | null {
+    const startTime = Date.now();
+    const instructionsSkipPerTimeoutCheck = 100000;
+
+    let breakpoints: BreakpointCondition[] = [];
+
+    for (let instructionsExecuted = 0;
+      !this.target?.IsHalted &&
+      breakpoints.length === 0 &&
+      (instructionsExecuted % instructionsSkipPerTimeoutCheck !== 0 || Date.now() - startTime < timeout);
+      ++instructionsExecuted) {
+      breakpoints = this.RunNext();
+    }
+
+    return breakpoints.length > 0 ? breakpoints : null;
   }
 
   SetBreakpoint(brk: BreakpointCondition): BreakpointReleaser {
