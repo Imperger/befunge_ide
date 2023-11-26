@@ -1,9 +1,9 @@
 import { CPU, PCDirection } from './CPU/CPU';
 import { Pointer } from './memory/Memory';
 
-type BreakpointReleaser = () => void;
+export type BreakpointReleaser = () => void;
 
-interface PcLocationCondition {
+export interface PcLocationCondition {
   Location: Pointer;
   Direction?: PCDirection;
 }
@@ -102,6 +102,13 @@ export class Debugger {
     }
 
     return () => this.BreakpointReleaser(brk);
+  }
+
+  get PCBreakpoints(): PcLocationCondition[] {
+    return [...this.pcLocationBrk.values()]
+      .flatMap(x => [...x.values()])
+      .flatMap(x => [...x])
+      .map(x => x.PC!);
   }
 
   private BreakpointReleaser(brk: BreakpointCondition): void {

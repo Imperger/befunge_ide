@@ -12,12 +12,14 @@ import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
+import { BreakpointCondition, BreakpointReleaser, PcLocationCondition } from '@/lib/befunge/Debugger';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
+import { Rgb } from '@/lib/Primitives';
 import { Camera } from '@/lib/renderer/Camera';
 
 
@@ -38,6 +40,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
+    private debugMode = false;
+
+    private breakpoints: BreakpointCondition[] = [];
+
+    private inactiveBreakpointColor: Rgb = [0.9764705882352941, 0.6588235294117647, 0.1450980392156863];
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
@@ -108,6 +115,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
 
         this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
+        this.overlay.DebugControls.Debug.Attach(() => this.DebugCode());
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
 
@@ -233,6 +241,82 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             if (e instanceof Error) {
                 this.overlay.Snackbar.ShowError(e.message)
             }
+        }
+    }
+
+    private DebugCode(): void {
+        const activeBreakpointColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
+
+        if (!this.debugMode) {
+            this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
+
+            // TODO Remove me
+            this.SetCellBreakpoint({ Location: { x: 2, y: 3 } })
+            this.SetCellBreakpoint({ Location: { x: 3, y: 1 } })
+
+            this.debugMode = true;
+            this.overlay.DebugControls.DebugMode = true;
+
+            this.overlay.OutputControls.Output = '';
+        }
+
+        const debug = this.befungeToolbox.Debugger;
+        const interpreter = this.befungeToolbox.Interpreter;
+
+
+        const executionResult = debug.RunFor(this.settings.ExecutionTimeout);
+
+        if (executionResult === null) {
+            if (!debug.IsHalted) {
+                this.overlay.Snackbar.ShowWarning('Terminated due timeout');
+            }
+
+            this.debugMode = false;
+            this.overlay.DebugControls.DebugMode = false;
+        } else {
+            this.breakpoints = executionResult;
+        }
+
+        if (this.breakpoints.length > 0) {
+            console.log(this.breakpoints);
+
+            for (const brk of this.breakpoints) {
+                if (brk.PC) {
+                    // TODO Restore only previous one
+                    this.RestoreCellBreakpointsSelection();
+                    
+                    this.codeEditor.Select(brk.PC.Location.x, brk.PC.Location.y, activeBreakpointColor);
+                }
+            }
+
+            this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+        }
+
+
+        if (debug.IsHalted) {
+            this.debugMode = false;
+            this.overlay.DebugControls.DebugMode = false;
+
+            this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+
+            this.RestoreCellBreakpointsSelection();
+        }
+    }
+
+    private SetCellBreakpoint(brk: PcLocationCondition): BreakpointReleaser {
+        const releaser = this.befungeToolbox.Debugger.SetBreakpoint({ PC: brk });
+
+        this.codeEditor.Select(brk.Location.x, brk.Location.y, this.inactiveBreakpointColor);
+
+        return () => {
+            releaser();
+            this.codeEditor.Unselect(brk.Location.x, brk.Location.y);
+        };
+    }
+
+    private RestoreCellBreakpointsSelection(): void {
+        for (const brk of this.befungeToolbox.Debugger.PCBreakpoints) {
+            this.codeEditor.Select(brk.Location.x, brk.Location.y, this.inactiveBreakpointColor);
         }
     }
 

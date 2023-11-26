@@ -17,7 +17,7 @@ export enum EditionDirection { Left, Up, Right, Down };
 
 @injectable()
 export class CodeEditorService {
-    private readonly editionCellStyle: Rgb = [1, 0, 0];
+    private readonly editionCellStyle: Rgb = [0.21568627450980393, 0.2784313725490196, 0.30980392156862746];
     private editionCell: Vec2 = { x: 0, y: 0 };
     private editionDirection: EditionDirection = EditionDirection.Right;
 
