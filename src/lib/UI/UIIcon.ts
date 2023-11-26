@@ -6,7 +6,8 @@ import { TextureAtlas, TextureAtlasBuilder, UV } from "../renderer/TextureAtlas"
 import { Inversify } from "@/Inversify";
 
 export enum UIIcon {
-    Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger, Play,
+    Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger,
+    Play, PlayDebug,
     ExclamationCircle, ExclamationTriangle, CheckCircle
 };
 
@@ -93,6 +94,11 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Play,
                 filename: 'ui_icons/play.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.PlayDebug,
+                filename: 'ui_icons/play_debug.svg',
                 dimension: { width: 128, height: 128 }
             },
             {
