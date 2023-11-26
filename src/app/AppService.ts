@@ -14,6 +14,7 @@ import { SourceCodeMemory } from './SourceCodeMemory';
 import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
+import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
@@ -237,6 +238,27 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private async OpenFileFromDisk(): Promise<void> {
         const sourceCode = await UserFileLoader.ReadAsText();
+
+        const validator = new SourceCodeValidityAnalyser(sourceCode);
+
+        const firstProblem = validator.NextIllegalInstruction();
+
+        if (firstProblem !== null) {
+            let remainingProblems = 0;
+
+            for (; validator.NextIllegalInstruction(); ++remainingProblems);
+
+            let problemMsg = `File contains illegal symbol '${firstProblem.value}' at ${firstProblem.offset}`;
+
+            if (remainingProblems > 0) {
+                problemMsg += ` and ${remainingProblems} more`;
+            }
+
+            this.overlay.Snackbar
+                .ShowError(problemMsg);
+
+            return;
+        }
 
         this.LoadSourceCodeToEditor(sourceCode);
     }
