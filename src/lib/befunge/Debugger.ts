@@ -94,7 +94,14 @@ export class Debugger {
         this.pcLocationBrk.set(brk.PC.Location.x, column);
       }
 
-      column.get(brk.PC.Location.y)?.push(brk);
+      let row = column.get(brk.PC.Location.y);
+
+      if (row === undefined) {
+        row = [];
+        column.set(brk.PC.Location.y, row);
+      }
+
+      row.push(brk);
     }
 
     if (brk.Stack && (brk.Stack.Size || brk.Stack.Value)) {
