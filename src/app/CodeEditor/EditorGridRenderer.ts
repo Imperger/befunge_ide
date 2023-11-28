@@ -76,7 +76,7 @@ export class EditorGridRenderer extends PrimitivesRenderer {
             for (let col = 0; col < this.Dimension.Columns; ++col) {
                 const cell = this.BuildCell(
                     { x: col * this.CellSize, y: row * this.CellSize },
-                    [1, 0, 0],
+                    [0, 0.592156862745098, 0.6549019607843137],
                     ' ');
 
                 vertexList.push(...cell);

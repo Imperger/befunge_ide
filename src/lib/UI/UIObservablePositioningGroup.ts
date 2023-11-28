@@ -94,6 +94,10 @@ export class UIObservablePositioningGroup implements UIComponent {
         return { width: max.x - min.x, height: max.y - min.y };
     }
 
+    Destroy(): void {
+        [...this.childs].forEach(x => x.Destroy());
+    }
+
     private static MaintainExtremum(point: Vec2, extremum: { min: Vec2, max: Vec2 }): void {
         if (point.x < extremum.min.x) {
             extremum.min.x = point.x;

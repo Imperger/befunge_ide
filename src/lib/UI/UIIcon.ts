@@ -8,7 +8,9 @@ import { Inversify } from "@/Inversify";
 export enum UIIcon {
     Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger,
     Play, PlayDebug,
-    ExclamationCircle, ExclamationTriangle, CheckCircle
+    ExclamationCircle, ExclamationTriangle, CheckCircle,
+    Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
+    Delete
 };
 
 export interface UVExtra extends UV {
@@ -47,6 +49,24 @@ export class UIIconAtlas implements AsyncConstructable {
                         A: { x: uv.B.x, y: uv.B.y },
                         B: { x: uv.A.x, y: uv.A.y },
                         aspectRatio: this.ExtractAspectRatio(UIIcon.ArrowDown)
+                    };
+                }
+            case UIIcon.ArrowThinLeft:
+                {
+                    const uv = this.atlas.LookupUV(UIIcon.ArrowThinRight);
+                    return {
+                        A: { x: uv.B.x, y: uv.B.y },
+                        B: { x: uv.A.x, y: uv.A.y },
+                        aspectRatio: this.ExtractAspectRatio(UIIcon.ArrowThinRight)
+                    };
+                }
+            case UIIcon.ArrowThinDown:
+                {
+                    const uv = this.atlas.LookupUV(UIIcon.ArrowThinUp);
+                    return {
+                        A: { x: uv.B.x, y: uv.B.y },
+                        B: { x: uv.A.x, y: uv.A.y },
+                        aspectRatio: this.ExtractAspectRatio(UIIcon.ArrowThinUp)
                     };
                 }
             default:
@@ -114,6 +134,31 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.CheckCircle,
                 filename: 'ui_icons/check_circle.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Breakpoint,
+                filename: 'ui_icons/breakpoint.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.ArrowThinAll,
+                filename: 'ui_icons/arrow_thin_all.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.ArrowThinUp,
+                filename: 'ui_icons/arrow_thin_up.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.ArrowThinRight,
+                filename: 'ui_icons/arrow_thin_right.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Delete,
+                filename: 'ui_icons/trash_can.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];

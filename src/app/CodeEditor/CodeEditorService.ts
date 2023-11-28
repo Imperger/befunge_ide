@@ -154,6 +154,10 @@ export class CodeEditorService {
     set ViewProjection(proj: Mat4 | Float32Array) {
         this.codeEditorRenderer.ViewProjection = proj;
     }
+
+    get EditionCell(): Vec2 {
+        return this.editionCell;
+    }
 }
 
 Inversify.bind(CodeEditorService).toSelf().inSingletonScope();

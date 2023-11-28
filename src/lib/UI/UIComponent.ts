@@ -12,4 +12,5 @@ export interface UIComponent {
     Scale: number;
     Dimension: Dimension;
     Observable: Observable<UIComponent>;
+    Destroy(): void;
 }

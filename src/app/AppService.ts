@@ -8,6 +8,7 @@ import { BefungeToolbox } from './BefungeToolbox';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { DebugRenderer } from './DebugRenderer';
 import { InjectionToken } from './InjectionToken';
+import { PCDirectionCondition } from './Overlay/DebugControls';
 import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
@@ -42,7 +43,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private debugMode = false;
 
-    private breakpoints: BreakpointCondition[] = [];
+    private cellBreakpoints: PcLocationCondition[] = [];
 
     private inactiveBreakpointColor: Rgb = [0.9764705882352941, 0.6588235294117647, 0.1450980392156863];
 
@@ -116,6 +117,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
         this.overlay.DebugControls.Debug.Attach(() => this.DebugCode());
+        this.overlay.DebugControls.CellBreakopint.Attach((cond: PCDirectionCondition) => this.OnCellBreakpointAction(cond));
+        this.overlay.DebugControls.CellBreakpointDelete.Attach(() => this.OnCellBreakpointDelete());
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
 
@@ -150,7 +153,23 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     OnSelect(e: MouseEvent): void {
         if (!this.overlay.Touch(e)) {
+            const oldEditionCell = { ...this.codeEditor.EditionCell };
+
             this.codeEditor.Touch(e);
+
+            const hasBrk = this.cellBreakpoints
+                .some(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
+
+            this.overlay.DebugControls.DeactivateButton = hasBrk;
+
+            if (oldEditionCell.x !== this.codeEditor.EditionCell.x || oldEditionCell.y !== this.codeEditor.EditionCell.y) {
+                const hasPrevBrk = this.cellBreakpoints
+                    .some(brk => brk.Location.x === oldEditionCell.x && brk.Location.y === oldEditionCell.y);
+
+                if (hasPrevBrk) {
+                    this.codeEditor.Select(oldEditionCell.x, oldEditionCell.y, this.inactiveBreakpointColor);
+                }
+            }
         }
 
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
@@ -250,9 +269,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         if (!this.debugMode) {
             this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
 
-            // TODO Remove me
-            this.SetCellBreakpoint({ Location: { x: 2, y: 3 } })
-            this.SetCellBreakpoint({ Location: { x: 3, y: 1 } })
+            this.UploadBreakpointsToDebugger();
 
             this.debugMode = true;
             this.overlay.DebugControls.DebugMode = true;
@@ -266,6 +283,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         const executionResult = debug.RunFor(this.settings.ExecutionTimeout);
 
+        let breakpoints: BreakpointCondition[] = [];
+
         if (executionResult === null) {
             if (!debug.IsHalted) {
                 this.overlay.Snackbar.ShowWarning('Terminated due timeout');
@@ -274,17 +293,18 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.debugMode = false;
             this.overlay.DebugControls.DebugMode = false;
         } else {
-            this.breakpoints = executionResult;
+            breakpoints = executionResult;
         }
 
-        if (this.breakpoints.length > 0) {
-            console.log(this.breakpoints);
+        if (breakpoints.length > 0) {
+            console.log(breakpoints);
 
-            for (const brk of this.breakpoints) {
+            // TODO Restore only previous one
+            this.RestoreCellBreakpointsSelection();
+
+            for (const brk of breakpoints) {
                 if (brk.PC) {
-                    // TODO Restore only previous one
-                    this.RestoreCellBreakpointsSelection();
-                    
+
                     this.codeEditor.Select(brk.PC.Location.x, brk.PC.Location.y, activeBreakpointColor);
                 }
             }
@@ -301,6 +321,10 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             this.RestoreCellBreakpointsSelection();
         }
+    }
+
+    private UploadBreakpointsToDebugger(): void {
+        this.cellBreakpoints.forEach(brk => this.SetCellBreakpoint(brk));
     }
 
     private SetCellBreakpoint(brk: PcLocationCondition): BreakpointReleaser {
@@ -366,6 +390,33 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private ResetSourceCodeEditor(): void {
         this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
         this.codeEditor.Clear();
+    }
+
+    private OnCellBreakpointAction(cond: PCDirectionCondition): void {
+        const existIdx = this.cellBreakpoints
+            .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
+
+        const condition: PcLocationCondition = {
+            Location: { ...this.codeEditor.EditionCell },
+            ...cond
+        };
+
+        if (existIdx === -1) {
+            this.cellBreakpoints.push(condition);
+
+            this.codeEditor.Select(condition.Location.x, condition.Location.y, this.inactiveBreakpointColor);
+        } else {
+            this.cellBreakpoints[existIdx] = condition;
+        }
+    }
+
+    private OnCellBreakpointDelete(): void {
+        const existIdx = this.cellBreakpoints
+            .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
+
+        if (existIdx !== -1) {
+            this.cellBreakpoints.splice(existIdx, 1);
+        }
     }
 }
 
