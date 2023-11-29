@@ -411,6 +411,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.cellBreakpoints.push({ ...condition, releaser: null });
 
             this.codeEditor.Select(condition.Location.x, condition.Location.y, this.inactiveBreakpointColor);
+
+            this.overlay.DebugControls.DeactivateButton = true;
         } else {
             this.cellBreakpoints[existIdx] = { ...condition, releaser: null };
         }
