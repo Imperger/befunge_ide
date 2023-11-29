@@ -26,7 +26,7 @@ export class DebugControls {
 
     private breakpointMenuButton: UIIconButton;
     private isBreakpointMenuOpen = false;
-    private breakpointMenuGroup!: UIObservablePositioningGroup;
+    private breakpointMenuGroup: UIObservablePositioningGroup | null = null;
 
     private readonly executeObservable = new ObservableController<void>();
 
@@ -79,6 +79,7 @@ export class DebugControls {
 
     Resize(): void {
         this.group.Resize();
+        this.breakpointMenuGroup?.Resize();
     }
 
     get DebugMode(): boolean {
@@ -131,8 +132,10 @@ export class DebugControls {
         this.breakpointMenuGroup = new UIObservablePositioningGroup(
             {
                 x: this.breakpointMenuButton.AbsolutePosition.x,
-                y: this.breakpointMenuButton.AbsolutePosition.y - (yOffsetFactor * margin + yOffsetFactor * sideLength)
-            });
+                y: yOffsetFactor * margin + (yOffsetFactor + 1) * sideLength + margin
+            },
+            { vertical: VerticalAnchor.Top }
+        );
 
         const breakpointAnyDirectionButton = this.uiRenderer.CreateButton(
             { x: 0, y: 0 },
@@ -214,6 +217,7 @@ export class DebugControls {
 
         this.breakpointMenuButton.Icon = { icon: UIIcon.Breakpoint, color: DebugControls.BreakpointButtonIconColor };
 
-        this.breakpointMenuGroup.Destroy();
+        this.breakpointMenuGroup?.Destroy();
+        this.breakpointMenuGroup = null;
     }
 }
