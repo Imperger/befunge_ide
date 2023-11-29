@@ -28,6 +28,10 @@ async function Delay(delay: number): Promise<void> {
     return new Promise(ok => setTimeout(ok, delay));
 }
 
+interface CellBreakpointController extends PcLocationCondition {
+    releaser: BreakpointReleaser | null;
+}
+
 @injectable()
 export class AppService extends AppEventTransformer implements AsyncConstructable {
     private isRunning = true;
@@ -42,7 +46,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private debugMode = false;
 
-    private cellBreakpoints: PcLocationCondition[] = [];
+    private cellBreakpoints: CellBreakpointController[] = [];
 
     private activeCellBreakpoints: PcLocationCondition[] = [];
 
@@ -296,9 +300,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
 
         if (breakpoints.length > 0) {
-            console.log(breakpoints);
-
-            // TODO Restore only previous one
             this.RestoreCellBreakpointsSelection();
 
             this.activeCellBreakpoints = [];
@@ -321,11 +322,15 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
 
             this.RestoreCellBreakpointsSelection();
+
+            this.overlay.Snackbar.ShowSuccess(`Completed`);
         }
     }
 
     private UploadBreakpointsToDebugger(): void {
-        this.cellBreakpoints.forEach(brk => this.SetCellBreakpoint(brk));
+        this.cellBreakpoints.forEach(brk => {
+            brk.releaser = this.SetCellBreakpoint(brk);
+        });
     }
 
     private SetCellBreakpoint(brk: PcLocationCondition): BreakpointReleaser {
@@ -403,11 +408,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         };
 
         if (existIdx === -1) {
-            this.cellBreakpoints.push(condition);
+            this.cellBreakpoints.push({ ...condition, releaser: null });
 
             this.codeEditor.Select(condition.Location.x, condition.Location.y, this.inactiveBreakpointColor);
         } else {
-            this.cellBreakpoints[existIdx] = condition;
+            this.cellBreakpoints[existIdx] = { ...condition, releaser: null };
         }
     }
 
@@ -416,6 +421,18 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
 
         if (existIdx !== -1) {
+            const brkRemove = this.cellBreakpoints[existIdx];
+
+            if (brkRemove.releaser !== null) {
+                brkRemove.releaser();
+            }
+
+            const activeBrkIdx = this.activeCellBreakpoints.findIndex(brk => brk.Location.x === brkRemove.Location.x && brk.Location.y === brkRemove.Location.y);
+
+            if (activeBrkIdx !== -1) {
+                this.activeCellBreakpoints.splice(activeBrkIdx, 1);
+            }
+
             this.cellBreakpoints.splice(existIdx, 1);
         }
     }
