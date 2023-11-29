@@ -1,8 +1,12 @@
+import { injectable } from "inversify";
+
+import { Inversify } from "@/Inversify";
 import { Befunge } from "@/lib/befunge/Befunge";
 import { Debugger } from "@/lib/befunge/Debugger";
 import { Memory } from "@/lib/befunge/memory/Memory";
 import { MemoryLimit } from "@/lib/befunge/memory/MemoryLimit";
 
+@injectable()
 export class BefungeToolbox {
     private interpreter!: Befunge;
     private debugger!: Debugger;
@@ -22,3 +26,5 @@ export class BefungeToolbox {
         this.interpreter.AttachDebugger(this.debugger);
     }
 }
+
+Inversify.bind(BefungeToolbox).toSelf().inSingletonScope();

@@ -35,7 +35,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private projection!: mat4;
     private camera: mat4;
 
-    private befungeToolbox: BefungeToolbox;
     private memoryLimit: MemoryLimit = { Width: 80, Height: 25 };
 
     private debugRenderer: DebugRenderer;
@@ -45,6 +44,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private cellBreakpoints: PcLocationCondition[] = [];
 
+    private activeCellBreakpoints: PcLocationCondition[] = [];
+
+    private activeBreakpointColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
     private inactiveBreakpointColor: Rgb = [0.9764705882352941, 0.6588235294117647, 0.1450980392156863];
 
     constructor(
@@ -52,7 +54,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(AppSettings) private settings: AppSettings,
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
-        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory) {
+        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
+        @inject(BefungeToolbox) private befungeToolbox: BefungeToolbox) {
         super();
 
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
@@ -65,8 +68,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.ViewProjection = this.ViewProjection;
 
         this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
-
-        this.befungeToolbox = new BefungeToolbox();
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
@@ -163,10 +164,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.overlay.DebugControls.DeactivateButton = hasBrk;
 
             if (oldEditionCell.x !== this.codeEditor.EditionCell.x || oldEditionCell.y !== this.codeEditor.EditionCell.y) {
-                const hasPrevBrk = this.cellBreakpoints
-                    .some(brk => brk.Location.x === oldEditionCell.x && brk.Location.y === oldEditionCell.y);
-
-                if (hasPrevBrk) {
+                if (this.activeCellBreakpoints.some(brk => brk.Location.x === oldEditionCell.x && brk.Location.y === oldEditionCell.y)) {
+                    this.codeEditor.Select(oldEditionCell.x, oldEditionCell.y, this.activeBreakpointColor);
+                } else if (this.cellBreakpoints.some(brk => brk.Location.x === oldEditionCell.x && brk.Location.y === oldEditionCell.y)) {
                     this.codeEditor.Select(oldEditionCell.x, oldEditionCell.y, this.inactiveBreakpointColor);
                 }
             }
@@ -264,8 +264,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private DebugCode(): void {
-        const activeBreakpointColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
-
         if (!this.debugMode) {
             this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
 
@@ -292,6 +290,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             this.debugMode = false;
             this.overlay.DebugControls.DebugMode = false;
+            this.activeCellBreakpoints = [];
         } else {
             breakpoints = executionResult;
         }
@@ -302,10 +301,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             // TODO Restore only previous one
             this.RestoreCellBreakpointsSelection();
 
+            this.activeCellBreakpoints = [];
             for (const brk of breakpoints) {
                 if (brk.PC) {
-
-                    this.codeEditor.Select(brk.PC.Location.x, brk.PC.Location.y, activeBreakpointColor);
+                    this.activeCellBreakpoints.push(brk.PC);
+                    this.codeEditor.Select(brk.PC.Location.x, brk.PC.Location.y, this.activeBreakpointColor);
                 }
             }
 
@@ -316,6 +316,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         if (debug.IsHalted) {
             this.debugMode = false;
             this.overlay.DebugControls.DebugMode = false;
+            this.activeCellBreakpoints = [];
 
             this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
 
