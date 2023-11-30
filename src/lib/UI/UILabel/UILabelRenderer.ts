@@ -212,8 +212,8 @@ export class UILabelRenderer extends PrimitivesRenderer {
             const attributes = PrimitiveBuilder.AABBRectangle(
                 { x, y: y + glyphBlueprint.baselineOffset.y },
                 {
-                    width: glyphBlueprint.width,
-                    height: glyphBlueprint.height
+                    width: glyphBlueprint.width * component.Scale,
+                    height: glyphBlueprint.height * component.Scale
                 },
                 [
                     [this.settings.ZFar - component.ZIndex - this.zFarIncluded],
@@ -228,7 +228,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
             this.UpdateComponentAttributes(attributes, offset * this.AttributesPerComponent);
 
-            x += glyphBlueprint.width;
+            x += glyphBlueprint.width * component.Scale;
 
             width = Math.max(width, x - component.AbsolutePosition.x);
         }
