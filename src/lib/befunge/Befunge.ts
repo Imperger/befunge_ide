@@ -31,9 +31,31 @@ import {
   MemoryRead,
   NoOperation
 } from './instructions';
+import { Instruction } from './instructions/Instruction';
 import { IOPort } from './IOPort';
 import { Memory, Pointer } from './memory/Memory';
 import { MemoryLimit } from './memory/MemoryLimit';
+
+export type MemoryWriteInterceptor = (ptr: Pointer, value: number) => void;
+export type MemoryInterceptorReleaser = () => void;
+
+class MemoryWriteInstructionInterceptor implements Instruction {
+  constructor(
+    private origin: MemoryWrite,
+    private interceptor: MemoryWriteInterceptor) { }
+
+  get Code(): string {
+    return this.origin.Code;
+  }
+
+  Execute(cpu: CPU): void {
+    const [value, x, y] = cpu.Stack.slice(-3);
+
+    this.interceptor({ x, y }, value);
+
+    this.origin.Execute(cpu);
+  }
+}
 
 export class Befunge {
   private io: IOPort;
@@ -41,6 +63,8 @@ export class Befunge {
   private cpu: CPU;
 
   private instructionsExecuted = 0;
+
+  private memoryWriteInterceptors: MemoryWriteInterceptor[] = [];
 
   constructor(private memoryLimit: MemoryLimit, private memory: Memory) {
     this.io = new IOPort();
@@ -66,7 +90,9 @@ export class Befunge {
       new PrintInteger(),
       new PrintASCII(),
       new Bridge(),
-      new MemoryWrite(),
+      new MemoryWriteInstructionInterceptor(
+        new MemoryWrite(),
+        (ptr: Pointer, value: number) => this.OnMemoryWrite(ptr, value)),
       new MemoryRead(),
       new InputInteger(),
       new InputASCII(),
@@ -160,6 +186,22 @@ export class Befunge {
 
   AttachDebugger(d: Debugger): void {
     d.AttachCPU(this.cpu);
+  }
+
+  AddMemoryWriteInterceptor(interceptor: MemoryWriteInterceptor): MemoryInterceptorReleaser {
+    this.memoryWriteInterceptors.push(interceptor);
+
+    return () => {
+      const rmIdx = this.memoryWriteInterceptors.indexOf(interceptor);
+
+      if (rmIdx !== -1) {
+        this.memoryWriteInterceptors.splice(rmIdx, 1);
+      }
+    };
+  }
+
+  private OnMemoryWrite(ptr: Pointer, value: number): void {
+    this.memoryWriteInterceptors.forEach(fn => fn(ptr, value));
   }
 
   get NextInstruction() {

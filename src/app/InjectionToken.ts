@@ -6,3 +6,8 @@ export const InjectionToken = {
     IconAtlasTexture: Symbol('Icon texture'),
     FontGlyphCollectionFactory: Symbol('Font glyph collection factory')
 };
+
+
+export const UILabelRendererTargetName = {
+    Perspective: Symbol('UILabel perspective renderer')
+}

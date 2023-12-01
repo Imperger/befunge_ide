@@ -8,7 +8,7 @@ import VUILabel from './UILabel.vert';
 import { UIObservableLabel } from './UIObservableLabel';
 
 import { AppSettings } from '@/app/AppSettings';
-import { InjectionToken } from '@/app/InjectionToken';
+import { InjectionToken, UILabelRendererTargetName } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
 import { EnumSize } from "@/lib/EnumSize";
 import { ExceptionTrap } from '@/lib/ExceptionTrap';
@@ -201,16 +201,16 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
             if (symbol === '\n') {
                 x = component.AbsolutePosition.x;
-                y -= component.LineHeight;
+                y -= component.LineHeight * component.Scale;
                 continue;
             }
 
             const glyphBlueprint = UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection);
 
-            height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset - y + glyphBlueprint.height);
+            height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + glyphBlueprint.height);
 
             const attributes = PrimitiveBuilder.AABBRectangle(
-                { x, y: y + glyphBlueprint.baselineOffset.y },
+                { x, y: y + glyphBlueprint.baselineOffset.y * component.Scale },
                 {
                     width: glyphBlueprint.width * component.Scale,
                     height: glyphBlueprint.height * component.Scale
@@ -238,7 +238,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
     private static AverageBaseOffset(component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
         return [...component.Text]
-            .reduce((sum, symbol) => sum + UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection).baselineOffset.y, 0) / component.Text.length;
+            .reduce((sum, symbol) => sum + UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection).baselineOffset.y * component.Scale, 0) / component.Text.length;
     }
 
     private static LookupGlyph(symbol: string, fontGlyphCollection: FontGlyphCollection): GlyphMeshBlueprint {
@@ -253,4 +253,5 @@ export class UILabelRenderer extends PrimitivesRenderer {
     }
 }
 
-Inversify.bind(UILabelRenderer).toSelf().inSingletonScope();
+Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetIsDefault();
+Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetNamed(UILabelRendererTargetName.Perspective);

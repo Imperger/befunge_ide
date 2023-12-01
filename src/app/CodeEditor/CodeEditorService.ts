@@ -4,6 +4,7 @@ import { InjectionToken } from "../InjectionToken";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
+import { CodeEditorTooltipService, TooltipPosition, TooltipReleaser } from "./CodeEditorTooltipService";
 import { EditorGridDimension } from "./EditorGridRenderer";
 
 import { Inversify } from "@/Inversify";
@@ -15,6 +16,8 @@ import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
 export enum EditionDirection { Left, Up, Right, Down };
 
+
+
 @injectable()
 export class CodeEditorService {
     private readonly editionCellStyle: Rgb = [0.21568627450980393, 0.2784313725490196, 0.30980392156862746];
@@ -25,7 +28,8 @@ export class CodeEditorService {
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
-        @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer) {
+        @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
+        @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService) {
 
         this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
     }
@@ -54,6 +58,14 @@ export class CodeEditorService {
 
     Unselect(column: number, row: number): void {
         this.codeEditorRenderer.Unselect(column, row);
+    }
+
+    Tooltip(column: number, row: number, text: string, position: TooltipPosition): TooltipReleaser {
+        return this.tooltipService.Tooltip(column, row, text, position);
+    }
+
+    HideAllTooltips(): void {
+        this.tooltipService.ReleaseAll();
     }
 
     Touch(e: MouseEvent): void {

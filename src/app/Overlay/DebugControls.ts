@@ -1,5 +1,4 @@
 import { PCDirection } from "@/lib/befunge/CPU/CPU";
-import { PcLocationCondition } from "@/lib/befunge/Debugger";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
@@ -23,6 +22,7 @@ export class DebugControls {
     private executeButton: UIIconButton;
 
     private debugButton: UIIconButton;
+    private debugMenuGroup: UIObservablePositioningGroup | null = null;
 
     private breakpointMenuButton: UIIconButton;
     private isBreakpointMenuOpen = false;
@@ -30,7 +30,7 @@ export class DebugControls {
 
     private readonly executeObservable = new ObservableController<void>();
 
-    private readonly debugObservable = new ObservableController<void>();
+    private readonly debugObservable = new ObservableController<boolean>();
 
     private readonly cellBreakpointObservable = new ObservableController<PCDirectionCondition>();
     private readonly cellBreakpointDeleteObservable = new ObservableController<void>();
@@ -62,7 +62,7 @@ export class DebugControls {
             1,
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.PlayDebug, color: DebugControls.DefaultButtonIconColor },
-            _sender => this.debugObservable.Notify(),
+            _sender => this.debugObservable.Notify(true),
             this.group
         );
 
@@ -80,6 +80,7 @@ export class DebugControls {
     Resize(): void {
         this.group.Resize();
         this.breakpointMenuGroup?.Resize();
+        this.debugMenuGroup?.Resize();
     }
 
     get DebugMode(): boolean {
@@ -92,6 +93,30 @@ export class DebugControls {
                 icon: UIIcon.PlayDebug,
                 color: mode ? DebugControls.DebugModeButtonIconColor : DebugControls.DefaultButtonIconColor
             };
+
+            const margin = 10;
+            const sideLength = 50;
+
+            if (mode) {
+                this.debugMenuGroup = new UIObservablePositioningGroup(
+                    {
+                        x: this.debugButton.AbsolutePosition.x,
+                        y: 2 * margin + 2 * sideLength
+                    },
+                    { vertical: VerticalAnchor.Top });
+
+                const stopDebuggingButton = this.uiRenderer.CreateButton(
+                    { x: 0, y: 0 },
+                    { width: sideLength, height: sideLength },
+                    1,
+                    { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
+                    { icon: UIIcon.Stop, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
+                    _sender => this.debugObservable.Notify(false),
+                    this.debugMenuGroup);
+            } else {
+                this.debugMenuGroup?.Destroy();
+                this.debugMenuGroup = null;
+            }
         }
 
         this.debugMode = mode;
@@ -101,7 +126,7 @@ export class DebugControls {
         return this.executeObservable;
     }
 
-    get Debug(): Observable<void> {
+    get Debug(): Observable<boolean> {
         return this.debugObservable;
     }
 
@@ -134,8 +159,7 @@ export class DebugControls {
                 x: this.breakpointMenuButton.AbsolutePosition.x,
                 y: yOffsetFactor * margin + (yOffsetFactor + 1) * sideLength + margin
             },
-            { vertical: VerticalAnchor.Top }
-        );
+            { vertical: VerticalAnchor.Top });
 
         const breakpointAnyDirectionButton = this.uiRenderer.CreateButton(
             { x: 0, y: 0 },
@@ -144,8 +168,7 @@ export class DebugControls {
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.ArrowThinAll, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
             _sender => this.NotifyWithPCLocationCondition({}),
-            this.breakpointMenuGroup
-        );
+            this.breakpointMenuGroup);
 
         const breakpointLeftDirectionButton = this.uiRenderer.CreateButton(
             { x: 0, y: margin + sideLength },
@@ -154,8 +177,7 @@ export class DebugControls {
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.ArrowThinLeft, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Left }),
-            this.breakpointMenuGroup
-        );
+            this.breakpointMenuGroup);
 
         const breakpointUpDirectionButton = this.uiRenderer.CreateButton(
             { x: 0, y: 2 * margin + 2 * sideLength },
@@ -164,8 +186,7 @@ export class DebugControls {
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.ArrowThinUp, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Up }),
-            this.breakpointMenuGroup
-        );
+            this.breakpointMenuGroup);
 
         const breakpointRightDirectionButton = this.uiRenderer.CreateButton(
             { x: 0, y: 3 * margin + 3 * sideLength },
@@ -174,8 +195,7 @@ export class DebugControls {
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.ArrowThinRight, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Right }),
-            this.breakpointMenuGroup
-        );
+            this.breakpointMenuGroup);
 
         const breakpointDownDirectionButton = this.uiRenderer.CreateButton(
             { x: 0, y: 4 * margin + 4 * sideLength },
@@ -184,8 +204,7 @@ export class DebugControls {
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.ArrowThinDown, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Down }),
-            this.breakpointMenuGroup
-        );
+            this.breakpointMenuGroup);
 
         if (this.DeactivateButton) {
             const breakpointDeactivateButton = this.uiRenderer.CreateButton(
@@ -195,8 +214,7 @@ export class DebugControls {
                 { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
                 { icon: UIIcon.Delete, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
                 _sender => this.NotifyWithCellBreakpointDeactivation(),
-                this.breakpointMenuGroup
-            );
+                this.breakpointMenuGroup);
         }
     }
 

@@ -1,13 +1,14 @@
 
 import { mat4 } from 'gl-matrix';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, named } from 'inversify';
 
 import { AppEventTransformer } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
 import { BefungeToolbox } from './BefungeToolbox';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
+import { TooltipPosition } from './CodeEditor/CodeEditorTooltipService';
 import { DebugRenderer } from './DebugRenderer';
-import { InjectionToken } from './InjectionToken';
+import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
 import { PCDirectionCondition } from './Overlay/DebugControls';
 import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
@@ -15,6 +16,7 @@ import { SourceCodeMemory } from './SourceCodeMemory';
 import { Inversify } from '@/Inversify';
 import { BreakpointCondition, BreakpointReleaser, PcLocationCondition } from '@/lib/befunge/Debugger';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
+import { Pointer } from '@/lib/befunge/memory/Memory';
 import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
@@ -22,6 +24,7 @@ import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
 import { Rgb } from '@/lib/Primitives';
 import { Camera } from '@/lib/renderer/Camera';
+import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 
 
 async function Delay(delay: number): Promise<void> {
@@ -50,6 +53,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private activeCellBreakpoints: PcLocationCondition[] = [];
 
+
     private activeBreakpointColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
     private inactiveBreakpointColor: Rgb = [0.9764705882352941, 0.6588235294117647, 0.1450980392156863];
 
@@ -59,7 +63,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
-        @inject(BefungeToolbox) private befungeToolbox: BefungeToolbox) {
+        @inject(BefungeToolbox) private befungeToolbox: BefungeToolbox,
+        @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer) {
         super();
 
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
@@ -77,6 +82,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.debugRenderer.ViewProjection = this.ViewProjection;
         this.debugRenderer.UploadAttributes(this.debugPoints);
 
+        const label = this.perspectiveLabelRenderer.Create({ x: 0, y: 0 }, 499, 'TESTING (d) 1234567890', 8, null);
+        label.Scale = 0.2;
         const Debug = async () => {
             const text = 'Hello world! 1234567890$@';
 
@@ -121,7 +128,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
 
         this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
-        this.overlay.DebugControls.Debug.Attach(() => this.DebugCode());
+        this.overlay.DebugControls.Debug.Attach((next: boolean) => this.DebugCodeAction(next));
         this.overlay.DebugControls.CellBreakopint.Attach((cond: PCDirectionCondition) => this.OnCellBreakpointAction(cond));
         this.overlay.DebugControls.CellBreakpointDelete.Attach(() => this.OnCellBreakpointDelete());
 
@@ -138,6 +145,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.codeEditor.ViewProjection = this.ViewProjection;
         this.debugRenderer.ViewProjection = this.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
     OnCameraMove(e: MouseEvent): void {
@@ -154,6 +162,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.codeEditor.ViewProjection = this.ViewProjection;
         this.debugRenderer.ViewProjection = this.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
     OnSelect(e: MouseEvent): void {
@@ -203,10 +212,21 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.codeEditor.ViewProjection = this.ViewProjection;
         this.debugRenderer.ViewProjection = this.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
     OnCellInput(e: KeyboardEvent): void {
-        this.codeEditor.CellInput(e);
+        if (this.overlay.DebugControls.DebugMode) {
+            this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
+        } else {
+            const prevEditionCell = { ...this.codeEditor.EditionCell };
+
+            this.codeEditor.CellInput(e);
+
+            if (this.cellBreakpoints.some(brk => brk.Location.x === prevEditionCell.x && brk.Location.y === prevEditionCell.y)) {
+                this.codeEditor.Select(prevEditionCell.x, prevEditionCell.y, this.inactiveBreakpointColor);
+            }
+        }
     }
 
     private BuildProjection(): void {
@@ -230,7 +250,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private Start(): void {
-        this.overlay.OutputControls.Output = 'HelloWOrld \nTerminated due timeout\n1'
+        this.overlay.OutputControls.Output = 'Hello (d) WOrld \nTerminated due timeout\n1'
         requestAnimationFrame(() => this.DrawFrame())
     }
 
@@ -238,6 +258,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         this.codeEditor.Draw();
+        this.perspectiveLabelRenderer.Draw();
         //this.debugRenderer.Draw();
 
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
@@ -267,9 +288,14 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
     }
 
+    private DebugCodeAction(next: boolean): void {
+        next ? this.DebugCode() : this.StopDebugging();
+    }
+
     private DebugCode(): void {
         if (!this.debugMode) {
             this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
+            this.befungeToolbox.Interpreter.AddMemoryWriteInterceptor((ptr: Pointer, value: number) => this.OnMemoryWrite(ptr, value));
 
             this.UploadBreakpointsToDebugger();
 
@@ -283,7 +309,19 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const interpreter = this.befungeToolbox.Interpreter;
 
 
-        const executionResult = debug.RunFor(this.settings.ExecutionTimeout);
+
+        let executionResult: BreakpointCondition[] | null;
+        try {
+            executionResult = debug.RunFor(this.settings.ExecutionTimeout);
+        } catch (e) {
+            if (e instanceof Error) {
+                this.overlay.Snackbar.ShowError(e.message)
+            }
+
+            this.StopDebugging();
+            return;
+        }
+
 
         let breakpoints: BreakpointCondition[] = [];
 
@@ -300,6 +338,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
 
         if (breakpoints.length > 0) {
+            console.log(breakpoints);
             this.RestoreCellBreakpointsSelection();
 
             this.activeCellBreakpoints = [];
@@ -325,6 +364,16 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             this.overlay.Snackbar.ShowSuccess(`Completed`);
         }
+    }
+
+    private StopDebugging(): void {
+        this.debugMode = false;
+        this.overlay.DebugControls.DebugMode = false;
+        this.activeCellBreakpoints = [];
+
+        this.RestoreCellBreakpointsSelection();
+
+        this.codeEditor.HideAllTooltips();
     }
 
     private UploadBreakpointsToDebugger(): void {
@@ -408,13 +457,15 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         };
 
         if (existIdx === -1) {
-            this.cellBreakpoints.push({ ...condition, releaser: null });
+            const releaser = this.debugMode ? this.SetCellBreakpoint(condition) : null;
+            this.cellBreakpoints.push({ ...condition, releaser });
 
             this.codeEditor.Select(condition.Location.x, condition.Location.y, this.inactiveBreakpointColor);
 
             this.overlay.DebugControls.DeactivateButton = true;
         } else {
-            this.cellBreakpoints[existIdx] = { ...condition, releaser: null };
+            const releaser = this.debugMode ? this.SetCellBreakpoint(condition) : null;
+            this.cellBreakpoints[existIdx] = { ...condition, releaser };
         }
     }
 
@@ -436,7 +487,19 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             }
 
             this.cellBreakpoints.splice(existIdx, 1);
+
+            this.codeEditor.Select(brkRemove.Location.x, brkRemove.Location.y, [0.21568627450980393, 0.2784313725490196, 0.30980392156862746]);
         }
+    }
+
+    private OnMemoryWrite(ptr: Pointer, value: number): void {
+        console.log(ptr, value);
+
+        this.codeEditor.Tooltip(
+            ptr.x,
+            ptr.y,
+            `${value.toString()}(${String.fromCharCode(value)})`,
+            TooltipPosition.RightTop);
     }
 }
 

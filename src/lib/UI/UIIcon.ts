@@ -10,7 +10,7 @@ export enum UIIcon {
     Play, PlayDebug,
     ExclamationCircle, ExclamationTriangle, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
-    Delete
+    Delete, Stop
 };
 
 export interface UVExtra extends UV {
@@ -159,6 +159,11 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Delete,
                 filename: 'ui_icons/trash_can.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Stop,
+                filename: 'ui_icons/stop.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];
