@@ -4,7 +4,6 @@ import { inject, injectable, named } from 'inversify';
 
 import { AppEventTransformer } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
-import { BefungeToolbox } from './BefungeToolbox';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
 import { DebugRenderer } from './DebugRenderer';
@@ -14,7 +13,6 @@ import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
-import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
@@ -34,8 +32,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private projection!: mat4;
     private camera: mat4;
 
-    private memoryLimit: MemoryLimit = { Width: 80, Height: 25 };
-
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
@@ -45,7 +41,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
-        @inject(BefungeToolbox) private befungeToolbox: BefungeToolbox,
         @inject(CodeExecutionService) private codeExecutionService: CodeExecutionService,
         @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer) {
         super();
@@ -59,7 +54,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.codeEditor.ViewProjection = this.ViewProjection;
 
-        this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
+        this.editorSourceCode.Initialize(ArrayMemory, this.settings.MemoryLimit);
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
@@ -109,8 +104,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     async AsyncConstructor(): Promise<void> {
         this.overlay.EditDirectionControls.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
-
-        this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
 
@@ -237,24 +230,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
     }
 
-    private ExecuteCode(): void {
-        this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
-
-        try {
-            if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
-                this.overlay.Snackbar.ShowSuccess(`Ok\nInstructions executed: ${this.befungeToolbox.Interpreter.InstructionsExecuted}`);
-            } else {
-                this.overlay.Snackbar.ShowWarning('Terminated due timeout');
-            }
-
-            this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
-        } catch (e) {
-            if (e instanceof Error) {
-                this.overlay.Snackbar.ShowError(e.message)
-            }
-        }
-    }
-
     private async OpenFileFromDisk(): Promise<void> {
         const sourceCode = await UserFileLoader.ReadAsText();
 
@@ -299,7 +274,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private ResetSourceCodeEditor(): void {
-        this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
+        this.editorSourceCode.Initialize(ArrayMemory, this.settings.MemoryLimit);
         this.codeEditor.Clear();
     }
 }
