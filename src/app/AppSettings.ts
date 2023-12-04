@@ -1,6 +1,7 @@
 import { injectable } from "inversify";
 
 import { Inversify } from "@/Inversify";
+import { MemoryLimit } from "@/lib/befunge/memory/MemoryLimit";
 
 interface Dimension {
     Width: number;
@@ -22,6 +23,8 @@ export class AppSettings {
     public ExecutionTimeout = 1000;
 
     public MaxOutputLength = 1000;
+
+    public MemoryLimit: MemoryLimit = { Width: 80, Height: 25 };
 }
 
 Inversify.bind(AppSettings).toSelf().inSingletonScope();

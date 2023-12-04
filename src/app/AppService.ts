@@ -6,33 +6,25 @@ import { AppEventTransformer } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
 import { BefungeToolbox } from './BefungeToolbox';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
-import { TooltipPosition } from './CodeEditor/CodeEditorTooltipService';
+import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
 import { DebugRenderer } from './DebugRenderer';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
-import { PCDirectionCondition } from './Overlay/DebugControls';
 import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
-import { BreakpointCondition, BreakpointReleaser, PcLocationCondition } from '@/lib/befunge/Debugger';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
-import { Pointer } from '@/lib/befunge/memory/Memory';
 import { MemoryLimit } from '@/lib/befunge/memory/MemoryLimit';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
-import { Rgb } from '@/lib/Primitives';
 import { Camera } from '@/lib/renderer/Camera';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 
 
 async function Delay(delay: number): Promise<void> {
     return new Promise(ok => setTimeout(ok, delay));
-}
-
-interface CellBreakpointController extends PcLocationCondition {
-    releaser: BreakpointReleaser | null;
 }
 
 @injectable()
@@ -47,16 +39,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
-    private debugMode = false;
-
-    private cellBreakpoints: CellBreakpointController[] = [];
-
-    private activeCellBreakpoints: PcLocationCondition[] = [];
-
-
-    private activeBreakpointColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
-    private inactiveBreakpointColor: Rgb = [0.9764705882352941, 0.6588235294117647, 0.1450980392156863];
-
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(AppSettings) private settings: AppSettings,
@@ -64,6 +46,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(BefungeToolbox) private befungeToolbox: BefungeToolbox,
+        @inject(CodeExecutionService) private codeExecutionService: CodeExecutionService,
         @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer) {
         super();
 
@@ -128,9 +111,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
 
         this.overlay.DebugControls.Execute.Attach(() => this.ExecuteCode());
-        this.overlay.DebugControls.Debug.Attach((next: boolean) => this.DebugCodeAction(next));
-        this.overlay.DebugControls.CellBreakopint.Attach((cond: PCDirectionCondition) => this.OnCellBreakpointAction(cond));
-        this.overlay.DebugControls.CellBreakpointDelete.Attach(() => this.OnCellBreakpointDelete());
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
 
@@ -167,22 +147,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     OnSelect(e: MouseEvent): void {
         if (!this.overlay.Touch(e)) {
-            const oldEditionCell = { ...this.codeEditor.EditionCell };
+            const prevEditionCell = { ...this.codeEditor.EditionCell };
 
             this.codeEditor.Touch(e);
 
-            const hasBrk = this.cellBreakpoints
-                .some(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
-
-            this.overlay.DebugControls.DeactivateButton = hasBrk;
-
-            if (oldEditionCell.x !== this.codeEditor.EditionCell.x || oldEditionCell.y !== this.codeEditor.EditionCell.y) {
-                if (this.activeCellBreakpoints.some(brk => brk.Location.x === oldEditionCell.x && brk.Location.y === oldEditionCell.y)) {
-                    this.codeEditor.Select(oldEditionCell.x, oldEditionCell.y, this.activeBreakpointColor);
-                } else if (this.cellBreakpoints.some(brk => brk.Location.x === oldEditionCell.x && brk.Location.y === oldEditionCell.y)) {
-                    this.codeEditor.Select(oldEditionCell.x, oldEditionCell.y, this.inactiveBreakpointColor);
-                }
-            }
+            this.codeExecutionService.Debugging.OnSelect(prevEditionCell);
         }
 
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
@@ -223,9 +192,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             this.codeEditor.CellInput(e);
 
-            if (this.cellBreakpoints.some(brk => brk.Location.x === prevEditionCell.x && brk.Location.y === prevEditionCell.y)) {
-                this.codeEditor.Select(prevEditionCell.x, prevEditionCell.y, this.inactiveBreakpointColor);
-            }
+            this.codeExecutionService.Debugging.OnCellInput(prevEditionCell);
         }
     }
 
@@ -288,117 +255,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
     }
 
-    private DebugCodeAction(next: boolean): void {
-        next ? this.DebugCode() : this.StopDebugging();
-    }
-
-    private DebugCode(): void {
-        if (!this.debugMode) {
-            this.befungeToolbox.Reset(this.memoryLimit, this.editorSourceCode.Clone());
-            this.befungeToolbox.Interpreter.AddMemoryWriteInterceptor((ptr: Pointer, value: number) => this.OnMemoryWrite(ptr, value));
-
-            this.UploadBreakpointsToDebugger();
-
-            this.debugMode = true;
-            this.overlay.DebugControls.DebugMode = true;
-
-            this.overlay.OutputControls.Output = '';
-        }
-
-        const debug = this.befungeToolbox.Debugger;
-        const interpreter = this.befungeToolbox.Interpreter;
-
-
-
-        let executionResult: BreakpointCondition[] | null;
-        try {
-            executionResult = debug.RunFor(this.settings.ExecutionTimeout);
-        } catch (e) {
-            if (e instanceof Error) {
-                this.overlay.Snackbar.ShowError(e.message)
-            }
-
-            this.StopDebugging();
-            return;
-        }
-
-
-        let breakpoints: BreakpointCondition[] = [];
-
-        if (executionResult === null) {
-            if (!debug.IsHalted) {
-                this.overlay.Snackbar.ShowWarning('Terminated due timeout');
-            }
-
-            this.debugMode = false;
-            this.overlay.DebugControls.DebugMode = false;
-            this.activeCellBreakpoints = [];
-        } else {
-            breakpoints = executionResult;
-        }
-
-        if (breakpoints.length > 0) {
-            console.log(breakpoints);
-            this.RestoreCellBreakpointsSelection();
-
-            this.activeCellBreakpoints = [];
-            for (const brk of breakpoints) {
-                if (brk.PC) {
-                    this.activeCellBreakpoints.push(brk.PC);
-                    this.codeEditor.Select(brk.PC.Location.x, brk.PC.Location.y, this.activeBreakpointColor);
-                }
-            }
-
-            this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
-        }
-
-
-        if (debug.IsHalted) {
-            this.debugMode = false;
-            this.overlay.DebugControls.DebugMode = false;
-            this.activeCellBreakpoints = [];
-
-            this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
-
-            this.RestoreCellBreakpointsSelection();
-
-            this.overlay.Snackbar.ShowSuccess(`Completed`);
-        }
-    }
-
-    private StopDebugging(): void {
-        this.debugMode = false;
-        this.overlay.DebugControls.DebugMode = false;
-        this.activeCellBreakpoints = [];
-
-        this.RestoreCellBreakpointsSelection();
-
-        this.codeEditor.HideAllTooltips();
-    }
-
-    private UploadBreakpointsToDebugger(): void {
-        this.cellBreakpoints.forEach(brk => {
-            brk.releaser = this.SetCellBreakpoint(brk);
-        });
-    }
-
-    private SetCellBreakpoint(brk: PcLocationCondition): BreakpointReleaser {
-        const releaser = this.befungeToolbox.Debugger.SetBreakpoint({ PC: brk });
-
-        this.codeEditor.Select(brk.Location.x, brk.Location.y, this.inactiveBreakpointColor);
-
-        return () => {
-            releaser();
-            this.codeEditor.Unselect(brk.Location.x, brk.Location.y);
-        };
-    }
-
-    private RestoreCellBreakpointsSelection(): void {
-        for (const brk of this.befungeToolbox.Debugger.PCBreakpoints) {
-            this.codeEditor.Select(brk.Location.x, brk.Location.y, this.inactiveBreakpointColor);
-        }
-    }
-
     private async OpenFileFromDisk(): Promise<void> {
         const sourceCode = await UserFileLoader.ReadAsText();
 
@@ -445,61 +301,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private ResetSourceCodeEditor(): void {
         this.editorSourceCode.Initialize(ArrayMemory, this.memoryLimit);
         this.codeEditor.Clear();
-    }
-
-    private OnCellBreakpointAction(cond: PCDirectionCondition): void {
-        const existIdx = this.cellBreakpoints
-            .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
-
-        const condition: PcLocationCondition = {
-            Location: { ...this.codeEditor.EditionCell },
-            ...cond
-        };
-
-        if (existIdx === -1) {
-            const releaser = this.debugMode ? this.SetCellBreakpoint(condition) : null;
-            this.cellBreakpoints.push({ ...condition, releaser });
-
-            this.codeEditor.Select(condition.Location.x, condition.Location.y, this.inactiveBreakpointColor);
-
-            this.overlay.DebugControls.DeactivateButton = true;
-        } else {
-            const releaser = this.debugMode ? this.SetCellBreakpoint(condition) : null;
-            this.cellBreakpoints[existIdx] = { ...condition, releaser };
-        }
-    }
-
-    private OnCellBreakpointDelete(): void {
-        const existIdx = this.cellBreakpoints
-            .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
-
-        if (existIdx !== -1) {
-            const brkRemove = this.cellBreakpoints[existIdx];
-
-            if (brkRemove.releaser !== null) {
-                brkRemove.releaser();
-            }
-
-            const activeBrkIdx = this.activeCellBreakpoints.findIndex(brk => brk.Location.x === brkRemove.Location.x && brk.Location.y === brkRemove.Location.y);
-
-            if (activeBrkIdx !== -1) {
-                this.activeCellBreakpoints.splice(activeBrkIdx, 1);
-            }
-
-            this.cellBreakpoints.splice(existIdx, 1);
-
-            this.codeEditor.Select(brkRemove.Location.x, brkRemove.Location.y, [0.21568627450980393, 0.2784313725490196, 0.30980392156862746]);
-        }
-    }
-
-    private OnMemoryWrite(ptr: Pointer, value: number): void {
-        console.log(ptr, value);
-
-        this.codeEditor.Tooltip(
-            ptr.x,
-            ptr.y,
-            `${value.toString()}(${String.fromCharCode(value)})`,
-            TooltipPosition.RightTop);
     }
 }
 
