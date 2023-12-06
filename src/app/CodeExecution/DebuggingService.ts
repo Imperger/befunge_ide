@@ -99,6 +99,8 @@ export class DebuggingService {
             this.debugMode = false;
             this.overlay.DebugControls.DebugMode = false;
             this.activeCellBreakpoints = [];
+
+            this.codeEditor.HideAllTooltips();
         } else {
             breakpoints = executionResult;
         }
@@ -127,6 +129,8 @@ export class DebuggingService {
             this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
 
             this.RestoreCellBreakpointsSelection();
+
+            this.codeEditor.HideAllTooltips();
 
             this.overlay.Snackbar.ShowSuccess(`Completed`);
         }
