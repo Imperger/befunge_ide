@@ -3,6 +3,7 @@ import { inject, injectable } from "inversify";
 import { InjectionToken } from "../InjectionToken";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
+import { CodeEditorExtension, EmptyExtension } from "./CodeEditorExtension";
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { CodeEditorTooltipService, TooltipPosition, TooltipReleaser } from "./CodeEditorTooltipService";
 import { EditorGridDimension } from "./EditorGridRenderer";
@@ -16,8 +17,6 @@ import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
 export enum EditionDirection { Left, Up, Right, Down };
 
-
-
 @injectable()
 export class CodeEditorService {
     private readonly editionCellStyle: Rgb = [0.21568627450980393, 0.2784313725490196, 0.30980392156862746];
@@ -25,6 +24,8 @@ export class CodeEditorService {
     private editionDirection: EditionDirection = EditionDirection.Right;
 
     private editDirectionObservable = new ObservableController<EditionDirection>();
+
+    private extension: CodeEditorExtension = new EmptyExtension();
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
@@ -46,6 +47,15 @@ export class CodeEditorService {
         this.editionDirection = direction;
 
         this.editDirectionObservable.Notify(direction);
+    }
+
+    LoadExtension(extension: CodeEditorExtension): void {
+        this.extension = extension;
+        this.extension.ViewProjection = this.codeEditorRenderer.ViewProjection;
+    }
+
+    UnloadExtension(): void {
+        this.extension = new EmptyExtension();
     }
 
     Symbol(symbol: string, column: number, row: number): void {
@@ -153,6 +163,8 @@ export class CodeEditorService {
 
     Draw(): void {
         this.codeEditorRenderer.Draw();
+
+        this.extension?.Draw();
     }
 
     get Dimension(): EditorGridDimension {
@@ -165,6 +177,7 @@ export class CodeEditorService {
 
     set ViewProjection(proj: Mat4 | Float32Array) {
         this.codeEditorRenderer.ViewProjection = proj;
+        this.extension.ViewProjection = proj;
     }
 
     get EditionCell(): Vec2 {

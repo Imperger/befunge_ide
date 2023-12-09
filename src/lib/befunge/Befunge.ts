@@ -35,6 +35,7 @@ import { Instruction } from './instructions/Instruction';
 import { IOPort } from './IOPort';
 import { Memory, Pointer } from './memory/Memory';
 import { MemoryLimit } from './memory/MemoryLimit';
+import { Profiler } from './Profiler';
 
 export type MemoryWriteInterceptor = (ptr: Pointer, value: number) => void;
 export type MemoryInterceptorReleaser = () => void;
@@ -51,7 +52,7 @@ class MemoryWriteInstructionInterceptor implements Instruction {
   Execute(cpu: CPU): void {
     const [value, x, y] = cpu.Stack.slice(-3);
 
-    this.interceptor({ x, y }, value);
+    this.interceptor({ x: x, y: y }, value);
 
     this.origin.Execute(cpu);
   }
@@ -186,6 +187,10 @@ export class Befunge {
 
   AttachDebugger(d: Debugger): void {
     d.AttachCPU(this.cpu);
+  }
+
+  AttachProfiler(profiler: Profiler): void {
+    profiler.AttachCPU(this.cpu);
   }
 
   AddMemoryWriteInterceptor(interceptor: MemoryWriteInterceptor): MemoryInterceptorReleaser {

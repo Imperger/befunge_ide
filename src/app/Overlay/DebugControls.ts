@@ -10,12 +10,18 @@ export interface PCDirectionCondition {
     Direction?: PCDirection;
 }
 
+export interface HeatmapToggleButtonState {
+    isShown: boolean;
+}
+
 export class DebugControls {
     private static readonly DefaultButtonFillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
     private static readonly DefaultButtonOutlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
+    private static readonly ToggleButtonOutlineColor: Rgb = [0, 0, 0];
     private static readonly DefaultButtonIconColor: Rgb = [0.40784313725490196, 0.6235294117647059, 0.2196078431372549];
     private static readonly DebugModeButtonIconColor: Rgb = [0.9411764705882353, 0.6392156862745098, 0.0392156862745098];
     private static readonly BreakpointButtonIconColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
+    private static readonly ProfilerButtonIconColor: Rgb = [0.11764705882352941, 0.5647058823529412, 1];
 
     private group: UIObservablePositioningGroup;
 
@@ -28,12 +34,17 @@ export class DebugControls {
     private isBreakpointMenuOpen = false;
     private breakpointMenuGroup: UIObservablePositioningGroup | null = null;
 
+    private heatmapButton: UIIconButton;
+
     private readonly executeObservable = new ObservableController<void>();
 
     private readonly debugObservable = new ObservableController<boolean>();
 
     private readonly cellBreakpointObservable = new ObservableController<PCDirectionCondition>();
     private readonly cellBreakpointDeleteObservable = new ObservableController<void>();
+
+    private isHeatmapShown = false;
+    private readonly heatmapObservable = new ObservableController<HeatmapToggleButtonState>();
 
     private debugMode = false;
 
@@ -73,6 +84,16 @@ export class DebugControls {
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.Breakpoint, color: DebugControls.BreakpointButtonIconColor },
             _sender => this.ToggleBreakpointMenuButton(),
+            this.group
+        );
+
+        this.heatmapButton = this.uiRenderer.CreateButton(
+            { x: 3 * buttonSideLength + 3 * margin, y: 0 },
+            { width: buttonSideLength, height: buttonSideLength },
+            1,
+            { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
+            { icon: UIIcon.Heatmap, color: DebugControls.ProfilerButtonIconColor },
+            sender => this.ToggleHeatmap(sender),
             this.group
         );
     }
@@ -136,6 +157,10 @@ export class DebugControls {
 
     get CellBreakpointDelete(): Observable<void> {
         return this.cellBreakpointDeleteObservable;
+    }
+
+    get Heatmap(): Observable<HeatmapToggleButtonState> {
+        return this.heatmapObservable;
     }
 
     private ToggleBreakpointMenuButton(): void {
@@ -237,5 +262,23 @@ export class DebugControls {
 
         this.breakpointMenuGroup?.Destroy();
         this.breakpointMenuGroup = null;
+    }
+
+    private ToggleHeatmap(component: UIIconButton): void {
+        this.isHeatmapShown = !this.isHeatmapShown;
+
+        const feedback: HeatmapToggleButtonState = { isShown: this.isHeatmapShown };
+        this.heatmapObservable.Notify(feedback);
+
+        if (feedback.isShown === this.isHeatmapShown) {
+
+            const outlineColor = this.isHeatmapShown ?
+                DebugControls.ToggleButtonOutlineColor :
+                DebugControls.DefaultButtonOutlineColor;
+
+            component.Style = { ...component.Style, outlineColor };
+        }
+
+        this.isHeatmapShown = feedback.isShown;
     }
 }

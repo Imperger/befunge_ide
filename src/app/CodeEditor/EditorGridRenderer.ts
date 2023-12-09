@@ -1,6 +1,7 @@
 
 import { inject, injectable } from 'inversify';
 
+import { AppSettings } from '../AppSettings';
 import { InjectionToken } from '../InjectionToken';
 
 import FGrid from './Grid.frag';
@@ -27,9 +28,8 @@ export interface EditorGridDimension {
 export class EditorGridRenderer extends PrimitivesRenderer {
     public readonly CellSize = 10;
 
-    public readonly Dimension: EditorGridDimension = { Columns: 80, Rows: 25 };
-
     constructor(
+        @inject(AppSettings) private settings: AppSettings,
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
         @inject(InjectionToken.FontAtlas) private fontAtlas: FontAtlas,
         @inject(InjectionToken.FontAtlasTexture) private fontAtlasTexture: WebGLTexture) {
@@ -67,13 +67,11 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         this.SetupRenderer();
     }
 
-    Resize(columns: number, rows: number): void {
-        this.Dimension.Columns = columns;
-        this.Dimension.Rows = rows;
+    ResizeGrid(): void {
 
         const vertexList: number[] = [];
-        for (let row = 0; row < this.Dimension.Rows; ++row) {
-            for (let col = 0; col < this.Dimension.Columns; ++col) {
+        for (let row = 0; row < this.settings.MemoryLimit.Height; ++row) {
+            for (let col = 0; col < this.settings.MemoryLimit.Width; ++col) {
                 const cell = this.BuildCell(
                     { x: col * this.CellSize, y: row * this.CellSize },
                     [0, 0.592156862745098, 0.6549019607843137],
@@ -87,9 +85,9 @@ export class EditorGridRenderer extends PrimitivesRenderer {
     }
 
     Symbol(symbol: string, column: number, row: number): void {
-        row = this.Dimension.Rows - row - 1;
+        row = this.settings.MemoryLimit.Height - row - 1;
 
-        const cellAttrs = this.PrimitiveAttributes(row * this.Dimension.Columns + column);
+        const cellAttrs = this.PrimitiveAttributes(row * this.settings.MemoryLimit.Width + column);
         const symbolUV = this.fontAtlas.LookupUV(symbol);
 
         const UVOffset = 5;
@@ -159,8 +157,15 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
     }
 
+    get Dimension(): EditorGridDimension {
+        return {
+            Columns: this.settings.MemoryLimit.Width,
+            Rows: this.settings.MemoryLimit.Height
+        };
+    }
+
     private SetupRenderer(): void {
-        this.Resize(this.Dimension.Columns, this.Dimension.Rows);
+        this.ResizeGrid();
     }
 }
 

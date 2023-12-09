@@ -4,7 +4,9 @@ export const InjectionToken = {
     IconAtlas: Symbol('Icon atlas'),
     FontAtlasTexture: Symbol('Font texture'),
     IconAtlasTexture: Symbol('Icon texture'),
-    FontGlyphCollectionFactory: Symbol('Font glyph collection factory')
+    FontGlyphCollectionFactory: Symbol('Font glyph collection factory'),
+    HeatmapGridRendererFactory: Symbol('Heatmap grid renderer factory'),
+    HeatmapExtensionFactory: Symbol('Heatmap extension factory')
 };
 
 
