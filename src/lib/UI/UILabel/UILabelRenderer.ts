@@ -202,6 +202,13 @@ export class UILabelRenderer extends PrimitivesRenderer {
             if (symbol === '\n') {
                 x = component.AbsolutePosition.x;
                 y -= component.LineHeight * component.Scale;
+
+                /**
+                 * FIXME Since we allocate memory even for new line symbol we need to zeroed it. 
+                 * In future UIIbservableLabel should not allocate memory for non printable symbols.
+                 */
+                const emptyAttrs = new Array(this.AttributesPerComponent).fill(0);
+                this.UpdateComponentAttributes(emptyAttrs, offset * this.AttributesPerComponent);
                 continue;
             }
 
