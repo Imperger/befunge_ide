@@ -36,6 +36,8 @@ export class ProfillingService {
 
             if (heatmap === null) {
                 this.overlay.Snackbar.ShowWarning('Terminated due timeout');
+
+                feedback.isShown = false;
             } else {
                 const extension = this.heatmapExtensionFactory(heatmap);
 
