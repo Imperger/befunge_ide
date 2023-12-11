@@ -120,6 +120,13 @@ export class PrimitivesRenderer {
     );
   }
 
+  Dispose(): void {
+    this.gl.deleteBuffer(this.vbo);
+    this.gl.deleteVertexArray(this.vao);
+
+    this.shader.Dispose();
+  }
+
   private Setup(shaderSource: ShaderProgramSource): void {
     this.vbo = this.gl.createBuffer() ?? NotNull('Failed to create vbo');
     this.vao = this.gl.createVertexArray() ?? NotNull('Failed to create vao');
