@@ -7,7 +7,7 @@ import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
 import { UIIconButton } from "./UIIconButton";
 
 import { Observable, ObservableController } from "@/lib/Observable";
-import { Vec2 } from "@/lib/Primitives";
+import { Rgb, Vec2 } from "@/lib/Primitives";
 
 export type TouchCallback = (sender: UIIconButton) => void;
 
@@ -16,6 +16,8 @@ export type UpdateCallback = (component: UIObservableIconButton) => void;
 export type DeleterCallback = (component: UIObservableIconButton) => void;
 
 export class UIObservableIconButton implements UIComponent, UIIconButton {
+    private static readonly DisabledIconColor: Rgb = [0.47058823529411764, 0.5647058823529412, 0.611764705882353];
+
     private static UninitializedTag = -1;
 
     private observable = new ObservableController<UIObservableIconButton>();
@@ -23,6 +25,10 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     private scale = 1;
 
     private destroyed = false;
+
+    private disabled = false;
+
+    private originIconStyle!: UIIconStyle;
 
     constructor(
         private position: Vec2,
@@ -114,6 +120,24 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
     get Destroyed(): boolean {
         return this.destroyed;
+    }
+
+    get Disable(): boolean {
+        return this.disabled;
+    }
+
+    set Disable(value: boolean) {
+        this.disabled = value;
+
+        if (value) {
+            this.originIconStyle = { ...this.iconStyle };
+
+            this.iconStyle.color = UIObservableIconButton.DisabledIconColor;
+        } else {
+            this.iconStyle.color = this.originIconStyle.color;
+        }
+
+        this.observable.Notify(this);
     }
 
     Touch(): void {

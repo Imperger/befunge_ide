@@ -26,6 +26,7 @@ export interface UIIconButton extends UIComponent {
     Icon: UIIconStyle;
     Style: UIButtonStyle;
     readonly Destroyed: boolean;
+    Disable: boolean;
 
     Touch(): void;
     Destroy(): void;
