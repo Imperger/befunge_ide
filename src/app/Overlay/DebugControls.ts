@@ -138,6 +138,9 @@ export class DebugControls {
                 this.debugMenuGroup?.Destroy();
                 this.debugMenuGroup = null;
             }
+
+            this.executeButton.Disable = mode;
+            this.heatmapButton.Disable = mode;
         }
 
         this.debugMode = mode;
@@ -277,6 +280,14 @@ export class DebugControls {
                 DebugControls.DefaultButtonOutlineColor;
 
             component.Style = { ...component.Style, outlineColor };
+
+            if (this.isHeatmapShown) {
+                this.CloseCellBreakpointDirectionMenu();
+            }
+
+            this.executeButton.Disable = this.isHeatmapShown;
+            this.debugButton.Disable = this.isHeatmapShown;
+            this.breakpointMenuButton.Disable = this.isHeatmapShown;
         }
 
         this.isHeatmapShown = feedback.isShown;
