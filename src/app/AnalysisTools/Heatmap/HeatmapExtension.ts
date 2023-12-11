@@ -2,7 +2,10 @@ import { inject, injectable, interfaces } from "inversify";
 
 import { HeatMapGridFactory, HeatmapGridRenderer } from "./HeatMapGridRenderer";
 
+import { AppSettings } from "@/app/AppSettings";
 import { CodeEditorExtension } from "@/app/CodeEditor/CodeEditorExtension";
+import { CodeEditorService } from "@/app/CodeEditor/CodeEditorService";
+import { TooltipPosition, TooltipReleaser } from "@/app/CodeEditor/CodeEditorTooltipService";
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
 import { Array2D } from "@/lib/containers/Array2D";
@@ -13,10 +16,17 @@ type HeatmapHitStats = Array2D<number>;
 
 
 class HeatmapExtension implements CodeEditorExtension {
-    constructor(private heatmapGridRenderer: HeatmapGridRenderer) { }
+    constructor(
+        private heatmapGridRenderer: HeatmapGridRenderer,
+        private tooltipReleasers: TooltipReleaser[]) { }
 
     Draw(): void {
         this.heatmapGridRenderer.Draw();
+    }
+
+    Unload(): void {
+        this.heatmapGridRenderer.Dispose();
+        this.tooltipReleasers.forEach(release => release());
     }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
@@ -36,6 +46,8 @@ export class HeatmapExtensionBuilder {
     private heatmap!: HeatmapHitStats;
 
     constructor(
+        @inject(AppSettings) private settings: AppSettings,
+        @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(InjectionToken.HeatmapGridRendererFactory) private heatmapGridRendererFactory: HeatMapGridFactory
     ) { }
 
@@ -44,11 +56,13 @@ export class HeatmapExtensionBuilder {
 
         this.Setup();
 
+        const releasers = this.DrawHitsOnCell();
+
         const colors = this.heatmap.Map(x => this.HitsToColor(x));
 
         const renderer = this.heatmapGridRendererFactory(colors);
 
-        return new HeatmapExtension(renderer)
+        return new HeatmapExtension(renderer, releasers)
     }
 
     private HitsToColor(hits: number): Rgba {
@@ -74,6 +88,23 @@ export class HeatmapExtensionBuilder {
             this.highHitsColor[1] - this.lowHitsColor[1],
             this.highHitsColor[2] - this.lowHitsColor[2]
         ];
+    }
+
+    private DrawHitsOnCell(): TooltipReleaser[] {
+        const releasers: TooltipReleaser[] = [];
+
+        for (let row = 0; row < this.settings.MemoryLimit.Height; ++row) {
+            for (let column = 0; column < this.settings.MemoryLimit.Width; ++column) {
+                const hits = this.heatmap.Get({ column, row });
+                if (hits > 0) {
+                    const releaser = this.codeEditor.Tooltip(column, row, hits.toString(), TooltipPosition.LeftBottom);
+
+                    releasers.push(releaser);
+                }
+            }
+        }
+
+        return releasers;
     }
 }
 

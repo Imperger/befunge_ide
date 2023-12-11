@@ -50,11 +50,15 @@ export class CodeEditorService {
     }
 
     LoadExtension(extension: CodeEditorExtension): void {
+        this.extension.Unload();
+
         this.extension = extension;
         this.extension.ViewProjection = this.codeEditorRenderer.ViewProjection;
     }
 
     UnloadExtension(): void {
+        this.extension.Unload();
+
         this.extension = new EmptyExtension();
     }
 
@@ -164,7 +168,7 @@ export class CodeEditorService {
     Draw(): void {
         this.codeEditorRenderer.Draw();
 
-        this.extension?.Draw();
+        this.extension.Draw();
     }
 
     get Dimension(): EditorGridDimension {
