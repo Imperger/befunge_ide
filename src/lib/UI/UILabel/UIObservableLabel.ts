@@ -5,7 +5,7 @@ import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
 import { SymbolStyle, UILabel } from "./UILabel";
 
-import { Observable, ObservableController } from "@/lib/Observable";
+import { Observable, ObservableController, ObserverDetacher } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
 
 export interface GlyphAllocator {
@@ -26,6 +26,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     public dimension: Dimension = { width: 0, height: 0 };
 
+    private parentDetacher: ObserverDetacher | null = null;
+
     constructor(
         private position: Vec2,
         private text: string,
@@ -39,7 +41,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
         this.AdjustPoolMemory();
 
-        parent?.Observable.Attach(() => this.observable.Notify(this));
+        this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
     }
 
     StyleRange(begin: number, end: number, style: SymbolStyle): void {
@@ -144,6 +146,10 @@ export class UIObservableLabel implements UIComponent, UILabel {
         this.Uninitialize();
 
         this.parent?.RemoveChild(this);
+
+        if (this.parentDetacher !== null) {
+            this.parentDetacher();
+        }
     }
 
     private Uninitialize(): void {

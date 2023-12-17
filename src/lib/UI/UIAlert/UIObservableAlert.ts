@@ -5,7 +5,7 @@ import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
 import { Dimension, UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "./UIAlert";
 
-import { Observable, ObservableController } from "@/lib/Observable";
+import { Observable, ObservableController, ObserverDetacher } from "@/lib/Observable";
 import { Vec2 } from "@/lib/Primitives";
 
 export type DeleterCallback = (component: UIObservableAlert) => void;
@@ -17,6 +17,8 @@ export class UIObservableAlert implements UIComponent, UIAlert {
 
     private isDestroyed = false;
 
+    private parentDetacher: ObserverDetacher | null = null;
+
     constructor(
         private position: Vec2,
         private dimension: Dimension,
@@ -27,7 +29,7 @@ export class UIObservableAlert implements UIComponent, UIAlert {
         public Offset: number,
         private deleter: DeleterCallback,
         private parent: UIObservablePositioningGroup | null = null) {
-        parent?.Observable.Attach(() => this.observable.Notify(this));
+        this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
     }
 
     Destroy(): void {
@@ -38,6 +40,10 @@ export class UIObservableAlert implements UIComponent, UIAlert {
         this.parent?.RemoveChild(this);
 
         this.deleter(this);
+
+        if (this.parentDetacher !== null) {
+            this.parentDetacher();
+        }
     }
 
     get Observable(): Observable<UIObservableAlert> {

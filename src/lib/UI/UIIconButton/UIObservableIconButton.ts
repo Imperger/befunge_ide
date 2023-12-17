@@ -6,7 +6,7 @@ import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
 import { UIIconButton } from "./UIIconButton";
 
-import { Observable, ObservableController } from "@/lib/Observable";
+import { Observable, ObservableController, ObserverDetacher } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
 
 export type TouchCallback = (sender: UIIconButton) => void;
@@ -30,6 +30,8 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
 
     private originIconStyle!: UIIconStyle;
 
+    private parentDetacher: ObserverDetacher | null = null;
+
     constructor(
         private position: Vec2,
         private dimension: Dimension,
@@ -40,7 +42,7 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         public Offset: number,
         private deleter: DeleterCallback,
         private parent: UIObservablePositioningGroup | null = null) {
-        parent?.Observable.Attach(() => this.observable.Notify(this));
+        this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
     }
 
     get Observable(): Observable<UIObservableIconButton> {
@@ -156,6 +158,10 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
         this.deleter(this);
 
         this.Offset = UIObservableIconButton.UninitializedTag;
+
+        if (this.parentDetacher !== null) {
+            this.parentDetacher();
+        }
     }
 
     private Uninitialize(): void {
