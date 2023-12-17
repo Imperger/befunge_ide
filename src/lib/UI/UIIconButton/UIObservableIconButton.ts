@@ -127,6 +127,10 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     }
 
     set Disable(value: boolean) {
+        if (value === this.disabled) {
+            return;
+        }
+
         this.disabled = value;
 
         if (value) {
