@@ -11,5 +11,6 @@ export const InjectionToken = {
 
 
 export const UILabelRendererTargetName = {
-    Perspective: Symbol('UILabel perspective renderer')
+    Perspective: Symbol('UILabel perspective renderer'),
+    TextList: Symbol('UILabel for UITextList')
 }

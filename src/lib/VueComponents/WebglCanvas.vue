@@ -69,7 +69,7 @@ function SetupContext(): void {
     return;
   }
 
-  context = canvas.value.getContext('webgl2');
+  context = canvas.value.getContext('webgl2', { stencil: true });
 
   if (context === null) {
     console.error("Can't initialize webgl2 context");

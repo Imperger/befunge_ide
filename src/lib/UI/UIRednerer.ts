@@ -13,6 +13,8 @@ import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
 import { UILabel } from "./UILabel/UILabel";
 import { UILabelRenderer } from "./UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "./UIObservablePositioningGroup";
+import { UITextList } from "./UITextList/UITextList";
+import { UITextListRenderer } from "./UITextList/UITextListRenderer";
 
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
@@ -46,7 +48,14 @@ export interface UICreator {
         icon: UIAlertIconStyle,
         text: UIAlertText,
         style: UIAlertStyle,
-        parent: UIObservablePositioningGroup | null): UIAlert
+        parent: UIObservablePositioningGroup | null): UIAlert;
+
+    CreateTextList(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        text: string,
+        lineHeight: number,
+        parent: UIObservablePositioningGroup | null): UITextList;
 }
 
 @injectable()
@@ -55,8 +64,10 @@ export class UIRenderer implements UICreator {
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(UIIconButtonRenderer) private iconButtonRenderer: UIIconButtonRenderer,
         @inject(UIAlertRenderer) private alertRenderer: UIAlertRenderer,
-        @inject(UILabelRenderer) private labelsRenderer: UILabelRenderer) {
+        @inject(UILabelRenderer) private labelsRenderer: UILabelRenderer,
+        @inject(UITextListRenderer) private textListRenderer: UITextListRenderer) {
         this.alertRenderer.UIRenderer = this;
+        this.textListRenderer.UIRenderer =this;
     }
 
     CreateButton(position: Vec2,
@@ -85,6 +96,15 @@ export class UIRenderer implements UICreator {
         style: UIAlertStyle,
         parent: UIObservablePositioningGroup | null = null): UIAlert {
         return this.alertRenderer.Create(position, dimension, zIndex, icon, text, style, parent);
+    }
+
+    CreateTextList(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        text: string,
+        lineHeight: number,
+        parent: UIObservablePositioningGroup | null = null): UITextList {
+        return this.textListRenderer.Create(position, dimension, zIndex, text, lineHeight, parent);
     }
 
     Touch(e: MouseEvent): boolean {
@@ -146,12 +166,14 @@ export class UIRenderer implements UICreator {
         this.alertRenderer.Draw();
         this.iconButtonRenderer.Draw();
         this.labelsRenderer.Draw();
+        this.textListRenderer.Draw();
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {
         this.iconButtonRenderer.ViewProjection = projection;
         this.labelsRenderer.ViewProjection = projection;
         this.alertRenderer.ViewProjection = projection;
+        this.textListRenderer.ViewProjection = projection;
     }
 }
 

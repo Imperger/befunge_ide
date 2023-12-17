@@ -118,6 +118,10 @@ export class Debugger {
       .map(x => x.PC!);
   }
 
+  get Stack(): number[] {
+    return this.target?.Stack ?? [];
+  }
+
   private BreakpointReleaser(brk: BreakpointCondition): void {
     if (brk.PC) {
       const column = this.pcLocationBrk.get(brk.PC.Location.x);

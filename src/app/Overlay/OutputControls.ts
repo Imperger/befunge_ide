@@ -11,6 +11,7 @@ export class OutputControls {
         this.group = new UIObservablePositioningGroup({ x: 10, y: 100 }, { vertical: VerticalAnchor.Bottom });
 
         this.outputLabel = this.uiRenderer.CreateLabel({ x: 0, y: 0 }, 1, '', 64, this.group);
+        this.outputLabel.Scale = 0.5;
     }
 
     get Output(): string {

@@ -215,7 +215,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private DrawFrame(): void {
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
 
         this.codeEditor.Draw();
         this.perspectiveLabelRenderer.Draw();

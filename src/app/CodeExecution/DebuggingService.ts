@@ -94,6 +94,8 @@ export class DebuggingService {
         if (executionResult === null) {
             if (!debug.IsHalted) {
                 this.overlay.Snackbar.ShowWarning('Terminated due timeout');
+
+                this.overlay.StackControls.Stack = [];
             }
 
             this.debugMode = false;
@@ -117,6 +119,8 @@ export class DebuggingService {
                 }
             }
 
+            this.overlay.StackControls.Stack = debug.Stack;
+            this.overlay.StackControls.ScrollToTop();
             this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
         }
 
@@ -133,6 +137,8 @@ export class DebuggingService {
             this.codeEditor.HideAllTooltips();
 
             this.overlay.Snackbar.ShowSuccess(`Completed`);
+
+            this.overlay.StackControls.Stack = [];
         }
     }
 
@@ -144,6 +150,8 @@ export class DebuggingService {
         this.RestoreCellBreakpointsSelection();
 
         this.codeEditor.HideAllTooltips();
+
+        this.overlay.StackControls.Stack = [];
     }
 
     private DebugCodeAction(next: boolean): void {

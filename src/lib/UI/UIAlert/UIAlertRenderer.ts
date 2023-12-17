@@ -29,7 +29,7 @@ enum UIAlertIconComponent { X, Y, Z, fillR, fillG, fillB, iconR, iconG, iconB, U
 enum UIAlertPanelComponent { X, Y, Z, R, G, B };
 
 @injectable()
-class UIALertIconRenderer extends PrimitivesRenderer {
+class UIAlertIconRenderer extends PrimitivesRenderer {
     public readonly IndicesPerPrimitive = 6;
 
     public readonly AttributesPerComponent;
@@ -89,7 +89,7 @@ class UIALertIconRenderer extends PrimitivesRenderer {
 
 }
 
-Inversify.bind(UIALertIconRenderer).toSelf().inSingletonScope();
+Inversify.bind(UIAlertIconRenderer).toSelf().inSingletonScope();
 
 @injectable()
 export class UIAlertRenderer extends PrimitivesRenderer {
@@ -111,7 +111,7 @@ export class UIAlertRenderer extends PrimitivesRenderer {
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
-        @inject(UIALertIconRenderer) private alertIcon: UIALertIconRenderer,
+        @inject(UIAlertIconRenderer) private alertIcon: UIAlertIconRenderer,
         @inject(InjectionToken.IconAtlas) private iconAtlas: UIIconAtlas,
         @inject(InjectionToken.IconAtlasTexture) private iconAtlasTexture: WebGLTexture,
         @inject(AppSettings) private settings: AppSettings) {
