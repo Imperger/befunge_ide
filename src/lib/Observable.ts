@@ -22,9 +22,7 @@ export class ObservableController<T> implements Observable<T> {
 
         this.observers.push(descriptor);
 
-        return () => {
-            this.observers.splice(this.observers.findIndex(x => x.id, 1));
-        }
+        return () => this.observers.splice(this.observers.findIndex(x => x.id === descriptor.id), 1);
     }
 
     Notify(sender: T): void {
