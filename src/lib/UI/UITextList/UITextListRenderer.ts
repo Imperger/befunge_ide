@@ -183,11 +183,11 @@ export class UITextListRenderer extends PrimitivesRenderer {
             parent);
 
 
-        textList.Observable.Attach((component: UIObservableTextList) => this.UpdateAttributes(component))
-
         if (parent !== null) {
-            parent.Observable.Attach((_component: UIComponent) => this.UpdateAttributes(textList));
+            parent.AppendChild(textList);
         }
+
+        textList.Observable.Attach((component: UIObservableTextList) => this.UpdateAttributes(component))
 
         this.UpdateAttributes(textList);
 
@@ -224,7 +224,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
         );
 
         this.labelRenderer.Draw();
-        
+
         this.gl.disable(this.gl.STENCIL_TEST);
 
         this.borderRenderer.Draw();
