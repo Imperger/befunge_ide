@@ -262,4 +262,4 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
 Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetIsDefault();
 Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetNamed(UILabelRendererTargetName.Perspective);
-Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetNamed(UILabelRendererTargetName.TextList);
+Inversify.bind(UILabelRenderer).toSelf().inTransientScope().whenTargetNamed(UILabelRendererTargetName.Unique);

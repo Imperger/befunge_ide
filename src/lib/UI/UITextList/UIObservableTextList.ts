@@ -19,6 +19,8 @@ interface ScrollControls {
     scrollBottomButton: UIIconButton;
 }
 
+export type UIObservableTextListDeleter = () => void;
+
 export class UIObservableTextList implements UITextList {
     private scale = 1;
 
@@ -51,6 +53,7 @@ export class UIObservableTextList implements UITextList {
         public Offset: number,
         private labelRenderer: UILabelRenderer,
         private uiRenderer: UICreator,
+        private deleter: UIObservableTextListDeleter,
         private parent: UIObservablePositioningGroup | null
     ) {
         this.label = this.labelRenderer.Create(
@@ -64,6 +67,8 @@ export class UIObservableTextList implements UITextList {
             parent);
 
         this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
+
+        this.UpdateScrollControlsPresence();
     }
 
     get Position(): Vec2 {
@@ -176,6 +181,8 @@ export class UIObservableTextList implements UITextList {
         if (this.parentDetacher !== null) {
             this.parentDetacher();
         }
+
+        this.deleter();
     }
 
     private UpdateScrollControlsPresence(): void {
@@ -204,8 +211,8 @@ export class UIObservableTextList implements UITextList {
 
         return this.uiRenderer.CreateButton(
             {
-                x: this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - margin,
-                y: this.dimension.height - this.scrollButtonDimension.height - this.borderWidth - margin
+                x: this.Position.x + this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - margin,
+                y: this.Position.y + this.dimension.height - this.scrollButtonDimension.height - this.borderWidth - margin
             },
             this.scrollButtonDimension,
             1,
@@ -221,8 +228,8 @@ export class UIObservableTextList implements UITextList {
 
         return this.uiRenderer.CreateButton(
             {
-                x: this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - margin,
-                y: this.borderWidth + margin
+                x: this.Position.x + this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - margin,
+                y: this.Position.y + this.borderWidth + margin
             },
             this.scrollButtonDimension,
             1,
@@ -234,11 +241,11 @@ export class UIObservableTextList implements UITextList {
     }
 
     get MinScroll(): number {
-        return -this.label.Dimension.height + this.dimension.height;
+        return this.Position.y - this.label.Dimension.height + this.dimension.height;
     }
 
     get MaxScroll(): number {
-        return 0;
+        return this.Position.y;
     }
 
     private ScrollAligned(offset: number): void {

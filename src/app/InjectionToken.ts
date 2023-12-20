@@ -6,11 +6,12 @@ export const InjectionToken = {
     IconAtlasTexture: Symbol('Icon texture'),
     FontGlyphCollectionFactory: Symbol('Font glyph collection factory'),
     HeatmapGridRendererFactory: Symbol('Heatmap grid renderer factory'),
-    HeatmapExtensionFactory: Symbol('Heatmap extension factory')
+    HeatmapExtensionFactory: Symbol('Heatmap extension factory'),
+    UITextListRendererFactory: Symbol('UITetList renderer factory')
 };
 
 
 export const UILabelRendererTargetName = {
     Perspective: Symbol('UILabel perspective renderer'),
-    TextList: Symbol('UILabel for UITextList')
+    Unique: Symbol('UILabel unique')
 }

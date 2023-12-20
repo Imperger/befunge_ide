@@ -14,7 +14,7 @@ import { UILabel } from "./UILabel/UILabel";
 import { UILabelRenderer } from "./UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "./UIObservablePositioningGroup";
 import { UITextList } from "./UITextList/UITextList";
-import { UITextListRenderer } from "./UITextList/UITextListRenderer";
+import { UITextListRenderer, UITextListRendererFactory } from "./UITextList/UITextListRenderer";
 
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
@@ -60,14 +60,15 @@ export interface UICreator {
 
 @injectable()
 export class UIRenderer implements UICreator {
+    private uiTextListRenderers: UITextListRenderer[] = [];
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(UIIconButtonRenderer) private iconButtonRenderer: UIIconButtonRenderer,
         @inject(UIAlertRenderer) private alertRenderer: UIAlertRenderer,
         @inject(UILabelRenderer) private labelsRenderer: UILabelRenderer,
-        @inject(UITextListRenderer) private textListRenderer: UITextListRenderer) {
+        @inject(InjectionToken.UITextListRendererFactory) private uiTextListRendererFactory: UITextListRendererFactory) {
         this.alertRenderer.UIRenderer = this;
-        this.textListRenderer.UIRenderer =this;
     }
 
     CreateButton(position: Vec2,
@@ -104,7 +105,18 @@ export class UIRenderer implements UICreator {
         text: string,
         lineHeight: number,
         parent: UIObservablePositioningGroup | null = null): UITextList {
-        return this.textListRenderer.Create(position, dimension, zIndex, text, lineHeight, parent);
+        const renderer = this.uiTextListRendererFactory(this);
+
+        this.uiTextListRenderers.push(renderer);
+
+        return renderer.Create(
+            position,
+            dimension,
+            zIndex,
+            text,
+            lineHeight,
+            () => this.UIObservableTextListDeleter(renderer),
+            parent);
     }
 
     Touch(e: MouseEvent): boolean {
@@ -161,19 +173,23 @@ export class UIRenderer implements UICreator {
         return true;
     }
 
+    private UIObservableTextListDeleter(renderer: UITextListRenderer): void {
+        this.uiTextListRenderers.splice(this.uiTextListRenderers.findIndex(x => x === renderer), 1);
+    }
+
 
     Draw(): void {
         this.alertRenderer.Draw();
         this.iconButtonRenderer.Draw();
         this.labelsRenderer.Draw();
-        this.textListRenderer.Draw();
+        this.uiTextListRenderers.forEach(x => x.Draw());
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {
         this.iconButtonRenderer.ViewProjection = projection;
         this.labelsRenderer.ViewProjection = projection;
         this.alertRenderer.ViewProjection = projection;
-        this.textListRenderer.ViewProjection = projection;
+        this.uiTextListRenderers.forEach(x => x.ViewProjection = projection);
     }
 }
 

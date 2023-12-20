@@ -1,11 +1,11 @@
-import { inject, injectable, named } from "inversify";
+import { inject, injectable, interfaces, named } from "inversify";
 
-import { Dimension, UIComponent } from "../UIComponent";
+import { Dimension } from "../UIComponent";
 import { UILabelRenderer } from "../UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
-import { UICreator } from "../UIRednerer";
+import { UICreator, UIRenderer } from "../UIRednerer";
 
-import { UIObservableTextList } from "./UIObservableTextList";
+import { UIObservableTextList, UIObservableTextListDeleter } from "./UIObservableTextList";
 import { UITextList } from "./UITextList";
 import FTextListBorder from './UITextListBorder.frag'
 import VTextListBorder from './UITextListBorder.vert'
@@ -82,7 +82,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
     constructor(
         @inject(AppSettings) private settings: AppSettings,
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
-        @inject(UILabelRenderer) @named(UILabelRendererTargetName.TextList) private labelRenderer: UILabelRenderer) {
+        @inject(UILabelRenderer) @named(UILabelRendererTargetName.Unique) private labelRenderer: UILabelRenderer) {
 
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UITextListStencilComponent);
@@ -168,6 +168,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
         zIndex: number,
         text: string,
         lineHeight: number,
+        deleter: UIObservableTextListDeleter,
         parent: UIObservablePositioningGroup | null = null): UITextList {
 
         const textList = new UIObservableTextList(
@@ -180,6 +181,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
             this.vertexAttributesTracker.Allocate(),
             this.labelRenderer,
             this.UIRenderer,
+            deleter,
             parent);
 
 
@@ -225,6 +227,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
 
         this.labelRenderer.Draw();
 
+        this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
         this.gl.disable(this.gl.STENCIL_TEST);
 
         this.borderRenderer.Draw();
@@ -280,4 +283,15 @@ export class UITextListRenderer extends PrimitivesRenderer {
     }
 }
 
-Inversify.bind(UITextListRenderer).toSelf().inSingletonScope();
+Inversify.bind(UITextListRenderer).toSelf().inTransientScope();
+
+export type UITextListRendererFactory = (uiRenderer: UIRenderer) => UITextListRenderer;
+
+Inversify
+    .bind<interfaces.Factory<UITextListRendererFactory>>(InjectionToken.UITextListRendererFactory)
+    .toFactory<UITextListRenderer, [UIRenderer]>(ctx => (uiRenderer: UIRenderer) => {
+        const instance = ctx.container.get(UITextListRenderer);
+        instance.UIRenderer = uiRenderer;
+
+        return instance;
+    });

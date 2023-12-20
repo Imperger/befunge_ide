@@ -12,7 +12,7 @@ export class StackControls {
         this.group = new UIObservablePositioningGroup(
             {
                 x: 10,
-                y: 650  
+                y: 650
             },
             { vertical: VerticalAnchor.Top }
         );
