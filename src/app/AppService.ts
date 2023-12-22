@@ -210,7 +210,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private Start(): void {
-        this.overlay.OutputControls.Output = 'Hello (d) WOrld \nTerminated due timeout\n1'
         requestAnimationFrame(() => this.DrawFrame())
     }
 
