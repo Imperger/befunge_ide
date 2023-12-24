@@ -181,7 +181,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         if (this.overlay.DebugControls.DebugMode) {
             this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
         } else if (this.overlay.DebugControls.IsHeatmapShown) {
-            this.overlay.Snackbar.ShowInformation('Editing is disabled when heatmap is active');
+            this.overlay.Snackbar.ShowInformation('Editing is disabled while heatmap is active');
         } else {
             const prevEditionCell = { ...this.codeEditor.EditionCell };
 
