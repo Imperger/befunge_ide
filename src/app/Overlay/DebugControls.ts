@@ -146,6 +146,10 @@ export class DebugControls {
         this.debugMode = mode;
     }
 
+    get IsHeatmapShown(): boolean {
+        return this.isHeatmapShown;
+    }
+
     get Execute(): Observable<void> {
         return this.executeObservable;
     }

@@ -180,6 +180,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     OnCellInput(e: KeyboardEvent): void {
         if (this.overlay.DebugControls.DebugMode) {
             this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
+        } else if (this.overlay.DebugControls.IsHeatmapShown) {
+            this.overlay.Snackbar.ShowInformation('Editing is disabled when heatmap is active');
         } else {
             const prevEditionCell = { ...this.codeEditor.EditionCell };
 
