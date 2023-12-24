@@ -248,6 +248,12 @@ export class UITextListRenderer extends PrimitivesRenderer {
         this.uiRenderer = renderer;
     }
 
+    Dispose(): void {
+        this.borderRenderer.Dispose();
+
+        super.Dispose();
+    }
+
     private UpdateAttributes(component: UIObservableTextList): void {
         this.UpdateStencilAttributes(component);
         this.UpdateBorderAttributes(component);
