@@ -60,6 +60,8 @@ export interface UICreator {
 
 @injectable()
 export class UIRenderer implements UICreator {
+    private viewProjection: Mat4 | Float32Array | null = null;
+
     private uiTextListRenderers: UITextListRenderer[] = [];
 
     constructor(
@@ -106,6 +108,10 @@ export class UIRenderer implements UICreator {
         lineHeight: number,
         parent: UIObservablePositioningGroup | null = null): UITextList {
         const renderer = this.uiTextListRendererFactory(this);
+
+        if (this.viewProjection !== null) {
+            renderer.ViewProjection = this.viewProjection;
+        }
 
         this.uiTextListRenderers.push(renderer);
 
@@ -186,6 +192,8 @@ export class UIRenderer implements UICreator {
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {
+        this.viewProjection = projection;
+
         this.iconButtonRenderer.ViewProjection = projection;
         this.labelsRenderer.ViewProjection = projection;
         this.alertRenderer.ViewProjection = projection;
