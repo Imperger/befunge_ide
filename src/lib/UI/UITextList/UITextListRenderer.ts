@@ -3,7 +3,7 @@ import { inject, injectable, interfaces, named } from "inversify";
 import { Dimension } from "../UIComponent";
 import { UILabelRenderer } from "../UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
-import { UICreator, UIRenderer } from "../UIRednerer";
+import { UICreator, UIRenderer } from "../UIRenderer";
 
 import { UIObservableTextList, UIObservableTextListDeleter } from "./UIObservableTextList";
 import { UITextList } from "./UITextList";

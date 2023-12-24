@@ -7,7 +7,7 @@ import { Rgb } from "@/lib/Primitives";
 import { UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "@/lib/UI/UIAlert/UIAlert";
 import { UIIcon } from "@/lib/UI/UIIcon";
 import { UIObservablePositioningGroup } from "@/lib/UI/UIObservablePositioningGroup";
-import { UIRenderer } from "@/lib/UI/UIRednerer";
+import { UIRenderer } from "@/lib/UI/UIRenderer";
 
 @injectable()
 export class SnackbarControls {

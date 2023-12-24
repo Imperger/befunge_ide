@@ -5,7 +5,7 @@ import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
 import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
 import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
-import { UIRenderer } from "@/lib/UI/UIRednerer";
+import { UIRenderer } from "@/lib/UI/UIRenderer";
 
 interface EditDirection {
     group: UIObservablePositioningGroup;

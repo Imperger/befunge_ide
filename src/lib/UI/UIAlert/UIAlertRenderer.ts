@@ -4,7 +4,7 @@ import { UIIconAtlas } from '../UIIcon';
 import { Dimension } from '../UIIconButton/UIIconButton';
 import { UILabel } from '../UILabel/UILabel';
 import { UIObservablePositioningGroup } from '../UIObservablePositioningGroup';
-import { UICreator } from '../UIRednerer';
+import { UICreator } from '../UIRenderer';
 
 import { UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from './UIAlert';
 import FUIALertIcon from './UIALertIcon.frag';

@@ -6,7 +6,7 @@ import { UIButtonStyle, UIIconButton } from "../UIIconButton/UIIconButton";
 import { UILabel } from "../UILabel/UILabel";
 import { UILabelRenderer } from "../UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
-import { UICreator } from "../UIRednerer";
+import { UICreator } from "../UIRenderer";
 
 import { UITextList } from "./UITextList";
 

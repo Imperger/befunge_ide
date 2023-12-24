@@ -1,5 +1,5 @@
 import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
-import { UIRenderer } from "@/lib/UI/UIRednerer";
+import { UIRenderer } from "@/lib/UI/UIRenderer";
 import { UITextList } from "@/lib/UI/UITextList/UITextList";
 
 export class OutputControls {

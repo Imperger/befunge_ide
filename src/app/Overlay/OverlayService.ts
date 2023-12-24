@@ -13,7 +13,7 @@ import { StackControls } from "./StackControls";
 
 import { Inversify } from "@/Inversify";
 import { AsyncConstructable, AsyncConstructorActivator } from "@/lib/DI/AsyncConstructorActivator";
-import { UIRenderer } from "@/lib/UI/UIRednerer";
+import { UIRenderer } from "@/lib/UI/UIRenderer";
 
 @injectable()
 export class OverlayService implements AsyncConstructable {
