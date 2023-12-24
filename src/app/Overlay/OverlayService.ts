@@ -13,7 +13,6 @@ import { StackControls } from "./StackControls";
 
 import { Inversify } from "@/Inversify";
 import { AsyncConstructable, AsyncConstructorActivator } from "@/lib/DI/AsyncConstructorActivator";
-import { UILabel } from "@/lib/UI/UILabel/UILabel";
 import { UIRenderer } from "@/lib/UI/UIRednerer";
 
 @injectable()
@@ -21,8 +20,6 @@ export class OverlayService implements AsyncConstructable {
     private settings: AppSettings;
 
     private stickyProjection!: mat4;
-
-    private outputLabel!: UILabel;
 
     private editDirectionControls!: EditDirectionControls;
 
