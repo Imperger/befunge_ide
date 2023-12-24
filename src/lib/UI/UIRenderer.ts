@@ -136,7 +136,7 @@ export class UIRenderer implements UICreator {
 
     private TouchButtons(x: number, y: number): boolean {
         const intersected = this.iconButtonRenderer.IconButtons
-            .filter(btn => !btn.Disable && Intersection.AABBRectanglePoint(
+            .filter(btn => Intersection.AABBRectanglePoint(
                 { x: btn.AbsolutePosition.x, y: btn.AbsolutePosition.y, width: btn.Dimension.width, height: btn.Dimension.height },
                 { x, y }));
 

@@ -147,7 +147,9 @@ export class UIObservableIconButton implements UIComponent, UIIconButton {
     }
 
     Touch(): void {
-        this.touchCallback(this);
+        if (!this.disabled) {
+            this.touchCallback(this);
+        }
     }
 
     Destroy(): void {
