@@ -76,7 +76,7 @@ export class HeatmapExtensionBuilder {
             this.lowHitsColor[0] + this.hitsColorsDiff[0] * t,
             this.lowHitsColor[1] + this.hitsColorsDiff[1] * t,
             this.lowHitsColor[2] + this.hitsColorsDiff[2] * t,
-            0.7
+            0.8
         ]
     }
 
