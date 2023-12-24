@@ -33,6 +33,6 @@ export class OutputControls {
 
     private NewLineFormatter(str: string): string {
         return [...str]
-            .reduce((out, char, n) => out + `${char}${(n % this.charactersPerLine === 0 ? '\n' : '')}`, '');
+            .reduce((out, char, n) => out + `${char}${(n !== 0 && n % this.charactersPerLine === 0 ? '\n' : '')}`, '');
     }
 }
