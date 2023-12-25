@@ -15,7 +15,7 @@ export class SnackbarControls {
 
     private snackbar: UIAlert | null = null;
 
-    private widthPercent = 0.25;
+    private widthPercent = 0.40;
 
     private contentColor: Rgb = [0.9, 0.9, 0.9];
 
