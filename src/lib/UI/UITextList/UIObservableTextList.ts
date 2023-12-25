@@ -113,6 +113,12 @@ export class UIObservableTextList implements UITextList {
     set Text(text: string) {
         this.label.Text = text;
 
+        this.scroll = 0;
+        this.label.Position = {
+            x: this.position.x + this.borderWidth,
+            y: this.position.y
+        }
+
         this.observable.Notify(this);
         this.UpdateScrollControlsPresence();
     }
