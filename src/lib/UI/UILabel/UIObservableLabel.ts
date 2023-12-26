@@ -251,12 +251,6 @@ export class UIObservableLabel implements UIComponent, UILabel {
                 offsetStartIdx = nonPrintableOffsetIdx + 1;
             }
         }
-
-        for (let n = 0; n < this.text.length; ++n) {
-            if (!UIObservableLabel.NonPrintableSymbols.includes(this.text[n]) && this.offsets[n] === UIObservableLabel.NonPrintableOffset)
-                // eslint-disable-next-line no-debugger
-                debugger;
-        }
     }
 
     private ExtendSymbolStyles(): void {
