@@ -26,6 +26,11 @@ enum UILabelComponent { X, Y, Z, R, G, B, Ux, Uy };
 
 type Offset = number;
 
+interface SplitedLine {
+    startIdx: number;
+    text: string;
+}
+
 /**
  * Note: In PrimitivesRenderer::PrimitiveAttributes method the index parameter means an individual symbol location but not a whole label component.
  *       It's because a label has dynamic attribute count that depends on text length.
@@ -194,50 +199,47 @@ export class UILabelRenderer extends PrimitivesRenderer {
         const avgBaseOffset = UILabelRenderer.AverageBaseOffset(component, fontGlyphCollection);
         const startBaseOffset = this.BaseStartOffset(component);
 
-        for (let n = 0, { x, y } = { x: component.AbsolutePosition.x, y: component.AbsolutePosition.y + startBaseOffset - avgBaseOffset }; n < component.Text.length; ++n) {
-            const symbol = component.Text[n];
-            const style = component.Style[n];
-            const offset = component.Offsets[n];
+        let { x, y } = {
+            x: component.AbsolutePosition.x,
+            y: component.AbsolutePosition.y + startBaseOffset - avgBaseOffset
+        };
 
-            if (symbol === '\n') {
-                x = component.AbsolutePosition.x;
-                y -= component.LineHeight * component.Scale;
+        for (const line of UILabelRenderer.SplitString(component.Text)) {
+            for (let n = 0; n < line.text.length; ++n) {
+                const symbol = line.text[n];
+                const style = component.Style[line.startIdx + n];
+                const offset = component.Offsets[line.startIdx + n];
 
-                /**
-                 * FIXME Since we allocate memory even for new line symbol we need to zeroed it. 
-                 * In future UIIbservableLabel should not allocate memory for non printable symbols.
-                 */
-                const emptyAttrs = new Array(this.AttributesPerComponent).fill(0);
-                this.UpdateComponentAttributes(emptyAttrs, offset * this.AttributesPerComponent);
-                continue;
+                const glyphBlueprint = UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection);
+
+                height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + glyphBlueprint.height);
+
+                const attributes = PrimitiveBuilder.AABBRectangle(
+                    { x, y: y + glyphBlueprint.baselineOffset.y * component.Scale },
+                    {
+                        width: glyphBlueprint.width * component.Scale,
+                        height: glyphBlueprint.height * component.Scale
+                    },
+                    [
+                        [this.settings.ZFar - component.ZIndex - this.zFarIncluded],
+                        style.color,
+                        {
+                            LeftBottom: [glyphBlueprint.uv.A.x, glyphBlueprint.uv.B.y],
+                            LeftTop: [glyphBlueprint.uv.A.x, glyphBlueprint.uv.A.y],
+                            RightTop: [glyphBlueprint.uv.B.x, glyphBlueprint.uv.A.y],
+                            RightBottom: [glyphBlueprint.uv.B.x, glyphBlueprint.uv.B.y]
+                        }
+                    ]);
+
+                this.UpdateComponentAttributes(attributes, offset * this.AttributesPerComponent);
+
+                x += glyphBlueprint.width * component.Scale;
+
+                width = Math.max(width, x - component.AbsolutePosition.x);
             }
 
-            const glyphBlueprint = UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection);
-
-            height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + glyphBlueprint.height);
-
-            const attributes = PrimitiveBuilder.AABBRectangle(
-                { x, y: y + glyphBlueprint.baselineOffset.y * component.Scale },
-                {
-                    width: glyphBlueprint.width * component.Scale,
-                    height: glyphBlueprint.height * component.Scale
-                },
-                [
-                    [this.settings.ZFar - component.ZIndex - this.zFarIncluded],
-                    style.color,
-                    {
-                        LeftBottom: [glyphBlueprint.uv.A.x, glyphBlueprint.uv.B.y],
-                        LeftTop: [glyphBlueprint.uv.A.x, glyphBlueprint.uv.A.y],
-                        RightTop: [glyphBlueprint.uv.B.x, glyphBlueprint.uv.A.y],
-                        RightBottom: [glyphBlueprint.uv.B.x, glyphBlueprint.uv.B.y]
-                    }
-                ]);
-
-            this.UpdateComponentAttributes(attributes, offset * this.AttributesPerComponent);
-
-            x += glyphBlueprint.width * component.Scale;
-
-            width = Math.max(width, x - component.AbsolutePosition.x);
+            x = component.AbsolutePosition.x;
+            y -= component.LineHeight * component.Scale;
         }
 
         component.UpdateTextDimension({ width, height });
@@ -254,10 +256,16 @@ export class UILabelRenderer extends PrimitivesRenderer {
             .CatchFn(SelfBind(fontGlyphCollection, 'Lookup'), '?');
     }
 
+    private static SplitString(str: string): SplitedLine[] {
+        return [...str.matchAll(/(.+)/g)]
+            .map(x => ({ text: x[0], startIdx: x.index ?? -1 }));
+    }
+
     private BaseStartOffset(component: UIObservableLabel): number {
-        return [...component.Text]
+        return [...component.Text.trimEnd()]
             .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight;
     }
+
 }
 
 Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetIsDefault();

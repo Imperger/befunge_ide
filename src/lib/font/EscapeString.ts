@@ -5,6 +5,8 @@ export function EscapeString(str: string): string {
 function Replacer(symbol: string): string {
     if (symbol === '\n') {
         return '\\n';
+    } else if (symbol === '\r') {
+        return '\\r';
     } else {
         return symbol;
     }

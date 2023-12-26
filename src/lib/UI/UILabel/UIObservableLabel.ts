@@ -14,6 +14,10 @@ export interface GlyphAllocator {
 }
 
 export class UIObservableLabel implements UIComponent, UILabel {
+    public static readonly NonPrintableOffset = -1;
+
+    private static readonly NonPrintableSymbols = ['\r', '\n'];
+
     private static DefaultSymbolStyle = { color: [0, 0, 0] as Rgb };
 
     private scale = 1;
@@ -142,6 +146,19 @@ export class UIObservableLabel implements UIComponent, UILabel {
         return this.observable;
     }
 
+    private get PrintableTextLength(): number {
+        return this.text
+            .split('')
+            .filter(char => !UIObservableLabel.NonPrintableSymbols.includes(char))
+            .length;
+    }
+
+    private get PrintableOffsetLength(): number {
+        return this.offsets
+            .filter(x => x !== UIObservableLabel.NonPrintableOffset)
+            .length;
+    }
+
     Destroy(): void {
         this.Uninitialize();
 
@@ -157,7 +174,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
     }
 
     private ExtendPoolMemory(): void {
-        let extraMemoryNeeded = this.text.length - this.offsets.length;
+        let extraMemoryNeeded = this.PrintableTextLength - this.PrintableOffsetLength;
+
         while (extraMemoryNeeded-- > 0) {
             const offset = this.glyphAllocator.Allocate(this);
             this.offsets.push(offset);
@@ -165,22 +183,79 @@ export class UIObservableLabel implements UIComponent, UILabel {
     }
 
     private ShrinkPoolMemory(): void {
-        const excessOffsets = this.offsets.length - this.text.length;
+        const excessOffsets = this.PrintableOffsetLength - this.PrintableTextLength;
 
-        for (let n = 1; n <= excessOffsets; ++n) {
-            const offset = this.offsets[this.offsets.length - n];
+        for (let n = this.offsets.length - 1, released = 0; released < excessOffsets; --n) {
+            const offset = this.offsets[n];
 
-            this.glyphAllocator.Free(offset);
+            if (offset !== UIObservableLabel.NonPrintableOffset) {
+                this.glyphAllocator.Free(offset);
+                this.offsets.splice(n, 1);
+
+                ++released;
+            }
         }
-
-        this.offsets.splice(this.offsets.length - excessOffsets, excessOffsets);
     }
 
     private AdjustPoolMemory(): void {
-        if (this.text.length > this.offsets.length) {
+        if (this.PrintableTextLength > this.PrintableOffsetLength) {
             this.ExtendPoolMemory();
-        } else if (this.text.length < this.offsets.length) {
+        } else if (this.PrintableTextLength < this.PrintableOffsetLength) {
             this.ShrinkPoolMemory();
+        }
+
+        if (this.text.length > this.offsets.length) {
+            this.AddExtraNonPrintableOffsets();
+        } else if (this.offsets.length > this.text.length) {
+            this.RemoveExcessNonPrintableOffsets();
+        }
+
+        this.AdjustNonPrintableOffsets();
+    }
+
+    private AddExtraNonPrintableOffsets(): void {
+        let extraNonPrintableOffsets = this.text.length - this.offsets.length;
+
+        while (extraNonPrintableOffsets-- > 0) {
+            this.offsets.push(UIObservableLabel.NonPrintableOffset);
+        }
+    }
+
+    private RemoveExcessNonPrintableOffsets(): void {
+        const excessOffsets = this.offsets.length - this.text.length;
+
+        for (let n = this.offsets.length - 1, removed = 0; removed < excessOffsets; --n) {
+            const offset = this.offsets[n];
+
+            if (offset === UIObservableLabel.NonPrintableOffset) {
+                this.offsets.splice(n, 1);
+
+                ++removed;
+            }
+        }
+    }
+
+    private AdjustNonPrintableOffsets(): void {
+        for (let charIdx = 0, offsetStartIdx = 0; charIdx < this.text.length; ++charIdx) {
+            const symbol = this.text[charIdx];
+            const offset = this.offsets[charIdx];
+
+            if (UIObservableLabel.NonPrintableSymbols.includes(symbol) && offset !== UIObservableLabel.NonPrintableOffset) {
+                const nonPrintableOffsetIdx = this.offsets
+                    .slice(offsetStartIdx)
+                    .findIndex((x, n) => x === UIObservableLabel.NonPrintableOffset && !UIObservableLabel.NonPrintableSymbols.includes(this.text[offsetStartIdx + n])) + offsetStartIdx;
+
+                this.offsets[charIdx] = UIObservableLabel.NonPrintableOffset;
+                this.offsets[nonPrintableOffsetIdx] = offset;
+
+                offsetStartIdx = nonPrintableOffsetIdx + 1;
+            }
+        }
+
+        for (let n = 0; n < this.text.length; ++n) {
+            if (!UIObservableLabel.NonPrintableSymbols.includes(this.text[n]) && this.offsets[n] === UIObservableLabel.NonPrintableOffset)
+                // eslint-disable-next-line no-debugger
+                debugger;
         }
     }
 
