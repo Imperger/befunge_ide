@@ -61,6 +61,7 @@ export class DebuggingService {
     private RunNext(): void {
         if (!this.debugMode) {
             this.befungeToolbox.Reset(this.settings.MemoryLimit, this.editorSourceCode.Clone());
+            this.befungeToolbox.Interpreter.SetInput(this.overlay.InputControls.Text);
             this.befungeToolbox.Interpreter.AddMemoryWriteInterceptor((ptr: Pointer, value: number) => this.OnMemoryWrite(ptr, value));
 
             this.UploadBreakpointsToDebugger();

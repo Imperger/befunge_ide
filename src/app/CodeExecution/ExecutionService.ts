@@ -21,6 +21,8 @@ export class ExecutionService {
     private Execute(): void {
         this.befungeToolbox.Reset(this.settings.MemoryLimit, this.editorSourceCode.Clone());
 
+        this.befungeToolbox.Interpreter.SetInput(this.overlay.InputControls.Text);
+
         try {
             if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
                 this.overlay.Snackbar.ShowSuccess(`Ok\nInstructions executed: ${this.befungeToolbox.Interpreter.InstructionsExecuted}`);

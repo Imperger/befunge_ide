@@ -170,7 +170,7 @@ export class UIObservableTextList implements UITextList {
         return this.observable;
     }
 
-    get IsContentOverflow(): boolean {
+    private get IsContentOverflow(): boolean {
         return this.label.Dimension.height > this.dimension.height;
     }
 

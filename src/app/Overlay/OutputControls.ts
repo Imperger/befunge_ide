@@ -31,6 +31,10 @@ export class OutputControls {
         this.outputTextList.ScrollToTop();
     }
 
+    Resize(): void {
+        this.group.Resize();
+    }
+
     private NewLineFormatter(str: string): string {
         return [...str]
             .reduce((out, char, n) => out + `${char}${(n !== 0 && n % this.charactersPerLine === 0 ? '\n' : '')}`, '');

@@ -5,8 +5,11 @@ import { Intersection } from "../math/Intersection";
 import { Vec2 } from "../Primitives";
 import { Mat4 } from "../renderer/ShaderProgram";
 
+import { InputReceiver } from "./InputReceiver";
 import { Dimension, UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "./UIAlert/UIAlert";
 import { UIAlertRenderer } from "./UIAlert/UIAlertRenderer";
+import { UIEditableTextList } from "./UIEditableTextList/UIEditableTextList";
+import { UIEditableTextListRenderer, UIEditableTextListRendererFactory } from "./UIEditableTextList/UIEditableTextListRenderer";
 import { UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
 import { UIIconButtonRenderer } from "./UIIconButton/UIIconButtonRenderer";
 import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
@@ -56,6 +59,18 @@ export interface UICreator {
         text: string,
         lineHeight: number,
         parent: UIObservablePositioningGroup | null): UITextList;
+
+    CreateEditableTextList(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        text: string,
+        lineHeight: number,
+        parent: UIObservablePositioningGroup | null): UIEditableTextList;
+}
+
+interface UIEditableTextListDescriptor {
+    renderer: UIEditableTextListRenderer;
+    editableTextList: UIEditableTextList;
 }
 
 @injectable()
@@ -64,12 +79,15 @@ export class UIRenderer implements UICreator {
 
     private uiTextListRenderers: UITextListRenderer[] = [];
 
+    private uiEditableTextLists: UIEditableTextListDescriptor[] = [];
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(UIIconButtonRenderer) private iconButtonRenderer: UIIconButtonRenderer,
         @inject(UIAlertRenderer) private alertRenderer: UIAlertRenderer,
         @inject(UILabelRenderer) private labelsRenderer: UILabelRenderer,
-        @inject(InjectionToken.UITextListRendererFactory) private uiTextListRendererFactory: UITextListRendererFactory) {
+        @inject(InjectionToken.UITextListRendererFactory) private uiTextListRendererFactory: UITextListRendererFactory,
+        @inject(InjectionToken.UIEditableTextListRendererFactory) private uiEditableTextListRendererFactory: UIEditableTextListRendererFactory) {
         this.alertRenderer.UIRenderer = this;
     }
 
@@ -125,9 +143,45 @@ export class UIRenderer implements UICreator {
             parent);
     }
 
-    Touch(e: MouseEvent): boolean {
+    CreateEditableTextList(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        text: string,
+        lineHeight: number,
+        parent: UIObservablePositioningGroup | null = null): UIEditableTextList {
+        const renderer = this.uiEditableTextListRendererFactory(this);
+
+        if (this.viewProjection !== null) {
+            renderer.ViewProjection = this.viewProjection;
+        }
+
+
+        const descriptor: UIEditableTextListDescriptor = { renderer } as UIEditableTextListDescriptor;
+
+        const editableTextList = renderer.Create(
+            position,
+            dimension,
+            zIndex,
+            text,
+            lineHeight,
+            () => this.UIObservableEditableTextListDeleter(descriptor),
+            parent);
+
+        descriptor.editableTextList = editableTextList;
+
+        this.uiEditableTextLists.push(descriptor);
+
+        return editableTextList;
+    }
+
+    Touch(e: MouseEvent): InputReceiver | boolean {
         const x = e.offsetX;
         const y = this.gl.canvas.height - e.offsetY;
+
+        const focusedEditableTextList = this.TouchEditableTextList(x, y);
+        if (focusedEditableTextList !== null) {
+            return focusedEditableTextList;
+        }
 
         return this.TouchAlerts(x, y) ||
             this.TouchButtons(x, y) ||
@@ -179,16 +233,43 @@ export class UIRenderer implements UICreator {
         return true;
     }
 
+    private TouchEditableTextList(x: number, y: number): UIEditableTextList | null {
+        const intersected = this.uiEditableTextLists
+            .filter(desc => Intersection.AABBRectanglePoint(
+                {
+                    x: desc.editableTextList.AbsolutePosition.x,
+                    y: desc.editableTextList.AbsolutePosition.y,
+                    width: desc.editableTextList.Dimension.width,
+                    height: desc.editableTextList.Dimension.height
+                },
+                { x, y }));
+
+
+        if (intersected.length === 0) {
+            return null;
+        }
+
+        return ArrayHelper
+            .Max(
+                intersected,
+                (a: UIEditableTextListDescriptor, b: UIEditableTextListDescriptor) => a.editableTextList.ZIndex < b.editableTextList.ZIndex)
+            .editableTextList;
+    }
+
     private UIObservableTextListDeleter(renderer: UITextListRenderer): void {
         this.uiTextListRenderers.splice(this.uiTextListRenderers.findIndex(x => x === renderer), 1);
     }
 
+    private UIObservableEditableTextListDeleter(descriptor: UIEditableTextListDescriptor): void {
+        this.uiEditableTextLists.splice(this.uiEditableTextLists.findIndex(x => x === descriptor), 1);
+    }
 
     Draw(): void {
         this.alertRenderer.Draw();
         this.iconButtonRenderer.Draw();
         this.labelsRenderer.Draw();
         this.uiTextListRenderers.forEach(x => x.Draw());
+        this.uiEditableTextLists.forEach(x => x.renderer.Draw());
     }
 
     set ViewProjection(projection: Mat4 | Float32Array) {
@@ -198,6 +279,7 @@ export class UIRenderer implements UICreator {
         this.labelsRenderer.ViewProjection = projection;
         this.alertRenderer.ViewProjection = projection;
         this.uiTextListRenderers.forEach(x => x.ViewProjection = projection);
+        this.uiEditableTextLists.forEach(x => x.renderer.ViewProjection = projection);
     }
 }
 

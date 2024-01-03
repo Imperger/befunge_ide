@@ -7,12 +7,14 @@ import { InjectionToken } from "../InjectionToken";
 import { DebugControls } from "./DebugControls";
 import { EditDirectionControls } from "./EditDirectionControls";
 import { FileControls } from "./FileControls";
+import { InputControls } from "./InputControls";
 import { OutputControls } from "./OutputControls";
 import { SnackbarControls } from "./SnackbarControls";
 import { StackControls } from "./StackControls";
 
 import { Inversify } from "@/Inversify";
 import { AsyncConstructable, AsyncConstructorActivator } from "@/lib/DI/AsyncConstructorActivator";
+import { InputReceiver } from "@/lib/UI/InputReceiver";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 
 @injectable()
@@ -24,6 +26,8 @@ export class OverlayService implements AsyncConstructable {
     private editDirectionControls!: EditDirectionControls;
 
     private debugControls!: DebugControls;
+
+    private inputControls!: InputControls;
 
     private outputControls!: OutputControls;
 
@@ -44,6 +48,7 @@ export class OverlayService implements AsyncConstructable {
     async AsyncConstructor(): Promise<void> {
         this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
         this.debugControls = new DebugControls(this.uiRenderer);
+        this.inputControls = new InputControls(this.uiRenderer);
         this.outputControls = new OutputControls(this.uiRenderer);
         this.fileControls = new FileControls(this.uiRenderer);
         this.stackControls = new StackControls(this.uiRenderer);
@@ -55,6 +60,10 @@ export class OverlayService implements AsyncConstructable {
 
     get DebugControls(): DebugControls {
         return this.debugControls;
+    }
+
+    get InputControls(): InputControls {
+        return this.inputControls;
     }
 
     get OutputControls(): OutputControls {
@@ -82,9 +91,11 @@ export class OverlayService implements AsyncConstructable {
         this.debugControls.Resize();
         this.fileControls.Resize();
         this.stackControls.Resize();
+        this.inputControls.Resize();
+        this.outputControls.Resize();
     }
 
-    Touch(e: MouseEvent): boolean {
+    Touch(e: MouseEvent): InputReceiver | boolean {
         return this.uiRenderer.Touch(e);
     }
 

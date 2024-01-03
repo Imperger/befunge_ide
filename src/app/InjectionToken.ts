@@ -7,7 +7,9 @@ export const InjectionToken = {
     FontGlyphCollectionFactory: Symbol('Font glyph collection factory'),
     HeatmapGridRendererFactory: Symbol('Heatmap grid renderer factory'),
     HeatmapExtensionFactory: Symbol('Heatmap extension factory'),
-    UITextListRendererFactory: Symbol('UITetList renderer factory')
+    UITextListRendererFactory: Symbol('UITetList renderer factory'),
+    CodeEditorServiceInputReceiverFactory: Symbol('CodeEditorServiceInputReceiver factory'),
+    UIEditableTextListRendererFactory: Symbol('UIEditableTextListRenderer factory')
 };
 
 

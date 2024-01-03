@@ -5,6 +5,7 @@ import { inject, injectable, named } from 'inversify';
 import { AppEventTransformer } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
+import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
 import { DebugRenderer } from './DebugRenderer';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
@@ -18,6 +19,7 @@ import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncCon
 import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
 import { Camera } from '@/lib/renderer/Camera';
+import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 
 
@@ -32,6 +34,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private projection!: mat4;
     private camera: mat4;
 
+    private inFocus: InputReceiver;
+
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
@@ -42,7 +46,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(CodeExecutionService) private codeExecutionService: CodeExecutionService,
-        @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer) {
+        @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer,
+        @inject(InjectionToken.CodeEditorServiceInputReceiverFactory) private codeEditorServiceInputReceiverFactory: CodeEditorServiceInputReceiverFactory) {
         super();
 
         this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
@@ -55,6 +60,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.ViewProjection = this.ViewProjection;
 
         this.editorSourceCode.Initialize(ArrayMemory, this.settings.MemoryLimit);
+
+        this.inFocus = this.codeEditorServiceInputReceiverFactory();
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
@@ -139,12 +146,17 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     OnSelect(e: MouseEvent): void {
-        if (!this.overlay.Touch(e)) {
+        const touchResult = this.overlay.Touch(e);
+
+        if (touchResult === false) {
+            this.inFocus = this.codeEditorServiceInputReceiverFactory();
             const prevEditionCell = { ...this.codeEditor.EditionCell };
 
             this.codeEditor.Touch(e);
 
             this.codeExecutionService.Debugging.OnSelect(prevEditionCell);
+        } else if (IsInputReceiver(touchResult)) {
+            this.inFocus = touchResult;
         }
 
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
@@ -177,18 +189,21 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
-    OnCellInput(e: KeyboardEvent): void {
-        if (this.overlay.DebugControls.DebugMode) {
+    OnKeyDown(e: KeyboardEvent): void {
+        this.inFocus.OnInput(e);
+    }
+
+    OnCellInput(_e: KeyboardEvent): void {
+        /* if (this.overlay.DebugControls.DebugMode) {
             this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
         } else if (this.overlay.DebugControls.IsHeatmapShown) {
             this.overlay.Snackbar.ShowInformation('Editing is disabled while heatmap is active');
         } else {
             const prevEditionCell = { ...this.codeEditor.EditionCell };
-
             this.codeEditor.CellInput(e);
 
             this.codeExecutionService.Debugging.OnCellInput(prevEditionCell);
-        }
+        } */
     }
 
     private BuildProjection(): void {
@@ -212,7 +227,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private Start(): void {
-        requestAnimationFrame(() => this.DrawFrame())
+        requestAnimationFrame(() => this.DrawFrame());
     }
 
     private DrawFrame(): void {
