@@ -7,12 +7,26 @@ export class IOPort {
     this.input.push(...data);
   }
 
-  InputRead(): string {
+  InputReadCharacter(): string {
     if (this.input.length === 0) {
       throw new Error('Failed to read from IO port');
     }
 
     return this.input.shift()!;
+  }
+
+  InputReadNumber(): number {
+    let numberEnd = 0;
+    for (
+      let char = this.input[numberEnd];
+      numberEnd < this.input.length && char >= '0' && char <= '9';
+      ++numberEnd);
+
+    if (numberEnd === 0) {
+      throw new Error('Failed to read number from IO port');
+    }
+
+    return Number.parseInt(this.input.splice(0, numberEnd).join(''));
   }
 
   get HasInput(): boolean {

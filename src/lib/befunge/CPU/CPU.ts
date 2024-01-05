@@ -32,7 +32,8 @@ export interface CPU {
   WriteMemory(ptr: Pointer, value: number): void;
 
   WriteIO(symbol: string): void;
-  ReadIO(): string;
+  ReadCharacter(): string;
+  ReadNumber(): number;
 
   Halt(): void;
 

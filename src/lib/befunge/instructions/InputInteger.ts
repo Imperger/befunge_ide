@@ -8,6 +8,6 @@ export class InputInteger implements Instruction {
   }
 
   Execute(cpu: CPU): void {
-    cpu.StackPush(Number.parseInt(cpu.ReadIO()));
+    cpu.StackPush(cpu.ReadNumber());
   }
 }
