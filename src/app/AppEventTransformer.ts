@@ -61,19 +61,9 @@ export abstract class AppEventTransformer {
         this.OnZoom(e);
     }
 
-    OnKeyDown(e: KeyboardEvent): void {
-        const keyCode = e.key.charCodeAt(0);
-
-        if (e.key.length === 1 && keyCode >= ' '.charCodeAt(0) && keyCode <= '~'.charCodeAt(0)) {
-            this.OnCellInput(e);
-        }
-    }
-
     abstract OnCameraMove(e: MouseEvent): void;
 
     abstract OnSelect(e: MouseEvent): void;
 
     abstract OnZoom(e: WheelEvent): void;
-
-    abstract OnCellInput(e: KeyboardEvent): void;
 }

@@ -193,19 +193,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.inFocus.OnInput(e);
     }
 
-    OnCellInput(_e: KeyboardEvent): void {
-        /* if (this.overlay.DebugControls.DebugMode) {
-            this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
-        } else if (this.overlay.DebugControls.IsHeatmapShown) {
-            this.overlay.Snackbar.ShowInformation('Editing is disabled while heatmap is active');
-        } else {
-            const prevEditionCell = { ...this.codeEditor.EditionCell };
-            this.codeEditor.CellInput(e);
-
-            this.codeExecutionService.Debugging.OnCellInput(prevEditionCell);
-        } */
-    }
-
     private BuildProjection(): void {
         this.settings.AspectRatio = this.gl.canvas.width / this.gl.canvas.height;
 
