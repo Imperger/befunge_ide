@@ -6,10 +6,13 @@ import { InjectionToken } from "./InjectionToken";
 import { OverlayService } from "./Overlay/OverlayService";
 
 import { Inversify } from "@/Inversify";
+import { Observable, ObservableController } from "@/lib/Observable";
 import { InputReceiver } from "@/lib/UI/InputReceiver";
 
 @injectable()
 export class CodeEditorServiceInputReceiver implements InputReceiver {
+    private onDestroy = new ObservableController<void>();
+
     constructor(
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(OverlayService) private overlay: OverlayService,
@@ -31,6 +34,18 @@ export class CodeEditorServiceInputReceiver implements InputReceiver {
                 this.codeExecutionService.Debugging.OnCellInput(prevEditionCell);
             }
         }
+    }
+
+    Focus(): void {
+        this.codeEditor.Focus();
+    }
+
+    Blur(): void {
+        this.codeEditor.Blur();
+    }
+
+    get OnDestroy(): Observable<void> {
+        return this.onDestroy;
     }
 }
 

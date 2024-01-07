@@ -102,6 +102,14 @@ export class CodeEditorService {
         }
     }
 
+    Focus(): void {
+        this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
+    }
+
+    Blur(): void {
+        this.codeEditorRenderer.Unselect(this.editionCell.x, this.editionCell.y);
+    }
+
     CellInput(e: KeyboardEvent): void {
         this.codeEditorRenderer.Symbol(e.key, this.editionCell.x, this.editionCell.y);
 

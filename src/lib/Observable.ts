@@ -25,6 +25,10 @@ export class ObservableController<T> implements Observable<T> {
         return () => this.observers.splice(this.observers.findIndex(x => x.id === descriptor.id), 1);
     }
 
+    DetachAll(): void {
+        this.observers = [];
+    }
+
     Notify(sender: T): void {
         this.observers.forEach(o => o.observer(sender));
     }

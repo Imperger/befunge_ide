@@ -18,6 +18,7 @@ import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnal
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
+import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
 import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
@@ -34,6 +35,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private projection!: mat4;
     private camera: mat4;
 
+    private inFocusOnDestroyReleaser: ObserverDetacher;
     private inFocus: InputReceiver;
 
     private debugRenderer: DebugRenderer;
@@ -62,6 +64,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.editorSourceCode.Initialize(ArrayMemory, this.settings.MemoryLimit);
 
         this.inFocus = this.codeEditorServiceInputReceiverFactory();
+        this.inFocus.Focus();
+        this.inFocusOnDestroyReleaser = this.inFocus.OnDestroy.Attach(() => 0);
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
@@ -149,14 +153,14 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const touchResult = this.overlay.Touch(e);
 
         if (touchResult === false) {
-            this.inFocus = this.codeEditorServiceInputReceiverFactory();
+            this.SwitchFocus(this.codeEditorServiceInputReceiverFactory());
             const prevEditionCell = { ...this.codeEditor.EditionCell };
 
             this.codeEditor.Touch(e);
 
             this.codeExecutionService.Debugging.OnSelect(prevEditionCell);
         } else if (IsInputReceiver(touchResult)) {
-            this.inFocus = touchResult;
+            this.SwitchFocus(touchResult);
         }
 
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
@@ -279,6 +283,15 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private ResetSourceCodeEditor(): void {
         this.editorSourceCode.Initialize(ArrayMemory, this.settings.MemoryLimit);
         this.codeEditor.Clear();
+    }
+
+    private SwitchFocus(component: InputReceiver): void {
+        this.inFocus.Blur();
+        this.inFocusOnDestroyReleaser();
+
+        this.inFocus = component;
+        this.inFocus.Focus();
+        this.inFocus.OnDestroy.Attach(() => this.SwitchFocus(this.codeEditorServiceInputReceiverFactory()));
     }
 }
 

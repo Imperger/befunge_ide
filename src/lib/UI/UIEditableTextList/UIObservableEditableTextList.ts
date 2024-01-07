@@ -11,11 +11,13 @@ import { Vec2 } from "@/lib/Primitives";
 export type UIObservableEditableTextListDeleter = () => void;
 
 export class UIObservableEditableTextList implements UIEditableTextList {
+    private onDestroy = new ObservableController<void>();
+
     private textList: UITextList;
 
     private hasFocus = false;
 
-    private observable = new ObservableController<UIObservableEditableTextList>();
+    private onUpdate = new ObservableController<UIObservableEditableTextList>();
 
     constructor(
         position: Vec2,
@@ -34,6 +36,10 @@ export class UIObservableEditableTextList implements UIEditableTextList {
             text,
             lineHeight,
             parent);
+    }
+
+    get OnDestroy(): Observable<void> {
+        return this.onDestroy;
     }
 
     OnInput(e: KeyboardEvent): void {
@@ -107,7 +113,7 @@ export class UIObservableEditableTextList implements UIEditableTextList {
     }
 
     get Observable(): Observable<UIObservableEditableTextList> {
-        return this.observable;
+        return this.onUpdate;
     }
 
     get HasFocus(): boolean {
@@ -127,6 +133,11 @@ export class UIObservableEditableTextList implements UIEditableTextList {
     }
 
     Destroy(): void {
+        this.onDestroy.Notify();
+
+        this.onDestroy.DetachAll();
+        this.onUpdate.DetachAll();
+
         this.deleter();
 
         this.textList.Destroy();
