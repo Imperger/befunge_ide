@@ -46,9 +46,12 @@ export class UIObservableEditableTextList implements UIEditableTextList {
         const keyCode = e.key.charCodeAt(0);
 
         if (e.key === 'Backspace' && this.Text.length > 0) {
-            this.Text = this.Text.slice(0, this.Text.length - 1)
+            const toDelete = 1 + +(this.Text[this.Text.length - 1] === '\n' && this.Text.length > 1);
+            this.Text = this.Text.slice(0, this.Text.length - toDelete)
         } else if (e.key.length === 1 && keyCode >= ' '.charCodeAt(0) && keyCode <= '~'.charCodeAt(0)) {
             this.Text = this.Text + e.key;
+        } else if (e.key === 'Enter') {
+            this.Text = this.Text + '\n';
         }
     }
 
