@@ -179,13 +179,14 @@ export class UIRenderer implements UICreator {
         const y = this.gl.canvas.height - e.offsetY;
 
         const focusedEditableTextList = this.TouchEditableTextList(x, y);
-        if (focusedEditableTextList !== null) {
-            return focusedEditableTextList;
-        }
 
-        return this.TouchAlerts(x, y) ||
+        const touchResult = this.TouchAlerts(x, y) ||
             this.TouchButtons(x, y) ||
             this.TouchLabels(x, y);
+
+        return focusedEditableTextList !== null ?
+            focusedEditableTextList :
+            touchResult;
     }
 
     private TouchButtons(x: number, y: number): boolean {
