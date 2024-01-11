@@ -184,9 +184,7 @@ export class UIRenderer implements UICreator {
             this.TouchButtons(x, y) ||
             this.TouchLabels(x, y);
 
-        return focusedEditableTextList !== null ?
-            focusedEditableTextList :
-            touchResult;
+        return focusedEditableTextList ?? touchResult;
     }
 
     private TouchButtons(x: number, y: number): boolean {
