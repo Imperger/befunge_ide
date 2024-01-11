@@ -205,6 +205,13 @@ export class UILabelRenderer extends PrimitivesRenderer {
         };
 
         for (const line of UILabelRenderer.SplitString(component.Text)) {
+            if (line.text.length === 0) {
+                height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + component.LineHeight);
+                x = component.AbsolutePosition.x;
+                y -= component.LineHeight * component.Scale;
+                continue;
+            }
+
             for (let n = 0; n < line.text.length; ++n) {
                 const symbol = line.text[n];
                 const style = component.Style[line.startIdx + n];
@@ -246,6 +253,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
     }
 
     private static AverageBaseOffset(component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
+        if (component.Text.length === 0) {
+            return 0;
+        }
+
         return [...component.Text]
             .reduce((sum, symbol) => sum + UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection).baselineOffset.y * component.Scale, 0) / component.Text.length;
     }
@@ -257,8 +268,27 @@ export class UILabelRenderer extends PrimitivesRenderer {
     }
 
     private static SplitString(str: string): SplitedLine[] {
-        return [...str.matchAll(/(.+)/g)]
-            .map(x => ({ text: x[0], startIdx: x.index ?? -1 }));
+        const lines: SplitedLine[] = [];
+
+        if (str.length === 0) {
+            return [];
+        }
+
+        let lineStart = 0;
+        for (let n = 0; n < str.length; ++n) {
+            const symbol = str[n];
+
+            if (symbol === '\n') {
+                lines.push({ text: str.slice(lineStart, n), startIdx: lineStart });
+                lineStart = n + 1;
+            }
+        }
+
+        if (lineStart !== str.length) {
+            lines.push({ text: str.slice(lineStart, str.length), startIdx: lineStart });
+        }
+
+        return lines;
     }
 
     private BaseStartOffset(component: UIObservableLabel): number {
