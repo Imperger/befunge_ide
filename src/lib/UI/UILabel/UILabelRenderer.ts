@@ -217,6 +217,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 const style = component.Style[line.startIdx + n];
                 const offset = component.Offsets[line.startIdx + n];
 
+                if (offset === UIObservableLabel.NonPrintableOffset) {
+                    continue;
+                }
+
                 const glyphBlueprint = UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection);
 
                 height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + glyphBlueprint.height);
@@ -281,7 +285,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
             if (symbol === '\n') {
                 lines.push({ text: str.slice(lineStart, n), startIdx: lineStart });
                 lineStart = n + 1;
-            }
+            } 
         }
 
         if (lineStart !== str.length) {
