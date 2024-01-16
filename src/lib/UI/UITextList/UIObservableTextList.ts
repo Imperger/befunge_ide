@@ -163,6 +163,16 @@ export class UIObservableTextList implements UITextList {
     set Scale(scale: number) {
         this.scale = scale;
 
+        this.label.Scale = scale;
+
+        this.UpdateScrollControlsPresence();
+
+        if (this.scrollControls !== null) {
+            this.scrollControls.scrollTopButton.Scale = scale;
+            this.scrollControls.scrollBottomButton.Scale = scale;
+        }
+
+
         this.observable.Notify(this);
     }
 
@@ -171,7 +181,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     private get IsContentOverflow(): boolean {
-        return this.label.Dimension.height > this.dimension.height;
+        return this.label.Dimension.height > this.Dimension.height;
     }
 
     ScrollToTop(): void {
@@ -200,6 +210,9 @@ export class UIObservableTextList implements UITextList {
                     scrollTopButton: this.CreateTopScrollButton(),
                     scrollBottomButton: this.CreateBottomScrollButton()
                 };
+
+                this.scrollControls.scrollBottomButton.Scale = this.scale;
+                this.scrollControls.scrollTopButton.Scale = this.scale;
 
                 this.ScrollAligned(0);
             }
@@ -247,7 +260,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     get MinScroll(): number {
-        return this.Position.y - this.label.Dimension.height + this.dimension.height;
+        return this.Position.y - this.label.Dimension.height / this.scale + this.Dimension.height / this.scale;
     }
 
     get MaxScroll(): number {

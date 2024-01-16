@@ -297,7 +297,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
     private BaseStartOffset(component: UIObservableLabel): number {
         return [...component.Text.trimEnd()]
-            .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight;
+            .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight * component.Scale;
     }
 
 }

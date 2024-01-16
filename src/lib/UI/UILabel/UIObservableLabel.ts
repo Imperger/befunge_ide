@@ -128,10 +128,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
     }
 
     get Dimension(): Dimension {
-        return {
-            width: this.dimension.width * this.scale,
-            height: this.dimension.height * this.scale
-        };
+        return { ...this.dimension };
     }
 
     UpdateTextDimension(dimension: Dimension): void {
