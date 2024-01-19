@@ -296,11 +296,17 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             let sourceString = '';
             for (let y = 0; y < this.settings.MemoryLimit.Height; ++y) {
+                let line = '';
+
                 for (let x = 0; x < this.settings.MemoryLimit.Width; ++x) {
-                    sourceString += String.fromCharCode(this.editorSourceCode.Read({ x, y }));
+                    line += String.fromCharCode(this.editorSourceCode.Read({ x, y }));
                 }
 
-                sourceString += '\n';
+                line = line.trimEnd();
+
+                if (line.length > 0) {
+                    sourceString += line.trimEnd() + '\n';
+                }
             }
 
             await stream.write(sourceString);
