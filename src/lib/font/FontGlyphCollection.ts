@@ -37,7 +37,9 @@ interface GlyphBoundary {
 }
 
 export class FontGlyphCollection {
-    constructor(private library: Map<string, GlyphMeshBlueprint>) { }
+    constructor(
+        private library: Map<string, GlyphMeshBlueprint>,
+        public readonly LineHeight: number) { }
 
     Lookup(symbol: string): GlyphMeshBlueprint {
         if (symbol.length === 0) {
@@ -79,7 +81,7 @@ class FontGlyphCollectionBuilderImpl {
 
         this.BuildBlueprints(endCode - startCode + 1);
 
-        return new FontGlyphCollection(this.lib);
+        return new FontGlyphCollection(this.lib, options.Font.Size);
     }
 
     private SetupCanvas(width: number, height: number): void {
