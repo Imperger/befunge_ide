@@ -305,7 +305,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
                 line = line.trimEnd();
 
                 if (line.length > 0) {
-                    sourceString += line.trimEnd() + '\n';
+                    sourceString += line + '\n';
                 }
             }
 
