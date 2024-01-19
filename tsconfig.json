@@ -14,7 +14,8 @@
     "baseUrl": ".",
     "types": [
       "webpack-env",
-      "reflect-metadata"
+      "reflect-metadata",
+      "@types/wicg-file-system-access"
     ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

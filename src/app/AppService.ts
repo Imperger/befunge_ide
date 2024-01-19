@@ -117,6 +117,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
+        this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
 
         this.Start();
     }
@@ -262,6 +263,36 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
 
         this.LoadSourceCodeToEditor(sourceCode);
+    }
+
+    private async SaveSourceToDisk(): Promise<void> {
+        try {
+            const fileHandle = await window.showSaveFilePicker();
+
+            const stream = await fileHandle.createWritable();
+
+            let sourceString = '';
+            for (let y = 0; y < this.settings.MemoryLimit.Height; ++y) {
+                for (let x = 0; x < this.settings.MemoryLimit.Width; ++x) {
+                    sourceString += String.fromCharCode(this.editorSourceCode.Read({ x, y }));
+                }
+
+                sourceString += '\n';
+            }
+
+            await stream.write(sourceString);
+
+            await stream.close();
+        } catch (e) {
+            if (e instanceof DOMException) {
+                switch (e.name) {
+                    case 'AbortError':
+                        return;
+                }
+
+                this.overlay.Snackbar.ShowError(e.message)
+            }
+        }
     }
 
     private LoadSourceCodeToEditor(sourceCode: string): void {
