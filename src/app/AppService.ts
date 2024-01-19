@@ -16,7 +16,6 @@ import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
-import { UserFileLoader } from '@/lib/DOM/UserFileLoader';
 import { Intersection } from '@/lib/math/Intersection';
 import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
@@ -239,7 +238,29 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private async OpenFileFromDisk(): Promise<void> {
-        const sourceCode = await UserFileLoader.ReadAsText();
+        let sourceCode = '';
+
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({ multiple: false });
+
+            if (fileHandle.kind !== "file") {
+                return;
+            }
+
+            const file = await fileHandle.getFile();
+
+            sourceCode = await file.text();
+        } catch (e) {
+            if (e instanceof DOMException) {
+                switch (e.name) {
+                    case 'AbortError':
+                        return;
+                }
+
+                this.overlay.Snackbar.ShowError(e.message)
+            }
+        }
+
 
         const validator = new SourceCodeValidityAnalyser(sourceCode);
 
