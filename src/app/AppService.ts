@@ -40,6 +40,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
+    private openedFilename: string | null = null;
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(AppSettings) private settings: AppSettings,
@@ -246,7 +248,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             if (fileHandle.kind !== "file") {
                 return;
             }
-
+            this.openedFilename = fileHandle.name;
             const file = await fileHandle.getFile();
 
             sourceCode = await file.text();
@@ -288,7 +290,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private async SaveSourceToDisk(): Promise<void> {
         try {
-            const fileHandle = await window.showSaveFilePicker();
+            const fileHandle = await window.showSaveFilePicker({ suggestedName: this.openedFilename ?? '' });
 
             const stream = await fileHandle.createWritable();
 
