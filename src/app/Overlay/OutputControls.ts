@@ -73,7 +73,7 @@ export class OutputControls {
             }
         }
 
-       return strArr.join('');
+        return strArr.join('');
     }
 
     private RetrieveFontGlyphCollection(): FontGlyphCollection {
@@ -87,4 +87,4 @@ export class OutputControls {
     }
 }
 
-Inversify.bind<OutputControls>(OutputControls).toSelf().inSingletonScope();
+Inversify.bind(OutputControls).toSelf().inSingletonScope();
