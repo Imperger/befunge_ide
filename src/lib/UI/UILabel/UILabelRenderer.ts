@@ -51,7 +51,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
         @inject(AppSettings) private settings: AppSettings,
         @inject(InjectionToken.FontAtlasTexture) private fontTexture: WebGLTexture,
-        @inject(InjectionToken.FontGlyphCollectionFactory) private fontGlyphCollectionProvider: FontGlyphCollectionFactory) {
+        @inject(InjectionToken.FontGlyphCollectionFactory) private fontGlyphCollectionFactory: FontGlyphCollectionFactory) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UILabelComponent);
         const indicesPerPrimitive = 6;
@@ -193,7 +193,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
     }
 
     private UpdateAttributes(component: UIObservableLabel): void {
-        const fontGlyphCollection = this.fontGlyphCollectionProvider({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
+        const fontGlyphCollection = this.fontGlyphCollectionFactory({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
 
         let width = 0, height = 0;
         const avgBaseOffset = UILabelRenderer.AverageBaseOffset(component, fontGlyphCollection);
