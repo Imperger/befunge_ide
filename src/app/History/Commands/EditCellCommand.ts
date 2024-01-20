@@ -34,8 +34,12 @@ export class EditCellCommand implements Command {
         this.codeEditorRenderer.Symbol(this.newValue, this.location.x, this.location.y);
         this.editorSourceCode.Write(this.location, this.newValue.charCodeAt(0));
 
-        this.codeEditorService.SetEditableCell(this.GetNextEditionCell());
-        this.codeEditorService.EditionDirection = this.editDirection;
+        const codeFlowEditDirection = this.FollowCodeFlowHelper(this.newValue);
+        if (this.editDirection !== codeFlowEditDirection) {
+            this.codeEditorService.EditionDirection = codeFlowEditDirection;
+        }
+
+        this.codeEditorService.SetEditableCell(this.GetNextEditionCell(codeFlowEditDirection));
     }
 
     Undo(): void {
@@ -46,10 +50,10 @@ export class EditCellCommand implements Command {
         this.codeEditorService.EditionDirection = this.editDirection;
     }
 
-    private GetNextEditionCell(): Pointer {
+    private GetNextEditionCell(direction: EditionDirection): Pointer {
         const nextEditableCell: Pointer = { ...this.location };
 
-        switch (this.editDirection) {
+        switch (direction) {
             case EditionDirection.Left:
                 nextEditableCell.x = this.location.x === 0 ?
                     this.codeEditorRenderer.Dimension.Columns - 1 :
@@ -73,6 +77,20 @@ export class EditCellCommand implements Command {
         }
 
         return nextEditableCell;
+    }
+
+    private FollowCodeFlowHelper(symbol: string): EditionDirection {
+        if (symbol === '<') {
+            return EditionDirection.Left;
+        } else if (symbol === '^') {
+            return EditionDirection.Up;
+        } else if (symbol === '>') {
+            return EditionDirection.Right;
+        } else if (symbol === 'v') {
+            return EditionDirection.Down;
+        }
+
+        return this.editDirection;
     }
 }
 

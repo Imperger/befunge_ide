@@ -135,8 +135,6 @@ export class CodeEditorService {
         command.Apply();
 
         this.history.Push(command);
-
-        this.PostCellInputHook(e);
     }
 
     Clear(): void {
@@ -144,22 +142,6 @@ export class CodeEditorService {
             for (let column = 0; column < this.codeEditorRenderer.Dimension.Columns; ++column) {
                 this.Symbol(' ', column, row);
             }
-        }
-    }
-
-    private PostCellInputHook(e: KeyboardEvent): void {
-        this.FollowCodeFlowHelper(e);
-    }
-
-    private FollowCodeFlowHelper(e: KeyboardEvent): void {
-        if (e.key === '<' && this.editionDirection !== EditionDirection.Left) {
-            this.EditionDirection = EditionDirection.Left;
-        } else if (e.key === '^' && this.editionDirection !== EditionDirection.Up) {
-            this.EditionDirection = EditionDirection.Up;
-        } else if (e.key === '>' && this.editionDirection !== EditionDirection.Right) {
-            this.EditionDirection = EditionDirection.Right;
-        } else if (e.key === 'v' && this.editionDirection !== EditionDirection.Down) {
-            this.EditionDirection = EditionDirection.Down;
         }
     }
 
