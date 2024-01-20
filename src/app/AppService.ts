@@ -8,6 +8,7 @@ import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
 import { DebugRenderer } from './DebugRenderer';
+import { AppHistory } from './History/AppHistory';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
 import { OverlayService } from './Overlay/OverlayService';
 import { SourceCodeMemory } from './SourceCodeMemory';
@@ -21,6 +22,8 @@ import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
 import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
+
+import './History/Commands/EditCellCommand';
 
 
 async function Delay(delay: number): Promise<void> {
@@ -48,6 +51,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
+        @inject(AppHistory) private history: AppHistory,
         @inject(CodeExecutionService) private codeExecutionService: CodeExecutionService,
         @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer,
         @inject(InjectionToken.CodeEditorServiceInputReceiverFactory) private codeEditorServiceInputReceiverFactory: CodeEditorServiceInputReceiverFactory) {
@@ -119,6 +123,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
         this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
+
+        this.overlay.HistoryControls.UndoObservable.Attach(() => this.history.Undo());
+        this.overlay.HistoryControls.RedoObservable.Attach(() => this.history.Redo());
 
         this.Start();
     }

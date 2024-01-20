@@ -17,3 +17,7 @@ export const UILabelRendererTargetName = {
     Perspective: Symbol('UILabel perspective renderer'),
     Unique: Symbol('UILabel unique')
 }
+
+export const AppCommandInjectionToken = {
+    EditCellCommandFactory: Symbol('EditCellCommand factory')
+};

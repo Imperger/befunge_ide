@@ -1,6 +1,8 @@
 import { inject, injectable } from "inversify";
 
-import { InjectionToken } from "../InjectionToken";
+import { AppHistory } from "../History/AppHistory";
+import type { EditCellCommandFactory } from "../History/Commands/EditCellCommand";
+import { AppCommandInjectionToken, InjectionToken } from "../InjectionToken";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { CodeEditorExtension, EmptyExtension } from "./CodeEditorExtension";
@@ -9,6 +11,7 @@ import { CodeEditorTooltipService, TooltipPosition, TooltipReleaser } from "./Co
 import { EditorGridDimension } from "./EditorGridRenderer";
 
 import { Inversify } from "@/Inversify";
+import { Pointer } from "@/lib/befunge/memory/Memory";
 import { Intersection } from "@/lib/math/Intersection";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
@@ -16,6 +19,7 @@ import { Camera } from "@/lib/renderer/Camera";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
 export enum EditionDirection { Left, Up, Right, Down };
+
 
 @injectable()
 export class CodeEditorService {
@@ -30,7 +34,10 @@ export class CodeEditorService {
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
-        @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService) {
+        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
+        @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService,
+        @inject(AppCommandInjectionToken.EditCellCommandFactory) private editCellCommandFactory: EditCellCommandFactory,
+        @inject(AppHistory) private history: AppHistory) {
 
         this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
     }
@@ -110,14 +117,26 @@ export class CodeEditorService {
         this.codeEditorRenderer.Unselect(this.editionCell.x, this.editionCell.y);
     }
 
-    CellInput(e: KeyboardEvent): void {
-        this.codeEditorRenderer.Symbol(e.key, this.editionCell.x, this.editionCell.y);
+    SetEditableCell(location: Pointer): void {
+        this.codeEditorRenderer.Unselect(this.editionCell.x, this.editionCell.y);
 
-        Inversify.get(SourceCodeMemory).Write(this.editionCell, e.key.charCodeAt(0));
+        this.editionCell.x = location.x;
+        this.editionCell.y = location.y;
+        this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
+    }
+
+    CellInput(e: KeyboardEvent): void {
+        const command = this.editCellCommandFactory(
+            this.editionCell,
+            String.fromCharCode(this.editorSourceCode.Read(this.editionCell)),
+            e.key,
+            this.editionDirection);
+
+        command.Apply();
+
+        this.history.Push(command);
 
         this.PostCellInputHook(e);
-
-        this.MoveToNextEditionCell();
     }
 
     Clear(): void {
@@ -142,35 +161,6 @@ export class CodeEditorService {
         } else if (e.key === 'v' && this.editionDirection !== EditionDirection.Down) {
             this.EditionDirection = EditionDirection.Down;
         }
-    }
-
-    private MoveToNextEditionCell(): void {
-        this.codeEditorRenderer.Unselect(this.editionCell.x, this.editionCell.y);
-
-        switch (this.editionDirection) {
-            case EditionDirection.Left:
-                this.editionCell.x = this.editionCell.x === 0 ?
-                    this.codeEditorRenderer.Dimension.Columns - 1 :
-                    this.editionCell.x - 1;
-                break;
-            case EditionDirection.Up:
-                this.editionCell.y = this.editionCell.y === 0 ?
-                    this.codeEditorRenderer.Dimension.Rows - 1 :
-                    this.editionCell.y - 1;
-                break;
-            case EditionDirection.Right:
-                this.editionCell.x = this.editionCell.x === this.codeEditorRenderer.Dimension.Columns - 1 ?
-                    0 :
-                    this.editionCell.x + 1;
-                break;
-            case EditionDirection.Down:
-                this.editionCell.y = this.editionCell.y === this.codeEditorRenderer.Dimension.Rows - 1 ?
-                    0 :
-                    this.editionCell.y + 1;
-                break;
-        }
-
-        this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
     }
 
     Draw(): void {
