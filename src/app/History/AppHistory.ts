@@ -44,6 +44,13 @@ export class AppHistory {
         this.updateObservable.Notify();
     }
 
+    Reset(): void {
+        this.history.length = 0;
+        this.cursor = -1;
+
+        this.updateObservable.Notify();
+    }
+
     get CanUndo(): boolean {
         return this.cursor >= 0;
     }
