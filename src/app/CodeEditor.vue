@@ -51,6 +51,6 @@ function OnKeyDown(e: KeyboardEvent): void {
 </script>
 
 <template>
-  <webgl2-canvas tabindex="0" @contextReady="OnContextReady" @resize="OnResize" @mousemove="OnMouseMove"
+  <webgl2-canvas autofocus tabindex="0" @contextReady="OnContextReady" @resize="OnResize" @mousemove="OnMouseMove"
     @mousedown="OnMouseDown" @mouseup="OnMouseUp" @wheel="OnWheel" @keydown="OnKeyDown" />
 </template>
