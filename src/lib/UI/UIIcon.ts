@@ -69,6 +69,15 @@ export class UIIconAtlas implements AsyncConstructable {
                         aspectRatio: this.ExtractAspectRatio(UIIcon.ArrowThinUp)
                     };
                 }
+            case UIIcon.Undo:
+                {
+                    const uv = this.atlas.LookupUV(UIIcon.Redo);
+                    return {
+                        A: { x: uv.B.x, y: uv.A.y },
+                        B: { x: uv.A.x, y: uv.B.y },
+                        aspectRatio: this.ExtractAspectRatio(UIIcon.Redo)
+                    };
+                }
             default:
                 return { ...this.atlas.LookupUV(id), aspectRatio: this.ExtractAspectRatio(id) };
         }
@@ -169,11 +178,6 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Heatmap,
                 filename: 'ui_icons/heatmap.svg',
-                dimension: { width: 128, height: 128 }
-            },
-            {
-                id: UIIcon.Undo,
-                filename: 'ui_icons/undo.svg',
                 dimension: { width: 128, height: 128 }
             },
             {
