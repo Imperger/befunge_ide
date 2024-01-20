@@ -63,11 +63,11 @@ export class CodeEditorTooltipService {
                 y = (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize + cellSize - instance.Dimension.height - margin;
                 break;
             case TooltipPosition.RightTop:
-                x = column * cellSize + cellSize - instance.Dimension.width / instance.Scale - margin;
+                x = column * cellSize + cellSize - instance.Dimension.width - margin;
                 y = (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize + cellSize - instance.Dimension.height - margin;
                 break;
             case TooltipPosition.RightBottom:
-                x = column * cellSize + cellSize - instance.Dimension.width / instance.Scale - margin;
+                x = column * cellSize + cellSize - instance.Dimension.width - margin;
                 y = margin + (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize;
                 break;
         }

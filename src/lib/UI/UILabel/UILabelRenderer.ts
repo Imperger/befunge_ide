@@ -199,9 +199,11 @@ export class UILabelRenderer extends PrimitivesRenderer {
         const avgBaseOffset = UILabelRenderer.AverageBaseOffset(component, fontGlyphCollection);
         const startBaseOffset = this.BaseStartOffset(component);
 
+        const yStart = component.AbsolutePosition.y + startBaseOffset - avgBaseOffset;
+
         let { x, y } = {
             x: component.AbsolutePosition.x,
-            y: component.AbsolutePosition.y + startBaseOffset - avgBaseOffset
+            y: yStart
         };
 
         for (const line of UILabelRenderer.SplitString(component.Text)) {
@@ -222,8 +224,6 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 }
 
                 const glyphBlueprint = UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection);
-
-                height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + glyphBlueprint.height);
 
                 const attributes = PrimitiveBuilder.AABBRectangle(
                     { x, y: y + glyphBlueprint.baselineOffset.y * component.Scale },
@@ -253,7 +253,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
             y -= component.LineHeight * component.Scale;
         }
 
-        component.UpdateTextDimension({ width, height });
+        component.UpdateTextDimension({ width, height: yStart - y });
     }
 
     private static AverageBaseOffset(component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
@@ -285,7 +285,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
             if (symbol === '\n') {
                 lines.push({ text: str.slice(lineStart, n), startIdx: lineStart });
                 lineStart = n + 1;
-            } 
+            }
         }
 
         if (lineStart !== str.length) {
