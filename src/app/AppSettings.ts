@@ -8,6 +8,11 @@ interface Dimension {
     Height: number;
 }
 
+export interface ZCameraBoundary {
+    min: number;
+    max: number;
+}
+
 @injectable()
 export class AppSettings {
     public readonly ZNear = 1;
@@ -15,6 +20,8 @@ export class AppSettings {
     public readonly ZFar = 500;
 
     public readonly Fovy = 60 / 180 * Math.PI;
+
+    public readonly ZCameraBoundary: ZCameraBoundary = { min: 50, max: 250 };
 
     public AspectRatio = 1;
 

@@ -11,6 +11,7 @@ import { DebugRenderer } from './DebugRenderer';
 import { AppHistory } from './History/AppHistory';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
 import { OverlayService } from './Overlay/OverlayService';
+import { SmoothCameraZoom } from './SmoothCameraZoom';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
@@ -45,6 +46,10 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private openedFilename: string | null = null;
 
+    private cameraZoomer: SmoothCameraZoom | null = null;
+
+    private lastFrameTime = Date.now();
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(AppSettings) private settings: AppSettings,
@@ -57,7 +62,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(InjectionToken.CodeEditorServiceInputReceiverFactory) private codeEditorServiceInputReceiverFactory: CodeEditorServiceInputReceiverFactory) {
         super();
 
-        this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, 300]);
+        this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, this.settings.ZCameraBoundary.max * 0.75]);
 
         gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -185,21 +190,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     OnZoom(e: WheelEvent): void {
-        const delta = e.deltaY * 0.5;
-        const z = this.camera[14] + delta;
-
-        if (z >= this.settings.ZFar || z <= this.settings.ZNear) {
-            return;
-        }
-
-        this.camera = mat4.translate(
-            mat4.create(),
-            this.camera,
-            [0, 0, delta]);
-
-        this.codeEditor.ViewProjection = this.ViewProjection;
-        this.debugRenderer.ViewProjection = this.ViewProjection;
-        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+        this.cameraZoomer = new SmoothCameraZoom(e.deltaY < 0 ? 'in' : 'out');
     }
 
     OnKeyDown(e: KeyboardEvent): void {
@@ -227,11 +218,21 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private Start(): void {
-        requestAnimationFrame(() => this.DrawFrame());
+        requestAnimationFrame(() => this.DrawFrame(Date.now() - this.lastFrameTime));
     }
 
-    private DrawFrame(): void {
+    private DrawFrame(elapsed: number): void {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
+
+        if (this.cameraZoomer !== null) {
+            if (this.cameraZoomer.Update(elapsed, this.camera, this.settings.ZCameraBoundary)) {
+                this.cameraZoomer = null;
+            }
+
+            this.codeEditor.ViewProjection = this.ViewProjection;
+            this.debugRenderer.ViewProjection = this.ViewProjection;
+            this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+        }
 
         this.codeEditor.Draw();
         this.perspectiveLabelRenderer.Draw();
@@ -242,7 +243,10 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.overlay.Draw();
 
         if (this.isRunning) {
-            requestAnimationFrame(() => this.DrawFrame())
+            const now = Date.now();
+            const elapsed = now - this.lastFrameTime;
+            requestAnimationFrame(() => this.DrawFrame(elapsed))
+            this.lastFrameTime = now;
         }
     }
 
