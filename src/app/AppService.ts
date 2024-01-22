@@ -62,7 +62,10 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(InjectionToken.CodeEditorServiceInputReceiverFactory) private codeEditorServiceInputReceiverFactory: CodeEditorServiceInputReceiverFactory) {
         super();
 
-        this.camera = mat4.translate(mat4.create(), mat4.create(), [50, 100, this.settings.ZCameraBoundary.max * 0.75]);
+        this.camera = mat4.translate(
+            mat4.create(),
+            mat4.create(),
+            [50, 100, this.settings.ZCameraBoundary.min + (this.settings.ZCameraBoundary.max - this.settings.ZCameraBoundary.min) * 0.75]);
 
         gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -81,7 +84,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.debugRenderer.ViewProjection = this.ViewProjection;
         this.debugRenderer.UploadAttributes(this.debugPoints);
 
-        const label = this.perspectiveLabelRenderer.Create({ x: 0, y: 0 }, 499, 'TESTING (d) 1234567890', 8, null);
+        const label = this.perspectiveLabelRenderer.Create({ x: 0, y: 0 }, 499, 'TESTING (d) \n 1234567890', 8, null);
         label.Scale = 0.2;
         const Debug = async () => {
             const text = 'Hello world! 1234567890$@';
