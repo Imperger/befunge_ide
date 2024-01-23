@@ -10,6 +10,7 @@ import { UIObservableLabel } from './UIObservableLabel';
 import { AppSettings } from '@/app/AppSettings';
 import { InjectionToken, UILabelRendererTargetName } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
+import { ArrayHelper } from '@/lib/ArrayHelper';
 import { EnumSize } from "@/lib/EnumSize";
 import { ExceptionTrap } from '@/lib/ExceptionTrap';
 import { FontGlyphCollection, FontGlyphCollectionFactory, GlyphMeshBlueprint } from '@/lib/font/FontGlyphCollection';
@@ -195,20 +196,25 @@ export class UILabelRenderer extends PrimitivesRenderer {
     private UpdateAttributes(component: UIObservableLabel): void {
         const fontGlyphCollection = this.fontGlyphCollectionFactory({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
 
-        let width = 0, height = 0;
-        const avgBaseOffset = UILabelRenderer.AverageBaseOffset(component, fontGlyphCollection);
+        let width = 0;
+        const lines = UILabelRenderer.SplitString(component.Text);
+
+        if (lines.length === 0) {
+            return;
+        }
+
+        const minBaseOffset = UILabelRenderer.MinBaseOffset(lines[0].text, component, fontGlyphCollection);
         const startBaseOffset = this.BaseStartOffset(component);
 
-        const yStart = component.AbsolutePosition.y + startBaseOffset - avgBaseOffset;
+        const yStart = component.AbsolutePosition.y + startBaseOffset - minBaseOffset;
 
         let { x, y } = {
             x: component.AbsolutePosition.x,
             y: yStart
         };
 
-        for (const line of UILabelRenderer.SplitString(component.Text)) {
+        for (const line of lines) {
             if (line.text.length === 0) {
-                height = Math.max(height, component.AbsolutePosition.y + startBaseOffset - avgBaseOffset / component.Scale - y + component.LineHeight);
                 x = component.AbsolutePosition.x;
                 y -= component.LineHeight * component.Scale;
                 continue;
@@ -256,13 +262,15 @@ export class UILabelRenderer extends PrimitivesRenderer {
         component.UpdateTextDimension({ width, height: yStart - y });
     }
 
-    private static AverageBaseOffset(component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
-        if (component.Text.length === 0) {
+    private static MinBaseOffset(line: string, component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
+        if (line.length === 0) {
             return 0;
         }
 
-        return [...component.Text]
-            .reduce((sum, symbol) => sum + UILabelRenderer.LookupGlyph(symbol, fontGlyphCollection).baselineOffset.y * component.Scale, 0) / component.Text.length;
+        const comp = (a: string, b: string) => UILabelRenderer.LookupGlyph(a, fontGlyphCollection).baselineOffset.y < UILabelRenderer.LookupGlyph(b, fontGlyphCollection).baselineOffset.y;
+        const maxBaselineOffsetSymbol = ArrayHelper.Min([...line], comp);
+
+        return UILabelRenderer.LookupGlyph(maxBaselineOffsetSymbol, fontGlyphCollection).baselineOffset.y * component.Scale;
     }
 
     private static LookupGlyph(symbol: string, fontGlyphCollection: FontGlyphCollection): GlyphMeshBlueprint {
