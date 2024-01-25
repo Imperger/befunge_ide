@@ -8,16 +8,17 @@ import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
 import { DebugRenderer } from './DebugRenderer';
+import { SmoothCameraZoom } from './Effects/SmoothCameraZoom';
 import { AppHistory } from './History/AppHistory';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
 import { OverlayService } from './Overlay/OverlayService';
-import { SmoothCameraZoom } from './SmoothCameraZoom';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
+import { EffectRunner } from '@/lib/effect/EffectRunner';
 import { Intersection } from '@/lib/math/Intersection';
 import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
@@ -46,13 +47,12 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private openedFilename: string | null = null;
 
-    private cameraZoomer: SmoothCameraZoom | null = null;
-
     private lastFrameTime = Date.now();
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
         @inject(AppSettings) private settings: AppSettings,
+        @inject(EffectRunner) private effectRunner: EffectRunner,
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
@@ -157,7 +157,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.gl.canvas);
 
         this.camera = mat4.translate(
-            mat4.create(),
+            this.camera,
             this.camera,
             [delta.x, delta.y, 0]);
 
@@ -193,7 +193,12 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     OnZoom(e: WheelEvent): void {
-        this.cameraZoomer = new SmoothCameraZoom(e.deltaY < 0 ? 'in' : 'out');
+        const smoothCameraZoomEffect = new SmoothCameraZoom(
+            e.deltaY < 0 ? 'in' : 'out',
+            this.camera,
+            this.settings.ZCameraBoundary);
+
+        this.effectRunner.Register(smoothCameraZoomEffect);
     }
 
     OnKeyDown(e: KeyboardEvent): void {
@@ -227,11 +232,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private DrawFrame(elapsed: number): void {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
 
-        if (this.cameraZoomer !== null) {
-            if (this.cameraZoomer.Update(elapsed, this.camera, this.settings.ZCameraBoundary)) {
-                this.cameraZoomer = null;
-            }
-
+        if (this.effectRunner.Draw(elapsed)) {
             this.codeEditor.ViewProjection = this.ViewProjection;
             this.debugRenderer.ViewProjection = this.ViewProjection;
             this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
