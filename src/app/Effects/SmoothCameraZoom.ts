@@ -5,8 +5,6 @@ import { ZCameraBoundary } from "../AppSettings";
 import { Effect } from "@/lib/effect/Effect";
 
 export class SmoothCameraZoom implements Effect {
-    private static last: SmoothCameraZoom | null = null;
-
     private progress = 0;
 
     private duration = 100;
@@ -19,7 +17,6 @@ export class SmoothCameraZoom implements Effect {
         private direction: 'in' | 'out',
         private camera: mat4,
         private boundary: ZCameraBoundary) {
-        SmoothCameraZoom.last = this;
     }
 
     get IsDone(): boolean {
@@ -27,11 +24,6 @@ export class SmoothCameraZoom implements Effect {
     }
 
     Draw(elapsed: number): void {
-        if (SmoothCameraZoom.last !== this) {
-            this.isDone = true;
-            return;
-        }
-
         const fract = elapsed / this.duration;
 
         this.progress += fract;

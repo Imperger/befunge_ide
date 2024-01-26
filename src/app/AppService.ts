@@ -18,7 +18,7 @@ import { Inversify } from '@/Inversify';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
-import { EffectRunner } from '@/lib/effect/EffectRunner';
+import { EffectRunner, RegistrationCollisionResolver } from '@/lib/effect/EffectRunner';
 import { Intersection } from '@/lib/math/Intersection';
 import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
@@ -198,7 +198,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.camera,
             this.settings.ZCameraBoundary);
 
-        this.effectRunner.Register(smoothCameraZoomEffect);
+        this.effectRunner.Register(
+            smoothCameraZoomEffect,
+            { id: 'camera_zoom', rule: RegistrationCollisionResolver.Replace });
     }
 
     OnKeyDown(e: KeyboardEvent): void {
