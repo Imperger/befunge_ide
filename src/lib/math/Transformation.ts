@@ -55,8 +55,7 @@ export class Transformation {
                 vec2.fromValues(destination.rt.x, destination.rt.y)),
             Transformation.DistanceDiff(
                 vec2.fromValues(movable.rt.x, movable.lb.y),
-                vec2.fromValues(destination.rt.x, destination.lb.y)
-            )
+                vec2.fromValues(destination.rt.x, destination.lb.y))
         ];
 
         const closest = ArrayHelper.Min(corners, (a, b) => a.distance < b.distance);
