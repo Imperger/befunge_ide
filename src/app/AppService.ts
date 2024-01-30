@@ -1,5 +1,5 @@
 
-import { mat4 } from 'gl-matrix';
+import { mat4, vec2, vec3 } from 'gl-matrix';
 import { inject, injectable, named } from 'inversify';
 
 import { AppEventTransformer } from './AppEventTransformer';
@@ -8,6 +8,7 @@ import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
 import { DebugRenderer } from './DebugRenderer';
+import { SmoothCameraMove } from './Effects/SmoothCameraMove';
 import { SmoothCameraZoom } from './Effects/SmoothCameraZoom';
 import { AppHistory } from './History/AppHistory';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
@@ -20,6 +21,7 @@ import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnal
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { EffectRunner, RegistrationCollisionResolver } from '@/lib/effect/EffectRunner';
 import { Intersection } from '@/lib/math/Intersection';
+import { Transformation } from '@/lib/math/Transformation';
 import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
 import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
@@ -128,6 +130,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     async AsyncConstructor(): Promise<void> {
         this.overlay.EditDirectionControls.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
+        this.codeEditor.EditionCellLostObservable.Attach(() => this.FollowEditableCell());
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
         this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
@@ -357,6 +360,32 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
                 this.codeEditor.Symbol(symbol, column, row);
             }
         }
+    }
+
+    private FollowEditableCell(): void {
+        const cellRect = this.codeEditor.EditableCellRect;
+        const lbNDC = vec3.transformMat4(vec3.create(), cellRect.lb, this.ViewProjection);
+        const rtNDC = vec3.transformMat4(vec3.create(), cellRect.rt, this.ViewProjection);
+
+        const ndcMovement = Transformation.MoveRectangleToPlaceInsideRectangle(
+            { lb: { x: lbNDC[0], y: lbNDC[1] }, rt: { x: rtNDC[0], y: rtNDC[1] } },
+            { lb: { x: -1, y: -1 }, rt: { x: 1, y: 1 } }
+        );
+
+        const movement: vec2 = [
+            ndcMovement.x * this.gl.canvas.width / 2,
+            ndcMovement.y * this.gl.canvas.height / 2
+        ];
+
+        const effect = new SmoothCameraMove(
+            this.camera,
+            movement,
+            this.gl.canvas,
+            () => this.ViewProjection);
+
+        this.effectRunner.Register(
+            effect,
+            { id: 'follow_editable_cell', rule: RegistrationCollisionResolver.Replace });
     }
 
     private ResetSourceCodeEditor(): void {

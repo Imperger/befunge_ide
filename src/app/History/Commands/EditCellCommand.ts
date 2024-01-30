@@ -1,4 +1,3 @@
-
 import { inject, injectable, interfaces } from "inversify";
 
 import { Command } from "./Command";

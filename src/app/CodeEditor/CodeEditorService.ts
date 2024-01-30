@@ -1,3 +1,4 @@
+import { vec3 } from "gl-matrix";
 import { inject, injectable } from "inversify";
 
 import { AppHistory } from "../History/AppHistory";
@@ -21,6 +22,11 @@ import { Mat4 } from "@/lib/renderer/ShaderProgram";
 export enum EditionDirection { Left, Up, Right, Down };
 
 
+export interface EditableCellRect {
+    lb: vec3;
+    rt: vec3;
+}
+
 @injectable()
 export class CodeEditorService {
     private readonly editionCellStyle: Rgb = [0.21568627450980393, 0.2784313725490196, 0.30980392156862746];
@@ -28,6 +34,8 @@ export class CodeEditorService {
     private editionDirection: EditionDirection = EditionDirection.Right;
 
     private editDirectionObservable = new ObservableController<EditionDirection>();
+
+    private editionCellLostObservale = new ObservableController<void>();
 
     private extension: CodeEditorExtension = new EmptyExtension();
 
@@ -44,6 +52,10 @@ export class CodeEditorService {
 
     get EditDirectionObservable(): Observable<EditionDirection> {
         return this.editDirectionObservable;
+    }
+
+    get EditionCellLostObservable(): Observable<void> {
+        return this.editionCellLostObservale;
     }
 
     get EditionDirection(): EditionDirection {
@@ -123,6 +135,10 @@ export class CodeEditorService {
         this.editionCell.x = location.x;
         this.editionCell.y = location.y;
         this.codeEditorRenderer.Select(this.editionCell.x, this.editionCell.y, this.editionCellStyle);
+
+        if (!this.IsEditionCellVisible) {
+            this.editionCellLostObservale.Notify();
+        }
     }
 
     CellInput(e: KeyboardEvent): void {
@@ -166,6 +182,46 @@ export class CodeEditorService {
 
     get EditionCell(): Vec2 {
         return this.editionCell;
+    }
+
+    get EditableCellRect(): EditableCellRect {
+        const lb: vec3 = [
+            this.EditionCell.x * this.codeEditorRenderer.CellSize,
+            (this.codeEditorRenderer.Dimension.Rows - this.EditionCell.y - 1) * this.codeEditorRenderer.CellSize,
+            0.02];
+
+        const rt: vec3 = [
+            (this.EditionCell.x + 1) * this.codeEditorRenderer.CellSize,
+            (this.codeEditorRenderer.Dimension.Rows - this.EditionCell.y) * this.codeEditorRenderer.CellSize,
+            0.02];
+
+        return { lb, rt };
+    }
+
+    get IsEditionCellVisible(): boolean {
+        const lb: vec3 = [
+            this.editionCell.x * this.codeEditorRenderer.CellSize,
+            (this.codeEditorRenderer.Dimension.Rows - this.editionCell.y - 1) * this.codeEditorRenderer.CellSize,
+            0.02];
+
+        const lbNDC = vec3.transformMat4(vec3.create(), lb, this.ViewProjection);
+
+        if (lbNDC[0] < -1 || lbNDC[1] < -1) {
+            return false;
+        }
+
+        const rt: vec3 = [
+            (this.editionCell.x + 1) * this.codeEditorRenderer.CellSize,
+            (this.codeEditorRenderer.Dimension.Rows - this.editionCell.y) * this.codeEditorRenderer.CellSize,
+            0.02];
+
+        const rtNDC = vec3.transformMat4(vec3.create(), rt, this.ViewProjection);
+
+        if (rtNDC[0] > 1 || rtNDC[1] > 1) {
+            return false;
+        }
+
+        return true;
     }
 }
 
