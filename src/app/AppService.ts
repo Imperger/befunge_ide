@@ -134,6 +134,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
         this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
+        this.overlay.FileControls.OpenSettingsObservable.Attach(() => this.OpenSettings());
 
         this.overlay.HistoryControls.UndoObservable.Attach(() => this.history.Undo());
         this.overlay.HistoryControls.RedoObservable.Attach(() => this.history.Redo());
@@ -344,6 +345,10 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
                 this.overlay.Snackbar.ShowError(e.message)
             }
         }
+    }
+
+    private OpenSettings(): void {
+        console.log('Open settings');
     }
 
     private LoadSourceCodeToEditor(sourceCode: string): void {

@@ -10,16 +10,20 @@ export class FileControls {
 
     private openButton: UIIconButton;
     private saveButton: UIIconButton;
+    private settingsButton: UIIconButton;
 
     private openFromDiskObservable = new ObservableController<void>();
 
     private saveToDiskObservable = new ObservableController<void>();
+
+    private openSettingsObservable = new ObservableController<void>();
 
     constructor(private uiRenderer: UIRenderer) {
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const openButtonIconColor: Rgb = [0.9411764705882353, 0.6392156862745098, 0.0392156862745098];
         const saveButtonIconColor: Rgb = [0.08235294117647059, 0.396078431372549, 0.7529411764705882];
+        const settingsButtonIconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
         const margin = 10;
         const btnSideLength = 30;
 
@@ -44,6 +48,15 @@ export class FileControls {
             _sender => this.saveToDiskObservable.Notify(),
             this.group
         );
+
+        this.settingsButton = this.uiRenderer.CreateButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
+            { width: btnSideLength, height: btnSideLength },
+            1,
+            { fillColor, outlineColor },
+            { icon: UIIcon.Settings, color: settingsButtonIconColor },
+            _sender => this.openSettingsObservable.Notify(),
+            this.group
+        );
     }
 
     Resize(): void {
@@ -56,5 +69,9 @@ export class FileControls {
 
     get SaveToDiskObservable(): Observable<void> {
         return this.saveToDiskObservable;
+    }
+
+    get OpenSettingsObservable(): Observable<void> {
+        return this.openSettingsObservable;
     }
 }

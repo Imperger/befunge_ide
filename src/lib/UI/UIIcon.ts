@@ -10,7 +10,7 @@ export enum UIIcon {
     Play, PlayDebug,
     ExclamationCircle, ExclamationTriangle, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
-    Delete, Stop, Heatmap, Undo, Redo
+    Delete, Stop, Heatmap, Undo, Redo, Settings
 };
 
 export interface UVExtra extends UV {
@@ -183,6 +183,11 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Redo,
                 filename: 'ui_icons/redo.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Settings,
+                filename: 'ui_icons/settings.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];

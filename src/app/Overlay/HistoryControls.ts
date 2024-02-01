@@ -32,7 +32,7 @@ export class HistoryControls {
         const btnSideLength = 30;
 
         this.group = new UIObservablePositioningGroup(
-            { x: 4 * margin + 2 * btnSideLength, y: margin + btnSideLength },
+            { x: 5 * margin + 3 * btnSideLength, y: margin + btnSideLength },
             { vertical: VerticalAnchor.Top });
 
         this.undoButton = this.uiRenderer.CreateButton({ x: 0, y: 0 },
