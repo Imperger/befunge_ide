@@ -10,7 +10,7 @@ export class SmoothCameraMove implements Effect {
 
     private progress = 0;
 
-    private duration = 200;
+    private duration = 400;
 
     constructor(
         private camera: mat4,

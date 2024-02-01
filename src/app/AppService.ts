@@ -372,14 +372,28 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const lbNDC = vec3.transformMat4(vec3.create(), cellRect.lb, this.ViewProjection);
         const rtNDC = vec3.transformMat4(vec3.create(), cellRect.rt, this.ViewProjection);
 
-        const ndcMovement = Transformation.MoveRectangleToPlaceInsideRectangle(
-            { lb: { x: lbNDC[0], y: lbNDC[1] }, rt: { x: rtNDC[0], y: rtNDC[1] } },
-            { lb: { x: -1, y: -1 }, rt: { x: 1, y: 1 } }
-        );
+        const ndcDiagonal = vec3.sub(vec3.create(), rtNDC, lbNDC);
+        const ndcHalfDiagonal = vec3.div(vec3.create(), ndcDiagonal, vec3.fromValues(2, 2, 2));
+        const ndcCellCenter = vec3.add(vec3.create(), lbNDC, ndcHalfDiagonal);
+        const ndcMovement = vec2.fromValues(-ndcCellCenter[0], -ndcCellCenter[1]);
+
+        if (this.codeEditor.EditionCell.x === 0 ||
+            this.codeEditor.EditionCell.x === this.settings.MemoryLimit.Width - 1 ||
+            this.codeEditor.EditionCell.y === 0 ||
+            this.codeEditor.EditionCell.y === this.settings.MemoryLimit.Height - 1) {
+            const ndcStickToEdgeMovement = Transformation.MoveRectangleToPlaceInsideRectangle(
+                { lb: { x: lbNDC[0], y: lbNDC[1] }, rt: { x: rtNDC[0], y: rtNDC[1] } },
+                { lb: { x: -1, y: -1 }, rt: { x: 1, y: 1 } }
+            );
+
+            ndcMovement[0] = ndcStickToEdgeMovement.x;
+            ndcMovement[1] = ndcStickToEdgeMovement.y;
+        }
+
 
         const movement: vec2 = [
-            ndcMovement.x * this.gl.canvas.width / 2,
-            ndcMovement.y * this.gl.canvas.height / 2
+            ndcMovement[0] * this.gl.canvas.width / 2,
+            ndcMovement[1] * this.gl.canvas.height / 2
         ];
 
         const effect = new SmoothCameraMove(
