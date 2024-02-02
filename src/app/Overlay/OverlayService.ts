@@ -5,6 +5,7 @@ import { AppSettings } from "../AppSettings";
 import { InjectionToken } from "../InjectionToken";
 
 import { DebugControls } from "./DebugControls";
+import { EditControls } from "./EditControls";
 import { EditDirectionControls } from "./EditDirectionControls";
 import { FileControls } from "./FileControls";
 import { HistoryControls } from "./HistoryControls";
@@ -39,6 +40,7 @@ export class OverlayService implements AsyncConstructable {
         @inject(UIRenderer) private uiRenderer: UIRenderer,
         @inject(SnackbarControls) private snackbarControls: SnackbarControls,
         @inject(HistoryControls) private historyControls: HistoryControls,
+        @inject(EditControls) private editControls: EditControls,
         @inject(OutputControls) private outputControls: OutputControls) {
         this.settings = Inversify.get(AppSettings);
 
@@ -82,6 +84,10 @@ export class OverlayService implements AsyncConstructable {
         return this.historyControls;
     }
 
+    get EditControls(): EditControls {
+        return this.editControls;
+    }
+
     get StackControls(): StackControls {
         return this.stackControls;
     }
@@ -95,6 +101,7 @@ export class OverlayService implements AsyncConstructable {
         this.debugControls.Resize();
         this.fileControls.Resize();
         this.historyControls.Resize();
+        this.editControls.Resize();
         this.stackControls.Resize();
         this.inputControls.Resize();
         this.outputControls.Resize();

@@ -10,7 +10,7 @@ export enum UIIcon {
     Play, PlayDebug,
     ExclamationCircle, ExclamationTriangle, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
-    Delete, Stop, Heatmap, Undo, Redo, Settings
+    Delete, Stop, Heatmap, Undo, Redo, Settings, Select, Copy, Cut, Paste, EditDelete
 };
 
 export interface UVExtra extends UV {
@@ -188,6 +188,31 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Settings,
                 filename: 'ui_icons/settings.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Select,
+                filename: 'ui_icons/select.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Copy,
+                filename: 'ui_icons/copy.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Cut,
+                filename: 'ui_icons/cut.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Paste,
+                filename: 'ui_icons/paste.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.EditDelete,
+                filename: 'ui_icons/edit_delete.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];
