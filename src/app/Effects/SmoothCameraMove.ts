@@ -24,9 +24,13 @@ export class SmoothCameraMove implements Effect {
     }
 
     Draw(elapsed: number): void {
-        const fract = elapsed / this.duration;
+        let fract = elapsed / this.duration;
 
         this.progress += fract;
+
+        if (this.progress > 1) {
+            fract -= this.progress - 1;
+        }
 
         const movement = vec2.mul(vec2.create(), this.destination, vec2.fromValues(fract, fract));
 

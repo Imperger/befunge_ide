@@ -373,27 +373,32 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const rtNDC = vec3.transformMat4(vec3.create(), cellRect.rt, this.ViewProjection);
 
         const ndcDiagonal = vec3.sub(vec3.create(), rtNDC, lbNDC);
-        const ndcHalfDiagonal = vec3.div(vec3.create(), ndcDiagonal, vec3.fromValues(2, 2, 2));
-        const ndcCellCenter = vec3.add(vec3.create(), lbNDC, ndcHalfDiagonal);
-        const ndcMovement = vec2.fromValues(-ndcCellCenter[0], -ndcCellCenter[1]);
+        const ndcStickToEdgeMovement = Transformation.MoveRectangleToPlaceInsideRectangle(
+            { lb: { x: lbNDC[0], y: lbNDC[1] }, rt: { x: rtNDC[0], y: rtNDC[1] } },
+            { lb: { x: -1, y: -1 }, rt: { x: 1, y: 1 } });
 
-        if (this.codeEditor.EditionCell.x === 0 ||
-            this.codeEditor.EditionCell.x === this.settings.MemoryLimit.Width - 1 ||
-            this.codeEditor.EditionCell.y === 0 ||
-            this.codeEditor.EditionCell.y === this.settings.MemoryLimit.Height - 1) {
-            const ndcStickToEdgeMovement = Transformation.MoveRectangleToPlaceInsideRectangle(
-                { lb: { x: lbNDC[0], y: lbNDC[1] }, rt: { x: rtNDC[0], y: rtNDC[1] } },
-                { lb: { x: -1, y: -1 }, rt: { x: 1, y: 1 } }
-            );
+        const finalMovement = vec2.fromValues(ndcStickToEdgeMovement.x, ndcStickToEdgeMovement.y);
 
-            ndcMovement[0] = ndcStickToEdgeMovement.x;
-            ndcMovement[1] = ndcStickToEdgeMovement.y;
+        if (ndcStickToEdgeMovement.x > 0) {
+            const ndcDistanceToLeft = ndcDiagonal[0] * this.codeEditor.EditionCell.x;
+            finalMovement[0] += Math.min(ndcDistanceToLeft, 1);
+        } else if (ndcStickToEdgeMovement.x < 0) {
+            const ndcDistanceToRight = ndcDiagonal[0] * (this.settings.MemoryLimit.Width - this.codeEditor.EditionCell.x - 1);
+            finalMovement[0] -= Math.min(ndcDistanceToRight, 1);
+        }
+
+        if (ndcStickToEdgeMovement.y > 0) {
+            const ndcDistanceToBottom = ndcDiagonal[1] * (this.settings.MemoryLimit.Height - this.codeEditor.EditionCell.y - 1);
+            finalMovement[1] += Math.min(ndcDistanceToBottom, 1);
+        } else if (ndcStickToEdgeMovement.y < 0) {
+            const ndcDistanceToTop = ndcDiagonal[1] * this.codeEditor.EditionCell.y;
+            finalMovement[1] -= Math.min(ndcDistanceToTop, 1);
         }
 
 
         const movement: vec2 = [
-            ndcMovement[0] * this.gl.canvas.width / 2,
-            ndcMovement[1] * this.gl.canvas.height / 2
+            finalMovement[0] * this.gl.canvas.width / 2,
+            finalMovement[1] * this.gl.canvas.height / 2
         ];
 
         const effect = new SmoothCameraMove(

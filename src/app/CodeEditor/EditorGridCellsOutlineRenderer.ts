@@ -21,6 +21,9 @@ export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
     private readonly outlineWidth = 0.2;
     private readonly cellOutlineColor: Rgb = [0.5647058823529412, 0.6431372549019608, 0.6823529411764706];
 
+    private gridOutlineWidth = 0.5;
+    private readonly gridOutlineColor: Rgb = [0.20392156862745098, 0.596078431372549, 0.8588235294117647];
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) protected gl: WebGL2RenderingContext,
         @inject(EditorGridRenderer) private gridRenderer: EditorGridRenderer) {
@@ -65,8 +68,8 @@ export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
                 width: this.gridRenderer.Dimension.Columns * this.gridRenderer.CellSize,
                 height: this.gridRenderer.Dimension.Rows * this.gridRenderer.CellSize
             },
-            this.outlineWidth,
-            [this.cellOutlineColor]);
+            this.gridOutlineWidth,
+            [this.gridOutlineColor]);
 
         vertexList.push(...editorOutline);
 
