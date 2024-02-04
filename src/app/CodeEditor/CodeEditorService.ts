@@ -89,8 +89,16 @@ export class CodeEditorService {
         this.codeEditorRenderer.Select(column, row, style);
     }
 
+    SelectRegion(p0: Vec2, p1: Vec2, color: Rgb): void {
+        this.codeEditorRenderer.SelectRegion(p0, p1, color);
+    }
+
     Unselect(column: number, row: number): void {
         this.codeEditorRenderer.Unselect(column, row);
+    }
+
+    UnselectRegion(p0: Vec2, p1: Vec2): void {
+        this.codeEditorRenderer.UnselectRegion(p0, p1);
     }
 
     Tooltip(column: number, row: number, text: string, position: TooltipPosition): TooltipReleaser {

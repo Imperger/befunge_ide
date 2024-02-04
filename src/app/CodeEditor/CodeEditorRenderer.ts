@@ -5,7 +5,7 @@ import { EditorGridDimension, EditorGridRenderer } from "./EditorGridRenderer";
 import { SelectionRenderer } from "./SelectionRenderer";
 
 import { Inversify } from "@/Inversify";
-import { Rgb } from "@/lib/Primitives";
+import { Rgb, Vec2 } from "@/lib/Primitives";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
 @injectable()
@@ -37,8 +37,16 @@ export class CodeEditorRenderer {
         this.selectionRenderer.Select(column, row, color);
     }
 
+    SelectRegion(p0: Vec2, p1: Vec2, color: Rgb): void {
+        this.selectionRenderer.SelectRegion(p0, p1, color);
+    }
+
     Unselect(column: number, row: number): void {
         this.selectionRenderer.Unselect(column, row);
+    }
+
+    UnselectRegion(p0: Vec2, p1: Vec2): void {
+        this.selectionRenderer.UnselectRegion(p0, p1);
     }
 
     Draw(): void {

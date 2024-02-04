@@ -8,7 +8,8 @@ import VSelection from './Selection.vert';
 
 import { Inversify } from '@/Inversify';
 import { EnumSize } from '@/lib/EnumSize';
-import { Rgb } from '@/lib/Primitives';
+import { MathUtil } from '@/lib/math/MathUtil';
+import { Rgb, Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
@@ -16,16 +17,21 @@ import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 
 enum SelectionComponent { X, Y, R, G, B };
 
-interface SelectionLocation {
-    Column: number;
-    Row: number;
+interface SelectionBoundaryPoint {
+    x: number;
+    y: number;
+}
+
+interface Selection {
+    a: SelectionBoundaryPoint;
+    b: SelectionBoundaryPoint;
 }
 
 @injectable()
 export class SelectionRenderer extends PrimitivesRenderer {
     private static readonly IndicesPerPrimitive = 24;
 
-    private readonly selected: SelectionLocation[] = [];
+    private readonly selected: Selection[] = [];
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
@@ -58,14 +64,19 @@ export class SelectionRenderer extends PrimitivesRenderer {
             { indicesPerPrimitive: SelectionRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
     }
 
-    Select(column: number, row: number, color: Rgb): void {
-        row = this.editorGridRenderer.Dimension.Rows - row - 1;
+    Select(x: number, y: number, color: Rgb): void {
+        this.SelectRegion({ x, y }, { x, y }, color);
+    }
 
-        if (column < 0 || column >= this.editorGridRenderer.Dimension.Columns || row < 0 || row >= this.editorGridRenderer.Dimension.Rows) {
+    SelectRegion(p0: Vec2, p1: Vec2, color: Rgb): void {
+        const range = MathUtil.Extremum([this.FlipY(p0), this.FlipY(p1)]);
+
+        if (this.OutOfGrid(range.min) || this.OutOfGrid(range.max)) {
             return;
         }
 
-        const selectionIdx = this.selected.findIndex(x => x.Column === column && x.Row === row);
+        const selectionIdx = this.selected
+            .findIndex(r => r.a.x === range.min.x && r.a.y === range.min.y && r.b.x === range.max.x && r.b.y === range.max.y);
 
         if (selectionIdx !== -1) {
             const colorOffset = 2;
@@ -89,11 +100,17 @@ export class SelectionRenderer extends PrimitivesRenderer {
                 attrs.offset + colorOffset,
                 (SelectionRenderer.IndicesPerPrimitive - 1) * componentsPerVertex + 3);
         } else {
-            this.selected.push({ Column: column, Row: row });
+            this.selected.push({ a: range.min, b: range.max });
 
             const selection = PrimitiveBuilder.AABBFrame(
-                { x: column * this.editorGridRenderer.CellSize, y: row * this.editorGridRenderer.CellSize },
-                { width: this.editorGridRenderer.CellSize, height: this.editorGridRenderer.CellSize },
+                {
+                    x: range.min.x * this.editorGridRenderer.CellSize,
+                    y: range.min.y * this.editorGridRenderer.CellSize
+                },
+                {
+                    width: (range.max.x - range.min.x + 1) * this.editorGridRenderer.CellSize,
+                    height: (range.max.y - range.min.y + 1) * this.editorGridRenderer.CellSize
+                },
                 0.5,
                 [color]);
 
@@ -101,15 +118,31 @@ export class SelectionRenderer extends PrimitivesRenderer {
         }
     }
 
-    Unselect(column: number, row: number): void {
-        row = this.editorGridRenderer.Dimension.Rows - row - 1;
+    private OutOfGrid(p: Vec2): boolean {
+        return p.x < 0 || p.x >= this.editorGridRenderer.Dimension.Columns ||
+            p.y < 0 || p.y >= this.editorGridRenderer.Dimension.Rows;
+    }
 
-        const selectionIdx = this.selected.findIndex(x => x.Column === column && x.Row === row);
+    private FlipY(point: Vec2): Vec2 {
+        return {
+            x: point.x,
+            y: this.editorGridRenderer.Dimension.Rows - point.y - 1
+        }
+    }
+
+    Unselect(x: number, y: number): void {
+        this.UnselectRegion({ x, y }, { x, y });
+    }
+
+    UnselectRegion(p0: Vec2, p1: Vec2): void {
+        const range = MathUtil.Extremum([this.FlipY(p0), this.FlipY(p1)]);
+
+        const selectionIdx = this.selected
+            .findIndex(r => r.a.x === range.min.x && r.a.y === range.min.y && r.b.x === range.max.x && r.b.y === range.max.y);
 
         if (selectionIdx === -1) {
             return;
         }
-
 
         const attrs = this.PrimitiveAttributes(selectionIdx);
 
