@@ -69,14 +69,14 @@ export class SelectionRenderer extends PrimitivesRenderer {
     }
 
     SelectRegion(p0: Vec2, p1: Vec2, color: Rgb): void {
-        const range = MathUtil.Extremum([this.FlipY(p0), this.FlipY(p1)]);
+        const region = MathUtil.Extremum([this.FlipY(p0), this.FlipY(p1)]);
 
-        if (this.OutOfGrid(range.min) || this.OutOfGrid(range.max)) {
+        if (this.OutOfGrid(region.min) || this.OutOfGrid(region.max)) {
             return;
         }
 
         const selectionIdx = this.selected
-            .findIndex(r => r.a.x === range.min.x && r.a.y === range.min.y && r.b.x === range.max.x && r.b.y === range.max.y);
+            .findIndex(r => r.a.x === region.min.x && r.a.y === region.min.y && r.b.x === region.max.x && r.b.y === region.max.y);
 
         if (selectionIdx !== -1) {
             const colorOffset = 2;
@@ -100,16 +100,16 @@ export class SelectionRenderer extends PrimitivesRenderer {
                 attrs.offset + colorOffset,
                 (SelectionRenderer.IndicesPerPrimitive - 1) * componentsPerVertex + 3);
         } else {
-            this.selected.push({ a: range.min, b: range.max });
+            this.selected.push({ a: region.min, b: region.max });
 
             const selection = PrimitiveBuilder.AABBFrame(
                 {
-                    x: range.min.x * this.editorGridRenderer.CellSize,
-                    y: range.min.y * this.editorGridRenderer.CellSize
+                    x: region.min.x * this.editorGridRenderer.CellSize,
+                    y: region.min.y * this.editorGridRenderer.CellSize
                 },
                 {
-                    width: (range.max.x - range.min.x + 1) * this.editorGridRenderer.CellSize,
-                    height: (range.max.y - range.min.y + 1) * this.editorGridRenderer.CellSize
+                    width: (region.max.x - region.min.x + 1) * this.editorGridRenderer.CellSize,
+                    height: (region.max.y - region.min.y + 1) * this.editorGridRenderer.CellSize
                 },
                 0.5,
                 [color]);
@@ -135,10 +135,10 @@ export class SelectionRenderer extends PrimitivesRenderer {
     }
 
     UnselectRegion(p0: Vec2, p1: Vec2): void {
-        const range = MathUtil.Extremum([this.FlipY(p0), this.FlipY(p1)]);
+        const region = MathUtil.Extremum([this.FlipY(p0), this.FlipY(p1)]);
 
         const selectionIdx = this.selected
-            .findIndex(r => r.a.x === range.min.x && r.a.y === range.min.y && r.b.x === range.max.x && r.b.y === range.max.y);
+            .findIndex(r => r.a.x === region.min.x && r.a.y === region.min.y && r.b.x === region.max.x && r.b.y === region.max.y);
 
         if (selectionIdx === -1) {
             return;

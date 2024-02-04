@@ -128,9 +128,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     async AsyncConstructor(): Promise<void> {
-        this.overlay.EditDirectionControls.EditDirectionObservable.Attach(dir => this.codeEditor.EditionDirection = dir);
+        this.overlay.EditDirectionControls.EditDirectionObservable.Attach(dir => this.codeEditor.EditableCellDirection = dir);
         this.codeEditor.EditDirectionObservable.Attach(dir => this.overlay.EditDirectionControls.ForceEditDirection(dir));
-        this.codeEditor.EditionCellLostObservable.Attach(() => this.FollowEditableCell());
+        this.codeEditor.EditableCellLostObservable.Attach(() => this.FollowEditableCell());
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
         this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
@@ -175,11 +175,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         if (touchResult === false) {
             this.SwitchFocus(this.codeEditorServiceInputReceiverFactory());
-            const prevEditionCell = { ...this.codeEditor.EditionCell };
+            const prevEditableCell = { ...this.codeEditor.EditableCell };
 
             this.codeEditor.Touch(e);
 
-            this.codeExecutionService.Debugging.OnSelect(prevEditionCell);
+            this.codeExecutionService.Debugging.OnSelect(prevEditableCell);
         } else if (IsInputReceiver(touchResult)) {
             this.SwitchFocus(touchResult);
         }
@@ -380,18 +380,18 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const finalMovement = vec2.fromValues(ndcStickToEdgeMovement.x, ndcStickToEdgeMovement.y);
 
         if (ndcStickToEdgeMovement.x > 0) {
-            const ndcDistanceToLeft = ndcDiagonal[0] * this.codeEditor.EditionCell.x;
+            const ndcDistanceToLeft = ndcDiagonal[0] * this.codeEditor.EditableCell.x;
             finalMovement[0] += Math.min(ndcDistanceToLeft, 1);
         } else if (ndcStickToEdgeMovement.x < 0) {
-            const ndcDistanceToRight = ndcDiagonal[0] * (this.settings.MemoryLimit.Width - this.codeEditor.EditionCell.x - 1);
+            const ndcDistanceToRight = ndcDiagonal[0] * (this.settings.MemoryLimit.Width - this.codeEditor.EditableCell.x - 1);
             finalMovement[0] -= Math.min(ndcDistanceToRight, 1);
         }
 
         if (ndcStickToEdgeMovement.y > 0) {
-            const ndcDistanceToBottom = ndcDiagonal[1] * (this.settings.MemoryLimit.Height - this.codeEditor.EditionCell.y - 1);
+            const ndcDistanceToBottom = ndcDiagonal[1] * (this.settings.MemoryLimit.Height - this.codeEditor.EditableCell.y - 1);
             finalMovement[1] += Math.min(ndcDistanceToBottom, 1);
         } else if (ndcStickToEdgeMovement.y < 0) {
-            const ndcDistanceToTop = ndcDiagonal[1] * this.codeEditor.EditionCell.y;
+            const ndcDistanceToTop = ndcDiagonal[1] * this.codeEditor.EditableCell.y;
             finalMovement[1] -= Math.min(ndcDistanceToTop, 1);
         }
 

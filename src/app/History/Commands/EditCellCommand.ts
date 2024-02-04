@@ -35,10 +35,10 @@ export class EditCellCommand implements Command {
 
         const codeFlowEditDirection = this.FollowCodeFlowHelper(this.newValue);
         if (this.editDirection !== codeFlowEditDirection) {
-            this.codeEditorService.EditionDirection = codeFlowEditDirection;
+            this.codeEditorService.EditableCellDirection = codeFlowEditDirection;
         }
 
-        this.codeEditorService.SetEditableCell(this.GetNextEditionCell(codeFlowEditDirection));
+        this.codeEditorService.SetEditableCell(this.GetNextEditableCell(codeFlowEditDirection));
     }
 
     Undo(): void {
@@ -46,10 +46,10 @@ export class EditCellCommand implements Command {
         this.editorSourceCode.Write(this.location, this.oldValue.charCodeAt(0));
 
         this.codeEditorService.SetEditableCell(this.location);
-        this.codeEditorService.EditionDirection = this.editDirection;
+        this.codeEditorService.EditableCellDirection = this.editDirection;
     }
 
-    private GetNextEditionCell(direction: EditionDirection): Pointer {
+    private GetNextEditableCell(direction: EditionDirection): Pointer {
         const nextEditableCell: Pointer = { ...this.location };
 
         switch (direction) {

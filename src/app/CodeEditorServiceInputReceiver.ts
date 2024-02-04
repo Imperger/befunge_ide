@@ -27,11 +27,11 @@ export class CodeEditorServiceInputReceiver implements InputReceiver {
             } else if (this.overlay.DebugControls.IsHeatmapShown) {
                 this.overlay.Snackbar.ShowInformation('Editing is disabled while heatmap is active');
             } else {
-                const prevEditionCell = { ...this.codeEditor.EditionCell };
+                const prevEditableCell = { ...this.codeEditor.EditableCell };
 
                 this.codeEditor.CellInput(e);
 
-                this.codeExecutionService.Debugging.OnCellInput(prevEditionCell);
+                this.codeExecutionService.Debugging.OnCellInput(prevEditableCell);
             }
         }
     }

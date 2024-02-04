@@ -37,24 +37,24 @@ export class DebuggingService {
         this.overlay.DebugControls.CellBreakpointDelete.Attach(() => this.OnCellBreakpointDelete());
     }
 
-    OnSelect(prevEditionCell: Vec2): void {
+    OnSelect(prevEditableCell: Vec2): void {
         const hasBrk = this.cellBreakpoints
-            .some(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
+            .some(brk => brk.Location.x === this.codeEditor.EditableCell.x && brk.Location.y === this.codeEditor.EditableCell.y);
 
         this.overlay.DebugControls.DeactivateButton = hasBrk;
 
-        if (prevEditionCell.x !== this.codeEditor.EditionCell.x || prevEditionCell.y !== this.codeEditor.EditionCell.y) {
-            if (this.activeCellBreakpoints.some(brk => brk.Location.x === prevEditionCell.x && brk.Location.y === prevEditionCell.y)) {
-                this.codeEditor.Select(prevEditionCell.x, prevEditionCell.y, this.activeBreakpointColor);
-            } else if (this.cellBreakpoints.some(brk => brk.Location.x === prevEditionCell.x && brk.Location.y === prevEditionCell.y)) {
-                this.codeEditor.Select(prevEditionCell.x, prevEditionCell.y, this.inactiveBreakpointColor);
+        if (prevEditableCell.x !== this.codeEditor.EditableCell.x || prevEditableCell.y !== this.codeEditor.EditableCell.y) {
+            if (this.activeCellBreakpoints.some(brk => brk.Location.x === prevEditableCell.x && brk.Location.y === prevEditableCell.y)) {
+                this.codeEditor.Select(prevEditableCell.x, prevEditableCell.y, this.activeBreakpointColor);
+            } else if (this.cellBreakpoints.some(brk => brk.Location.x === prevEditableCell.x && brk.Location.y === prevEditableCell.y)) {
+                this.codeEditor.Select(prevEditableCell.x, prevEditableCell.y, this.inactiveBreakpointColor);
             }
         }
     }
 
-    OnCellInput(prevEditionCell: Vec2): void {
-        if (this.cellBreakpoints.some(brk => brk.Location.x === prevEditionCell.x && brk.Location.y === prevEditionCell.y)) {
-            this.codeEditor.Select(prevEditionCell.x, prevEditionCell.y, this.inactiveBreakpointColor);
+    OnCellInput(prevEditableCell: Vec2): void {
+        if (this.cellBreakpoints.some(brk => brk.Location.x === prevEditableCell.x && brk.Location.y === prevEditableCell.y)) {
+            this.codeEditor.Select(prevEditableCell.x, prevEditableCell.y, this.inactiveBreakpointColor);
         }
     }
 
@@ -178,10 +178,10 @@ export class DebuggingService {
 
     private OnCellBreakpointAction(cond: PCDirectionCondition): void {
         const existIdx = this.cellBreakpoints
-            .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
+            .findIndex(brk => brk.Location.x === this.codeEditor.EditableCell.x && brk.Location.y === this.codeEditor.EditableCell.y);
 
         const condition: PcLocationCondition = {
-            Location: { ...this.codeEditor.EditionCell },
+            Location: { ...this.codeEditor.EditableCell },
             ...cond
         };
 
@@ -200,7 +200,7 @@ export class DebuggingService {
 
     private OnCellBreakpointDelete(): void {
         const existIdx = this.cellBreakpoints
-            .findIndex(brk => brk.Location.x === this.codeEditor.EditionCell.x && brk.Location.y === this.codeEditor.EditionCell.y);
+            .findIndex(brk => brk.Location.x === this.codeEditor.EditableCell.x && brk.Location.y === this.codeEditor.EditableCell.y);
 
         if (existIdx !== -1) {
             const brkRemove = this.cellBreakpoints[existIdx];
