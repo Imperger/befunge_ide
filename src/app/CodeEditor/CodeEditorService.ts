@@ -81,7 +81,8 @@ export class CodeEditorService {
         this.extension = new EmptyExtension();
     }
 
-    Symbol(symbol: string, column: number, row: number): void {
+    EditCell(symbol: string, column: number, row: number): void {
+        this.editorSourceCode.Write({ x: column, y: row }, symbol.charCodeAt(0));
         this.codeEditorRenderer.Symbol(symbol, column, row);
     }
 
@@ -162,11 +163,7 @@ export class CodeEditorService {
     }
 
     Clear(): void {
-        for (let row = 0; row < this.codeEditorRenderer.Dimension.Rows; ++row) {
-            for (let column = 0; column < this.codeEditorRenderer.Dimension.Columns; ++column) {
-                this.Symbol(' ', column, row);
-            }
-        }
+        this.codeEditorRenderer.Clear();
     }
 
     Draw(): void {

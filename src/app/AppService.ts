@@ -93,7 +93,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             for (let n = 0; n < text.length; ++n) {
 
-                this.codeEditor.Symbol(text[n], n, 1);
+                this.codeEditor.EditCell(text[n], n, 1);
 
                 await Delay(10);
             }
@@ -102,7 +102,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             const endCode = '~'.charCodeAt(0);
             const startRow = 3;
             for (let n = 0; n < endCode - startCode; ++n) {
-                this.codeEditor.Symbol(String.fromCharCode(n + startCode), n % 80, startRow + Math.floor(n / 80));
+                this.codeEditor.EditCell(String.fromCharCode(n + startCode), n % 80, startRow + Math.floor(n / 80));
 
                 await Delay(10);
             }
@@ -359,10 +359,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         for (let row = 0; row < linesOfCode.length; ++row) {
             const line = linesOfCode[row];
             for (let column = 0; column < line.length; ++column) {
-                const symbol = line[column];
-
-                this.editorSourceCode.Write({ x: column, y: row }, symbol.charCodeAt(0));
-                this.codeEditor.Symbol(symbol, column, row);
+                this.codeEditor.EditCell(line[column], column, row);
             }
         }
     }

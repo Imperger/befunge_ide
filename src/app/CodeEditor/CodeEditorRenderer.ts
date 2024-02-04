@@ -55,6 +55,14 @@ export class CodeEditorRenderer {
         this.selectionRenderer.Draw();
     }
 
+    Clear(): void {
+        for (let row = 0; row < this.Dimension.Rows; ++row) {
+            for (let column = 0; column < this.Dimension.Columns; ++column) {
+                this.Symbol(' ', column, row);
+            }
+        }
+    }
+
     get Dimension(): EditorGridDimension {
         return this.editorGridRenderer.Dimension;
     }

@@ -5,7 +5,6 @@ import { Command } from "./Command";
 import { CodeEditorRenderer } from "@/app/CodeEditor/CodeEditorRenderer";
 import { CodeEditorService, EditionDirection } from "@/app/CodeEditor/CodeEditorService";
 import { AppCommandInjectionToken } from "@/app/InjectionToken";
-import { SourceCodeMemory } from "@/app/SourceCodeMemory";
 import { Inversify } from "@/Inversify";
 import { Pointer } from "@/lib/befunge/memory/Memory";
 
@@ -21,7 +20,6 @@ export class EditCellCommand implements Command {
     private editDirection = EditionDirection.Right;
 
     constructor(
-        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
         @inject(CodeEditorService) private codeEditorService: CodeEditorService) { }
 
@@ -30,8 +28,7 @@ export class EditCellCommand implements Command {
     }
 
     Apply(): void {
-        this.codeEditorRenderer.Symbol(this.newValue, this.location.x, this.location.y);
-        this.editorSourceCode.Write(this.location, this.newValue.charCodeAt(0));
+        this.codeEditorService.EditCell(this.newValue, this.location.x, this.location.y);
 
         const codeFlowEditDirection = this.FollowCodeFlowHelper(this.newValue);
         if (this.editDirection !== codeFlowEditDirection) {
@@ -42,8 +39,7 @@ export class EditCellCommand implements Command {
     }
 
     Undo(): void {
-        this.codeEditorRenderer.Symbol(this.oldValue, this.location.x, this.location.y);
-        this.editorSourceCode.Write(this.location, this.oldValue.charCodeAt(0));
+        this.codeEditorService.EditCell(this.oldValue, this.location.x, this.location.y);
 
         this.codeEditorService.SetEditableCell(this.location);
         this.codeEditorService.EditableCellDirection = this.editDirection;
