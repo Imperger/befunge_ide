@@ -1,14 +1,14 @@
 import { vec3 } from "gl-matrix";
 import { inject, injectable } from "inversify";
 
-import { AppHistory } from "../History/AppHistory";
-import type { EditCellCommandFactory } from "../History/Commands/EditCellCommand";
-import { AppCommandInjectionToken, InjectionToken } from "../InjectionToken";
+import { InjectionToken } from "../InjectionToken";
+import { OverlayService } from "../Overlay/OverlayService";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { CodeEditorExtension, EmptyExtension } from "./CodeEditorExtension";
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { CodeEditorTooltipService, TooltipPosition, TooltipReleaser } from "./CodeEditorTooltipService";
+import { EditableTarget } from "./EditableTarget";
 import { EditorGridDimension } from "./EditorGridRenderer";
 
 import { Inversify } from "@/Inversify";
@@ -27,27 +27,54 @@ export interface EditableCellRect {
     rt: vec3;
 }
 
+interface TouchBehavior {
+    Touch(cell: Vec2): TouchBehavior;
+}
+
+class SelectCellBehaiver implements TouchBehavior {
+    constructor(private editableCell: EditableTarget) { }
+
+    Touch(cell: Vec2): TouchBehavior {
+        this.editableCell.Select(cell);
+
+        return this;
+    }
+}
+
+class SelectCellsRegion implements TouchBehavior {
+    private firstTouch: Vec2;
+
+    constructor(
+        private editableCell: EditableTarget) {
+        this.firstTouch = { ...editableCell.Target.lt };
+    }
+
+    Touch(cell: Vec2): TouchBehavior {
+        this.editableCell.SelectRegion(this.firstTouch, cell);
+
+        return new SelectCellBehaiver(this.editableCell);
+    }
+}
+
 @injectable()
 export class CodeEditorService {
-    private readonly editableCellStyle: Rgb = [0.21568627450980393, 0.2784313725490196, 0.30980392156862746];
-    private editableCell: Vec2 = { x: 0, y: 0 };
-    private editionDirection: EditionDirection = EditionDirection.Right;
-
     private editDirectionObservable = new ObservableController<EditionDirection>();
 
     private editableCellLostObservale = new ObservableController<void>();
 
     private extension: CodeEditorExtension = new EmptyExtension();
 
+    private touchBehavior: TouchBehavior;
+
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
+        @inject(OverlayService) private overlay: OverlayService,
+        @inject(EditableTarget) private editableCell: EditableTarget,
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
-        @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService,
-        @inject(AppCommandInjectionToken.EditCellCommandFactory) private editCellCommandFactory: EditCellCommandFactory,
-        @inject(AppHistory) private history: AppHistory) {
-
-        this.codeEditorRenderer.Select(this.editableCell.x, this.editableCell.y, this.editableCellStyle);
+        @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService) {
+        this.touchBehavior = new SelectCellBehaiver(this.editableCell);
+        this.overlay.EditControls.SelectObservable.Attach(() => this.OnSetEditableRegion());
     }
 
     get EditDirectionObservable(): Observable<EditionDirection> {
@@ -59,11 +86,11 @@ export class CodeEditorService {
     }
 
     get EditableCellDirection(): EditionDirection {
-        return this.editionDirection;
+        return this.editableCell.EditionDirection;
     }
 
     set EditableCellDirection(direction: EditionDirection) {
-        this.editionDirection = direction;
+        this.editableCell.EditionDirection = direction;
 
         this.editDirectionObservable.Notify(direction);
     }
@@ -118,48 +145,38 @@ export class CodeEditorService {
             { a: 0, b: 0, c: 1, d: 0 },
             { a: [posNear[0], posNear[1], posNear[2]], b: [posFar[0], posFar[1], posFar[2]] });
 
-        const column = Math.floor(intersection[0] / this.codeEditorRenderer.CellSize);
-        const row = this.codeEditorRenderer.Dimension.Rows - Math.floor(intersection[1] / this.codeEditorRenderer.CellSize) - 1;
+        const x = Math.floor(intersection[0] / this.codeEditorRenderer.CellSize);
+        const y = this.codeEditorRenderer.Dimension.Rows - Math.floor(intersection[1] / this.codeEditorRenderer.CellSize) - 1;
 
-        if (column >= 0 && row >= 0 && column < this.codeEditorRenderer.Dimension.Columns && row < this.codeEditorRenderer.Dimension.Rows) {
-            this.codeEditorRenderer.Unselect(this.editableCell.x, this.editableCell.y);
+        const nextBehaivor = this.touchBehavior.Touch({ x, y });
 
-            this.editableCell.x = column;
-            this.editableCell.y = row;
-            this.codeEditorRenderer.Select(this.editableCell.x, this.editableCell.y, this.editableCellStyle);
+        if (nextBehaivor !== this.touchBehavior) {
+            this.touchBehavior = nextBehaivor;
         }
     }
 
     Focus(): void {
-        this.codeEditorRenderer.Select(this.editableCell.x, this.editableCell.y, this.editableCellStyle);
+        this.editableCell.Focus();
     }
 
     Blur(): void {
-        this.codeEditorRenderer.Unselect(this.editableCell.x, this.editableCell.y);
+        this.editableCell.Blur();
     }
 
     SetEditableCell(location: Pointer): void {
-        this.codeEditorRenderer.Unselect(this.editableCell.x, this.editableCell.y);
-
-        this.editableCell.x = location.x;
-        this.editableCell.y = location.y;
-        this.codeEditorRenderer.Select(this.editableCell.x, this.editableCell.y, this.editableCellStyle);
+        this.editableCell.Select(location);
 
         if (!this.IsEditableCellVisible) {
             this.editableCellLostObservale.Notify();
         }
     }
 
+    SetEditableRegion(p0: Vec2, p1: Vec2): void {
+        this.editableCell.SelectRegion(p0, p1);
+    }
+
     CellInput(e: KeyboardEvent): void {
-        const command = this.editCellCommandFactory(
-            this.editableCell,
-            String.fromCharCode(this.editorSourceCode.Read(this.editableCell)),
-            e.key,
-            this.editionDirection);
-
-        command.Apply();
-
-        this.history.Push(command);
+        this.editableCell.CellInput(e.key);
     }
 
     Clear(): void {
@@ -186,7 +203,7 @@ export class CodeEditorService {
     }
 
     get EditableCell(): Vec2 {
-        return this.editableCell;
+        return this.editableCell.Target.lt;
     }
 
     get EditableCellRect(): EditableCellRect {
@@ -205,8 +222,8 @@ export class CodeEditorService {
 
     get IsEditableCellVisible(): boolean {
         const lb: vec3 = [
-            this.editableCell.x * this.codeEditorRenderer.CellSize,
-            (this.codeEditorRenderer.Dimension.Rows - this.editableCell.y - 1) * this.codeEditorRenderer.CellSize,
+            this.editableCell.Target.lt.x * this.codeEditorRenderer.CellSize,
+            (this.codeEditorRenderer.Dimension.Rows - this.editableCell.Target.lt.y - 1) * this.codeEditorRenderer.CellSize,
             0.02];
 
         const lbNDC = vec3.transformMat4(vec3.create(), lb, this.ViewProjection);
@@ -216,8 +233,8 @@ export class CodeEditorService {
         }
 
         const rt: vec3 = [
-            (this.editableCell.x + 1) * this.codeEditorRenderer.CellSize,
-            (this.codeEditorRenderer.Dimension.Rows - this.editableCell.y) * this.codeEditorRenderer.CellSize,
+            (this.editableCell.Target.lt.x + 1) * this.codeEditorRenderer.CellSize,
+            (this.codeEditorRenderer.Dimension.Rows - this.editableCell.Target.lt.y) * this.codeEditorRenderer.CellSize,
             0.02];
 
         const rtNDC = vec3.transformMat4(vec3.create(), rt, this.ViewProjection);
@@ -227,6 +244,10 @@ export class CodeEditorService {
         }
 
         return true;
+    }
+
+    private OnSetEditableRegion(): void {
+        this.touchBehavior = new SelectCellsRegion(this.editableCell);
     }
 }
 

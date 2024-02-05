@@ -28,6 +28,7 @@ import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 
 import './History/Commands/EditCellCommand';
+import './History/Commands/EditCellsRegionCommand';
 
 
 async function Delay(delay: number): Promise<void> {

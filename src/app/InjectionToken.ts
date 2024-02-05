@@ -19,5 +19,6 @@ export const UILabelRendererTargetName = {
 }
 
 export const AppCommandInjectionToken = {
-    EditCellCommandFactory: Symbol('EditCellCommand factory')
+    EditCellCommandFactory: Symbol('EditCellCommand factory'),
+    EditCellsRegionFactory: Symbol('EditCellsRegion factory')
 };
