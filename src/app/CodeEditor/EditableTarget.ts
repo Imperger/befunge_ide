@@ -133,6 +133,66 @@ export class EditableTarget {
         this.codeEditorRenderer.UnselectRegion(this.editableRegion.lt, this.editableRegion.rb);
     }
 
+    ContentString(): string {
+        let sourceCode = '';
+        for (let y = this.editableRegion.lt.y; y <= this.editableRegion.rb.y; ++y) {
+            for (let x = this.editableRegion.lt.x; x <= this.editableRegion.rb.x; ++x) {
+                sourceCode += String.fromCharCode(this.editorSourceCode.Read({ x: x, y: y }));
+            }
+
+            sourceCode += '\n';
+        }
+
+        return sourceCode.slice(0, -1);
+    }
+
+    InsertSourceCode(sourceCode: string): boolean {
+        const linesOfCode = sourceCode.split(/\r?\n/);
+
+        let fragmentWidth = 0;
+        const fragmentHeight = linesOfCode.length;
+        for (let y = 0; y < linesOfCode.length; ++y) {
+            const line = linesOfCode[y];
+            if (line.length > fragmentWidth) {
+                fragmentWidth = line.length;
+            }
+        }
+
+        if (!this.IsLocationValid({
+            x: this.editableRegion.lt.x + fragmentWidth - 1,
+            y: this.editableRegion.lt.y + fragmentHeight - 1
+        })) {
+            return false;
+        }
+
+        const newValue = Array2D.WithProvider(fragmentWidth, fragmentHeight, () => 32);
+        for (let row = 0; row < linesOfCode.length; ++row) {
+            const line = linesOfCode[row];
+            for (let column = 0; column < line.length; ++column) {
+                newValue.Set({ column, row }, line[column].charCodeAt(0));
+            }
+        }
+
+        const oldValue = Array2D.WithProvider(fragmentWidth, fragmentHeight, () => 0);
+        for (let y = this.editableRegion.lt.y; y < this.editableRegion.lt.y + fragmentHeight; ++y) {
+            for (let x = this.editableRegion.lt.x; x < this.editableRegion.lt.x + fragmentWidth; ++x) {
+                oldValue.Set({ column: x - this.editableRegion.lt.x, row: y - this.editableRegion.lt.y }, this.editorSourceCode.Read({ x, y }));
+            }
+        }
+
+        const command = this.editCellsRegionCommandFactory(
+            this.editableRegion,
+            oldValue,
+            newValue,
+            this.editionDirection);
+
+        command.Apply();
+
+        this.history.Push(command);
+
+        return true;
+    }
+
     get IsSingleCell(): boolean {
         return this.editableRegion.lt.x === this.editableRegion.rb.x &&
             this.editableRegion.lt.y === this.editableRegion.rb.y;
@@ -158,4 +218,4 @@ export class EditableTarget {
     }
 }
 
-Inversify.bind(EditableTarget).toSelf().inRequestScope();
+Inversify.bind(EditableTarget).toSelf().inSingletonScope();

@@ -13,11 +13,13 @@ import { EditorGridDimension } from "./EditorGridRenderer";
 
 import { Inversify } from "@/Inversify";
 import { Pointer } from "@/lib/befunge/memory/Memory";
+import { AsyncExceptionTrap } from "@/lib/ExceptionTrap";
 import { Intersection } from "@/lib/math/Intersection";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
 import { Camera } from "@/lib/renderer/Camera";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
+import { SelfBind } from "@/lib/SelfBind";
 
 export enum EditionDirection { Left, Up, Right, Down };
 
@@ -75,6 +77,8 @@ export class CodeEditorService {
         @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService) {
         this.touchBehavior = new SelectCellBehaiver(this.editableCell);
         this.overlay.EditControls.SelectObservable.Attach(() => this.OnSetEditableRegion());
+        this.overlay.EditControls.CopyObservable.Attach(() => this.OnCopyEditableRegion());
+        this.overlay.EditControls.PasteObservable.Attach(() => this.OnPaste());
     }
 
     get EditDirectionObservable(): Observable<EditionDirection> {
@@ -248,6 +252,24 @@ export class CodeEditorService {
 
     private OnSetEditableRegion(): void {
         this.touchBehavior = new SelectCellsRegion(this.editableCell);
+    }
+
+    private OnCopyEditableRegion(): void {
+        navigator.clipboard.writeText(this.editableCell.ContentString());
+    }
+
+    private async OnPaste(): Promise<void> {
+        const data = await AsyncExceptionTrap
+            .Try(SelfBind(navigator.clipboard, 'readText'))
+            .CatchValue('');
+
+        if (data.length === 0) {
+            return;
+        }
+
+        if (!this.editableCell.InsertSourceCode(data)) {
+            this.overlay.Snackbar.ShowWarning('Not enough space to insert the fragment')
+        }
     }
 }
 
