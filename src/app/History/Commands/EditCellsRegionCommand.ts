@@ -10,6 +10,7 @@ import { Pointer } from "@/lib/befunge/memory/Memory";
 import { Array2D } from "@/lib/containers/Array2D";
 import { MathUtil } from "@/lib/math/MathUtil";
 
+export type PostActionEditablePosition = 'next' | 'left_top' | 'right_bottom';
 
 @injectable()
 export class EditCellsRegionCommand implements Command {
@@ -24,6 +25,8 @@ export class EditCellsRegionCommand implements Command {
 
     private editDirection = EditionDirection.Right;
 
+    private posEditablePosition!: PostActionEditablePosition;
+
     constructor(@inject(CodeEditorService) private codeEditorService: CodeEditorService) { }
 
     Initialize(...args: Parameters<EditCellsRegionCommandFactory>): void {
@@ -31,14 +34,14 @@ export class EditCellsRegionCommand implements Command {
         this.region.lt = region.min;
         this.region.rb = region.max;
 
-        [, this.oldValue, this.newValue, this.editDirection] = args;
+        [, this.oldValue, this.newValue, this.editDirection, this.posEditablePosition] = args;
     }
 
     Apply(): void {
         this.newValue
             .ForEach((x, idx) => this.codeEditorService.EditCell(String.fromCharCode(x), this.region.lt.x + idx.column, this.region.lt.y + idx.row));
 
-        this.codeEditorService.SetEditableCell(this.GetNextEditableCell(this.editDirection));
+        this.UpdateEditableCell();
     }
 
     Undo(): void {
@@ -47,6 +50,20 @@ export class EditCellsRegionCommand implements Command {
 
         this.codeEditorService.SetEditableCell(this.region.lt);
         this.codeEditorService.EditableCellDirection = this.editDirection;
+    }
+
+    private UpdateEditableCell(): void {
+        switch (this.posEditablePosition) {
+            case 'next':
+                this.codeEditorService.SetEditableCell(this.GetNextEditableCell(this.editDirection));
+                break;
+            case 'left_top':
+                this.codeEditorService.SetEditableCell(this.region.lt);
+                break;
+            case 'right_bottom':
+                this.codeEditorService.SetEditableCell(this.region.rb);
+                break;
+        }
     }
 
     private GetNextEditableCell(direction: EditionDirection): Pointer {
@@ -89,13 +106,13 @@ export class EditCellsRegionCommand implements Command {
 
 Inversify.bind(EditCellsRegionCommand).toSelf().inTransientScope();
 
-export type EditCellsRegionCommandFactory = (region: EditableRegion, oldValue: Array2D<number>, newValue: Array2D<number>, editDirection: EditionDirection) => Command;
+export type EditCellsRegionCommandFactory = (region: EditableRegion, oldValue: Array2D<number>, newValue: Array2D<number>, editDirection: EditionDirection, postEditablePosition: PostActionEditablePosition) => Command;
 
 Inversify
     .bind<interfaces.Factory<EditCellsRegionCommand>>(AppCommandInjectionToken.EditCellsRegionFactory)
-    .toFactory<EditCellsRegionCommand, Parameters<EditCellsRegionCommandFactory>>(ctx => (region: EditableRegion, oldValue: Array2D<number>, newValue: Array2D<number>, editDirection: EditionDirection) => {
+    .toFactory<EditCellsRegionCommand, Parameters<EditCellsRegionCommandFactory>>(ctx => (region: EditableRegion, oldValue: Array2D<number>, newValue: Array2D<number>, editDirection: EditionDirection, postEditablePosition: PostActionEditablePosition) => {
         const instance = ctx.container.get(EditCellsRegionCommand);
-        instance.Initialize(region, oldValue, newValue, editDirection);
+        instance.Initialize(region, oldValue, newValue, editDirection, postEditablePosition);
 
         return instance;
     });

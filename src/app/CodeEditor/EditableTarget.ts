@@ -77,7 +77,8 @@ export class EditableTarget {
             this.editableRegion,
             oldValue,
             Array2D.WithProvider(dimension.width, dimension.height, () => symbol.charCodeAt(0)),
-            this.editionDirection);
+            this.editionDirection,
+            'next');
 
         command.Apply();
 
@@ -184,13 +185,34 @@ export class EditableTarget {
             this.editableRegion,
             oldValue,
             newValue,
-            this.editionDirection);
+            this.editionDirection,
+            'next');
 
         command.Apply();
 
         this.history.Push(command);
 
         return true;
+    }
+
+    Clear(): void {
+        const oldValue = Array2D.WithProvider(this.RegionDimension.width, this.RegionDimension.height, () => 0);
+        for (let y = this.editableRegion.lt.y; y <= this.editableRegion.rb.y; ++y) {
+            for (let x = this.editableRegion.lt.x; x <= this.editableRegion.rb.x; ++x) {
+                oldValue.Set({ column: x - this.editableRegion.lt.x, row: y - this.editableRegion.lt.y }, this.editorSourceCode.Read({ x, y }));
+            }
+        }
+
+        const command = this.editCellsRegionCommandFactory(
+            this.editableRegion,
+            oldValue,
+            Array2D.WithProvider(this.RegionDimension.width, this.RegionDimension.height, () => 32),
+            this.editionDirection,
+            'left_top');
+
+        command.Apply();
+
+        this.history.Push(command);
     }
 
     get IsSingleCell(): boolean {

@@ -77,8 +77,10 @@ export class CodeEditorService {
         @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService) {
         this.touchBehavior = new SelectCellBehaiver(this.editableCell);
         this.overlay.EditControls.SelectObservable.Attach(() => this.OnSetEditableRegion());
+        this.overlay.EditControls.CutObservable.Attach(() => this.OnCut());
         this.overlay.EditControls.CopyObservable.Attach(() => this.OnCopyEditableRegion());
         this.overlay.EditControls.PasteObservable.Attach(() => this.OnPaste());
+        this.overlay.EditControls.DeleteObservable.Attach(() => this.OnDelete());
     }
 
     get EditDirectionObservable(): Observable<EditionDirection> {
@@ -254,6 +256,12 @@ export class CodeEditorService {
         this.touchBehavior = new SelectCellsRegion(this.editableCell);
     }
 
+    private OnCut(): void {
+        navigator.clipboard.writeText(this.editableCell.ContentString());
+
+        this.editableCell.Clear();
+    }
+
     private OnCopyEditableRegion(): void {
         navigator.clipboard.writeText(this.editableCell.ContentString());
     }
@@ -270,6 +278,10 @@ export class CodeEditorService {
         if (!this.editableCell.InsertSourceCode(data)) {
             this.overlay.Snackbar.ShowWarning('Not enough space to insert the fragment')
         }
+    }
+
+    private OnDelete(): void {
+        this.editableCell.Clear();
     }
 }
 
