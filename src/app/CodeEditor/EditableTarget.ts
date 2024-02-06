@@ -1,9 +1,12 @@
-import { inject, injectable } from "inversify";
+import { inject, injectable, interfaces } from "inversify";
 
 import { AppHistory } from "../History/AppHistory";
-import type { EditCellCommandFactory } from "../History/Commands/EditCellCommand";
-import type { EditCellsRegionCommandFactory } from "../History/Commands/EditCellsRegionCommand";
-import { AppCommandInjectionToken } from "../InjectionToken";
+import type { EditCellCommandFactory } from "../History/Commands/EditCellCommand/EditCellCommand";
+import { MoveNextAction as CellMoveNextAction } from "../History/Commands/EditCellCommand/PostActions/MoveNextAction";
+import type { EditCellsRegionCommandFactory } from "../History/Commands/EditCellsRegionCommand/EditCellsRegionCommand";
+import { MoveNextAction as RegionMoveNextAction } from "../History/Commands/EditCellsRegionCommand/PostActions/MoveNextAction";
+import { StayLeftTopAction } from "../History/Commands/EditCellsRegionCommand/PostActions/StayLeftTopAction";
+import { AppCommandInjectionToken, EditCellCommandPostAction, EditCellsRegionCommandPostAction } from "../InjectionToken";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
@@ -39,7 +42,10 @@ export class EditableTarget {
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
         @inject(AppCommandInjectionToken.EditCellCommandFactory) private editCellCommandFactory: EditCellCommandFactory,
+        @inject(EditCellCommandPostAction.MoveNext) private cellMoveNextPostActionFactory: interfaces.AutoFactory<CellMoveNextAction>,
         @inject(AppCommandInjectionToken.EditCellsRegionFactory) private editCellsRegionCommandFactory: EditCellsRegionCommandFactory,
+        @inject(EditCellsRegionCommandPostAction.MoveNext) private regionMoveNextPostActionFactory: interfaces.AutoFactory<RegionMoveNextAction>,
+        @inject(EditCellsRegionCommandPostAction.StayLeftTop) private regionStayLeftTopPostActionFactory: interfaces.AutoFactory<StayLeftTopAction>,
         @inject(AppHistory) private history: AppHistory) {
         if (this.IsSingleCell) {
             this.codeEditorRenderer.Select(this.editableRegion.lt.x, this.editableRegion.lt.y, this.editableCellStyle);
@@ -57,7 +63,8 @@ export class EditableTarget {
             this.editableRegion.lt,
             String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt)),
             symbol,
-            this.editionDirection);
+            this.editionDirection,
+            this.cellMoveNextPostActionFactory());
 
         command.Apply();
 
@@ -78,7 +85,7 @@ export class EditableTarget {
             oldValue,
             Array2D.WithProvider(dimension.width, dimension.height, () => symbol.charCodeAt(0)),
             this.editionDirection,
-            'next');
+            this.regionMoveNextPostActionFactory());
 
         command.Apply();
 
@@ -186,7 +193,7 @@ export class EditableTarget {
             oldValue,
             newValue,
             this.editionDirection,
-            'next');
+            this.regionMoveNextPostActionFactory());
 
         command.Apply();
 
@@ -208,7 +215,7 @@ export class EditableTarget {
             oldValue,
             Array2D.WithProvider(this.RegionDimension.width, this.RegionDimension.height, () => 32),
             this.editionDirection,
-            'left_top');
+            this.regionStayLeftTopPostActionFactory());
 
         command.Apply();
 

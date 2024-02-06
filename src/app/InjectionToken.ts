@@ -22,3 +22,12 @@ export const AppCommandInjectionToken = {
     EditCellCommandFactory: Symbol('EditCellCommand factory'),
     EditCellsRegionFactory: Symbol('EditCellsRegion factory')
 };
+
+export const EditCellCommandPostAction = {
+    MoveNext: Symbol('MoveNext post action')
+};
+
+export const EditCellsRegionCommandPostAction = {
+    MoveNext: Symbol('MoveNext post action'),
+    StayLeftTop: Symbol('StayLeftTop post action')
+};

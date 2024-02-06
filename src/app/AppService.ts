@@ -27,8 +27,7 @@ import { Camera } from '@/lib/renderer/Camera';
 import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 
-import './History/Commands/EditCellCommand';
-import './History/Commands/EditCellsRegionCommand';
+import './History/Commands';
 
 
 async function Delay(delay: number): Promise<void> {
