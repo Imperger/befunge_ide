@@ -345,11 +345,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
                 line += String.fromCharCode(this.editorSourceCode.Read({ x, y }));
             }
 
-            line = line.trimEnd();
-
-            if (line.length > 0) {
-                sourceString += line + '\n';
-            }
+            sourceString += line.trimEnd() + '\n';
         }
 
         return sourceString;
