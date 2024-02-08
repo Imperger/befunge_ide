@@ -111,7 +111,7 @@ export class TextureAtlasBuilder<TId> {
         return new Promise((resolve, reject) => {
             image.onload = () => resolve(image);
             image.onerror = () => reject(new Error('Failed to create an image'));
-            image.src = src;
+            image.src = `${process.env.BASE_URL}${src}`;
         });
     }
 }
