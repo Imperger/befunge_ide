@@ -7,9 +7,12 @@ import { PointerArithmetics } from "@/lib/befunge/memory/PointerArithmetics";
 
 @injectable()
 export class SourceCodeMemory implements Memory {
+    private nonEmptyCells = 0;
+
     private target!: Memory;
 
     Initialize<T extends new (...args: any[]) => Memory>(ctr: T, ...args: ConstructorParameters<T>): void {
+        this.nonEmptyCells = 0;
         this.target = new ctr(...args);
     }
 
@@ -18,6 +21,17 @@ export class SourceCodeMemory implements Memory {
     }
 
     Write(ptr: Pointer, value: number): void {
+        const emptyValue = ' '.charCodeAt(0);
+        const actual = this.target.Read(ptr);
+
+        if (actual !== value) {
+            if (actual === emptyValue) {
+                ++this.nonEmptyCells;
+            } else if (value === emptyValue) {
+                --this.nonEmptyCells;
+            }
+        }
+
         this.target.Write(ptr, value);
     }
 
@@ -27,6 +41,10 @@ export class SourceCodeMemory implements Memory {
 
     Clone(): Memory {
         return this.target.Clone();
+    }
+
+    get Empty(): boolean {
+        return this.nonEmptyCells === 0;
     }
 
     get PointerArithmetics(): PointerArithmetics {

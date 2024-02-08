@@ -10,12 +10,12 @@ export class FileControls {
 
     private openButton: UIIconButton;
     private saveButton: UIIconButton;
+    private shareButton: UIIconButton;
     private settingsButton: UIIconButton;
 
     private openFromDiskObservable = new ObservableController<void>();
-
     private saveToDiskObservable = new ObservableController<void>();
-
+    private shareObservable = new ObservableController<void>();
     private openSettingsObservable = new ObservableController<void>();
 
     constructor(private uiRenderer: UIRenderer) {
@@ -49,7 +49,17 @@ export class FileControls {
             this.group
         );
 
-        this.settingsButton = this.uiRenderer.CreateButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
+        this.shareButton = this.uiRenderer.CreateButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
+            { width: btnSideLength, height: btnSideLength },
+            1,
+            { fillColor, outlineColor },
+            { icon: UIIcon.Share, color: saveButtonIconColor },
+            _sender => this.shareObservable.Notify(),
+            this.group
+        );
+        this.shareButton.Disable = true;
+
+        this.settingsButton = this.uiRenderer.CreateButton({ x: 3 * btnSideLength + 3 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -63,12 +73,24 @@ export class FileControls {
         this.group.Resize();
     }
 
+    get ShareDisabled(): boolean {
+        return this.shareButton.Disable;
+    }
+
+    set ShareDisabled(value: boolean) {
+        this.shareButton.Disable = value;
+    }
+
     get OpenFromDiskObservable(): Observable<void> {
         return this.openFromDiskObservable;
     }
 
     get SaveToDiskObservable(): Observable<void> {
         return this.saveToDiskObservable;
+    }
+
+    get ShareObservable(): Observable<void> {
+        return this.shareObservable;
     }
 
     get OpenSettingsObservable(): Observable<void> {

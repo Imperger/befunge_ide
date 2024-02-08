@@ -6,10 +6,12 @@ import { GlobalDependencies } from './GlobalDependencies';
 import { InjectionToken } from './InjectionToken';
 
 import { Inversify } from '@/Inversify';
+import { BefungeSourceCodeCodec } from '@/lib/befunge/BefungeSourceCodeCodec';
 import Webgl2Canvas from '@/lib/VueComponents/WebglCanvas.vue';
 
 let service!: AppService;
 
+const props = defineProps({ encoded: { required: false, type: String, default: '' } })
 
 onBeforeUnmount(() => service.Dispose());
 
@@ -22,6 +24,8 @@ async function OnContextReady(context: WebGL2RenderingContext): Promise<void> {
 
   service = await Inversify.getAsync(AppService);
   service.Resize();
+
+  OnSharedCode();
 }
 
 function OnResize(): void {
@@ -47,6 +51,19 @@ function OnWheel(e: WheelEvent): void {
 function OnKeyDown(e: KeyboardEvent): void {
   service?.OnKeyDown(e);
 }
+
+function OnSharedCode() {
+  if (props.encoded.length > 0) {
+    try {
+      const sourceCode = BefungeSourceCodeCodec.Decode(props.encoded);
+      service.LoadSourceCodeToEditor(sourceCode);
+    } catch (e) {
+      if (e instanceof Error) {
+        service.Snackbar.ShowError(e.message);
+      }
+    }
+  }
+};
 
 </script>
 

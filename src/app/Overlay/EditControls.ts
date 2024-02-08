@@ -33,7 +33,7 @@ export class EditControls {
         const btnSideLength = 30;
 
         this.group = new UIObservablePositioningGroup(
-            { x: 8 * margin + 5 * btnSideLength, y: margin + btnSideLength },
+            { x: 9 * margin + 6 * btnSideLength, y: margin + btnSideLength },
             { vertical: VerticalAnchor.Top }
         );
 

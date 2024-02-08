@@ -13,9 +13,11 @@ import { SmoothCameraZoom } from './Effects/SmoothCameraZoom';
 import { AppHistory } from './History/AppHistory';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
 import { OverlayService } from './Overlay/OverlayService';
+import { SnackbarControls } from './Overlay/SnackbarControls';
 import { SourceCodeMemory } from './SourceCodeMemory';
 
 import { Inversify } from '@/Inversify';
+import { BefungeSourceCodeCodec } from '@/lib/befunge/BefungeSourceCodeCodec';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
@@ -26,8 +28,8 @@ import { ObserverDetacher } from '@/lib/Observable';
 import { Camera } from '@/lib/renderer/Camera';
 import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
-
 import './History/Commands';
+import router from '@/router';
 
 
 async function Delay(delay: number): Promise<void> {
@@ -134,11 +136,13 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
         this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
+        this.overlay.FileControls.ShareObservable.Attach(() => this.ShareSourceCode());
         this.overlay.FileControls.OpenSettingsObservable.Attach(() => this.OpenSettings());
 
         this.overlay.HistoryControls.UndoObservable.Attach(() => this.history.Undo());
         this.overlay.HistoryControls.RedoObservable.Attach(() => this.history.Redo());
 
+        this.history.UpdateObservable.Attach(() => this.OnSourceCodeChanged());
         this.Start();
     }
 
@@ -317,22 +321,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
             const stream = await fileHandle.createWritable();
 
-            let sourceString = '';
-            for (let y = 0; y < this.settings.MemoryLimit.Height; ++y) {
-                let line = '';
-
-                for (let x = 0; x < this.settings.MemoryLimit.Width; ++x) {
-                    line += String.fromCharCode(this.editorSourceCode.Read({ x, y }));
-                }
-
-                line = line.trimEnd();
-
-                if (line.length > 0) {
-                    sourceString += line + '\n';
-                }
-            }
-
-            await stream.write(sourceString);
+            await stream.write(this.SourceCodeString());
 
             await stream.close();
         } catch (e) {
@@ -347,11 +336,36 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
     }
 
+    private SourceCodeString(): string {
+        let sourceString = '';
+        for (let y = 0; y < this.settings.MemoryLimit.Height; ++y) {
+            let line = '';
+
+            for (let x = 0; x < this.settings.MemoryLimit.Width; ++x) {
+                line += String.fromCharCode(this.editorSourceCode.Read({ x, y }));
+            }
+
+            line = line.trimEnd();
+
+            if (line.length > 0) {
+                sourceString += line + '\n';
+            }
+        }
+
+        return sourceString;
+    }
+
+    private ShareSourceCode(): void {
+        const encoded = BefungeSourceCodeCodec.Encode(this.SourceCodeString());
+
+        router.replace({ name: 'Share', params: { encoded } });
+    }
+
     private OpenSettings(): void {
         console.log('Open settings');
     }
 
-    private LoadSourceCodeToEditor(sourceCode: string): void {
+    LoadSourceCodeToEditor(sourceCode: string): void {
         this.ResetSourceCodeEditor();
 
         const linesOfCode = sourceCode.split(/\r?\n/);
@@ -362,6 +376,16 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
                 this.codeEditor.EditCell(line[column], column, row);
             }
         }
+
+        this.overlay.FileControls.ShareDisabled = this.editorSourceCode.Empty;
+    }
+
+    private OnSourceCodeChanged(): void {
+        this.overlay.FileControls.ShareDisabled = this.editorSourceCode.Empty;
+    }
+
+    get Snackbar(): SnackbarControls {
+        return this.overlay.Snackbar;
     }
 
     private FollowEditableCell(): void {
