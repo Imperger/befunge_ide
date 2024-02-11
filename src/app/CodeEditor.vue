@@ -69,5 +69,5 @@ function OnSharedCode() {
 
 <template>
   <webgl2-canvas autofocus tabindex="0" @contextReady="OnContextReady" @resize="OnResize" @mousemove="OnMouseMove"
-    @mousedown="OnMouseDown" @mouseup="OnMouseUp" @wheel="OnWheel" @keydown="OnKeyDown" />
+    @mousedown="OnMouseDown" @mouseup="OnMouseUp" @wheel.passive="OnWheel" @keydown="OnKeyDown" />
 </template>
