@@ -13,6 +13,7 @@ import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { EditionDirection } from "./CodeEditorService";
 
 import { Inversify } from "@/Inversify";
+import { Pointer } from "@/lib/befunge/memory/Memory";
 import { Array2D } from "@/lib/containers/Array2D";
 import { MathUtil } from "@/lib/math/MathUtil";
 import { Rgb, Vec2 } from "@/lib/Primitives"
@@ -68,11 +69,14 @@ export class EditableTarget {
 
         command.Apply();
 
-        this.history.Push(command);
+        if (symbol !== String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt))) {
+            this.history.Push(command);
+        }
     }
 
     private CellInputRegion(symbol: string): void {
         const dimension = this.RegionDimension;
+
         const oldValue = Array2D.WithProvider(dimension.width, dimension.height, () => 0);
         for (let y = this.editableRegion.lt.y; y <= this.editableRegion.rb.y; ++y) {
             for (let x = this.editableRegion.lt.x; x <= this.editableRegion.rb.x; ++x) {
@@ -89,7 +93,9 @@ export class EditableTarget {
 
         command.Apply();
 
-        this.history.Push(command);
+        if (!oldValue.Every(x => String.fromCharCode(x) === symbol)) {
+            this.history.Push(command);
+        }
     }
 
     Select(cell: Vec2): void {
@@ -197,7 +203,9 @@ export class EditableTarget {
 
         command.Apply();
 
-        this.history.Push(command);
+        if (!newValue.Equals(oldValue)) {
+            this.history.Push(command);
+        }
 
         return true;
     }
@@ -219,7 +227,9 @@ export class EditableTarget {
 
         command.Apply();
 
-        this.history.Push(command);
+        if (!oldValue.Every(x => x === 32)) {
+            this.history.Push(command);
+        }
     }
 
     get IsSingleCell(): boolean {

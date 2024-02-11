@@ -49,6 +49,18 @@ export class Array2D<T> {
         this.data.forEach((value: T, idx: number) => fn(value, this.IndexToCoord(idx), this));
     }
 
+    Every(fn: (value: T, idx: Index2D, arr: Array2D<T>) => boolean): boolean {
+        return this.data.every((value: T, idx: number) => fn(value, this.IndexToCoord(idx), this))
+    }
+
+    Equals(arr: Array2D<T>): boolean {
+        if (arr.width !== this.width || arr.height !== this.height) {
+            return false;
+        }
+
+        return this.Every((value, index) => value === arr.Get(index));
+    }
+
     private Initialize(): void {
         this.data = Array.from({ length: this.width * this.height }, () => this.provider!());
     }
