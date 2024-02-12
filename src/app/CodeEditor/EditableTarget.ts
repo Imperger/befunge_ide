@@ -13,7 +13,6 @@ import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { EditionDirection } from "./CodeEditorService";
 
 import { Inversify } from "@/Inversify";
-import { Pointer } from "@/lib/befunge/memory/Memory";
 import { Array2D } from "@/lib/containers/Array2D";
 import { MathUtil } from "@/lib/math/MathUtil";
 import { Rgb, Vec2 } from "@/lib/Primitives"
