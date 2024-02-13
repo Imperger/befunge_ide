@@ -200,6 +200,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
         const lines = UILabelRenderer.SplitString(component.Text);
 
         if (lines.length === 0) {
+            component.UpdateTextDimension({ width: 0, height: 0 });
             return;
         }
 
