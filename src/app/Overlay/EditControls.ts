@@ -2,7 +2,8 @@ import { inject, injectable } from "inversify";
 
 import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
-import { Rgb } from "@/lib/Primitives";
+import { Rgb, Vec2 } from "@/lib/Primitives";
+import { Dimension } from "@/lib/UI/UIComponent";
 import { UIIcon } from "@/lib/UI/UIIcon";
 import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
 import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
@@ -105,6 +106,14 @@ export class EditControls {
 
     get DeleteObservable(): Observable<void> {
         return this.deleteObservable;
+    }
+
+    get Position(): Vec2 {
+        return this.group.AbsolutePosition;
+    }
+
+    get Dimension(): Dimension {
+        return this.group.Dimension;
     }
 }
 

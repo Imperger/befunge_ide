@@ -434,7 +434,7 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         return PrimitiveBuilder.AABBFrame(
             { x: component.AbsolutePosition.x - width, y: component.AbsolutePosition.y - width },
             { width: component.Dimension.width + 2 * width, height: component.Dimension.height + 2 * width },
-            width, [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.outlineColor]);
+            width * component.Scale, [[this.settings.ZFar - component.ZIndex - this.zFarIncluded], component.Style.outlineColor]);
     }
 }
 

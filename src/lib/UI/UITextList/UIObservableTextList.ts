@@ -34,6 +34,8 @@ export class UIObservableTextList implements UITextList {
 
     private readonly scrollButtonDimension: Dimension = { width: 10, height: 20 };
 
+    private margin = 5;
+
     private readonly scrollButtonStyle: UIButtonStyle = {
         fillColor: [0.9254901960784314, 0.9411764705882353, 0.9450980392156862],
         outlineColor: [0.9254901960784314, 0.9411764705882353, 0.9450980392156862]
@@ -58,7 +60,7 @@ export class UIObservableTextList implements UITextList {
     ) {
         this.label = this.labelRenderer.Create(
             {
-                x: position.x + this.borderWidth,
+                x: position.x + this.BorderWidth,
                 y: position.y
             },
             zIndex,
@@ -83,8 +85,8 @@ export class UIObservableTextList implements UITextList {
 
     get Dimension(): Dimension {
         return {
-            width: this.dimension.width * this.scale,
-            height: this.dimension.height * this.scale
+            width: this.dimension.width * this.Scale,
+            height: this.dimension.height * this.Scale
         };
     }
 
@@ -115,7 +117,7 @@ export class UIObservableTextList implements UITextList {
 
         this.scroll = 0;
         this.label.Position = {
-            x: this.position.x + this.borderWidth,
+            x: this.position.x + this.BorderWidth,
             y: this.position.y
         }
 
@@ -147,7 +149,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     get BorderWidth(): number {
-        return this.borderWidth;
+        return this.borderWidth * this.Scale;
     }
 
     set BorderWidth(width: number) {
@@ -163,7 +165,9 @@ export class UIObservableTextList implements UITextList {
     set Scale(scale: number) {
         this.scale = scale;
 
-        this.label.Scale = scale;
+        if (this.parent === null) {
+            this.label.Scale = scale;
+        }
 
         this.UpdateScrollControlsPresence();
 
@@ -211,11 +215,23 @@ export class UIObservableTextList implements UITextList {
                     scrollBottomButton: this.CreateBottomScrollButton()
                 };
 
-                this.scrollControls.scrollBottomButton.Scale = this.scale;
-                this.scrollControls.scrollTopButton.Scale = this.scale;
+                if (this.parent === null) {
+                    this.scrollControls.scrollBottomButton.Scale = this.Scale;
+                    this.scrollControls.scrollTopButton.Scale = this.Scale;
+                }
 
                 this.ScrollAligned(0);
             }
+
+            this.scrollControls.scrollBottomButton.Position = {
+                x: this.ScrollButtonX,
+                y: this.ScrollBottomButtonY
+            };
+
+            this.scrollControls.scrollTopButton.Position = {
+                x: this.ScrollButtonX,
+                y: this.ScrollTopButtonY
+            };
         } else {
             if (this.scrollControls !== null) {
                 this.scrollControls.scrollTopButton.Destroy();
@@ -225,13 +241,23 @@ export class UIObservableTextList implements UITextList {
         }
     }
 
-    private CreateTopScrollButton(): UIIconButton {
-        const margin = 5;
+    private get ScrollButtonX(): number {
+        return this.Position.x + this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - this.margin;
+    }
 
+    private get ScrollTopButtonY(): number {
+        return this.Position.y + this.dimension.height - this.scrollButtonDimension.height - this.borderWidth - this.margin;
+    }
+
+    private get ScrollBottomButtonY(): number {
+        return this.Position.y + this.BorderWidth + this.margin;
+    }
+
+    private CreateTopScrollButton(): UIIconButton {
         return this.uiRenderer.CreateButton(
             {
-                x: this.Position.x + this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - margin,
-                y: this.Position.y + this.dimension.height - this.scrollButtonDimension.height - this.borderWidth - margin
+                x: this.ScrollButtonX,
+                y: this.ScrollTopButtonY
             },
             this.scrollButtonDimension,
             1,
@@ -243,12 +269,10 @@ export class UIObservableTextList implements UITextList {
     }
 
     private CreateBottomScrollButton(): UIIconButton {
-        const margin = 5;
-
         return this.uiRenderer.CreateButton(
             {
-                x: this.Position.x + this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - margin,
-                y: this.Position.y + this.borderWidth + margin
+                x: this.ScrollButtonX,
+                y: this.ScrollBottomButtonY
             },
             this.scrollButtonDimension,
             1,
@@ -260,7 +284,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     get MinScroll(): number {
-        return this.Position.y - this.label.Dimension.height / this.scale + this.Dimension.height / this.scale;
+        return this.Position.y - this.label.Dimension.height + this.Dimension.height;
     }
 
     get MaxScroll(): number {

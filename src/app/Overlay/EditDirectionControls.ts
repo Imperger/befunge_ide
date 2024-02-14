@@ -26,8 +26,8 @@ export class EditDirectionControls {
     private editDirectionObservable = new ObservableController<EditionDirection>();
 
     constructor(private uiRenderer: UIRenderer) {
-        const buttonMargin = 10;
-        const [buttonWidth, btnHeight] = [75, 50];
+        const buttonMargin = 5;
+        const [buttonWidth, btnHeight] = [37.5, 25];
 
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
@@ -35,7 +35,7 @@ export class EditDirectionControls {
         this.group = new UIObservablePositioningGroup(
             {
                 x: 10,
-                y: 2 * buttonWidth + 3 * buttonMargin + btnHeight + 100
+                y: 2 * buttonWidth + 3 * buttonMargin + btnHeight + 50
             },
             { vertical: VerticalAnchor.Top });
 

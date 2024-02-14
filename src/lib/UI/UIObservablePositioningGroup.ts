@@ -68,7 +68,7 @@ export class UIObservablePositioningGroup implements UIComponent {
     }
 
     get Scale(): number {
-        return this.scale;
+        return this.scale / Inversify.get(AppSettings).DevicePixelRatio;
     }
 
     set Scale(scale: number) {
@@ -91,6 +91,7 @@ export class UIObservablePositioningGroup implements UIComponent {
 
             UIObservablePositioningGroup.MaintainExtremum(rightTop, { min, max });
         }
+
         return { width: max.x - min.x, height: max.y - min.y };
     }
 
@@ -120,9 +121,9 @@ export class UIObservablePositioningGroup implements UIComponent {
         switch (this.anchor.horizontal) {
             default:
             case HorizontalAnchor.Left:
-                return this.position.x;
+                return this.position.x * this.Scale;
             case HorizontalAnchor.Right:
-                return viewWidth - this.position.x;
+                return viewWidth - this.position.x * this.Scale;
             case HorizontalAnchor.Middle:
                 return (viewWidth - this.Dimension.width) / 2;
         }
@@ -132,9 +133,9 @@ export class UIObservablePositioningGroup implements UIComponent {
         switch (this.anchor.vertical) {
             default:
             case VerticalAnchor.Bottom:
-                return this.position.y;
+                return this.position.y * this.Scale;
             case VerticalAnchor.Top:
-                return viewHeight - this.position.y;
+                return viewHeight - this.position.y * this.Scale;
         }
     }
 }

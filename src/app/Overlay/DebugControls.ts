@@ -1,4 +1,10 @@
+import { inject, injectable } from "inversify";
+
+import { EditControls } from "./EditControls";
+
+import { Inversify } from "@/Inversify";
 import { PCDirection } from "@/lib/befunge/CPU/CPU";
+import { Intersection } from "@/lib/math/Intersection";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
@@ -14,6 +20,7 @@ export interface HeatmapToggleButtonState {
     isShown: boolean;
 }
 
+@injectable()
 export class DebugControls {
     private static readonly DefaultButtonFillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
     private static readonly DefaultButtonOutlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
@@ -50,8 +57,14 @@ export class DebugControls {
 
     public DeactivateButton = false;
 
-    constructor(private uiRenderer: UIRenderer) {
-        this.group = new UIObservablePositioningGroup({ x: 800, y: 60 }, { vertical: VerticalAnchor.Top, horizontal: HorizontalAnchor.Middle });
+    private readonly verticalPositions = { default: 60, shifted: 100 };
+
+    constructor(
+        @inject(UIRenderer) private uiRenderer: UIRenderer,
+        @inject(EditControls) private editControls: EditControls) {
+        this.group = new UIObservablePositioningGroup(
+            { x: 800, y: this.verticalPositions.default },
+            { vertical: VerticalAnchor.Top, horizontal: HorizontalAnchor.Middle });
 
         const margin = 10;
         const buttonSideLength = 50;
@@ -65,7 +78,6 @@ export class DebugControls {
             _sender => this.executeObservable.Notify(),
             this.group
         );
-
 
         this.debugButton = this.uiRenderer.CreateButton(
             { x: buttonSideLength + margin, y: 0 },
@@ -102,6 +114,23 @@ export class DebugControls {
         this.group.Resize();
         this.breakpointMenuGroup?.Resize();
         this.debugMenuGroup?.Resize();
+
+        this.BeResponsible();
+    }
+
+    private BeResponsible(): void {
+        const dimension = this.group.Dimension;
+
+        const shiftedY = Intersection.RectangleRectangle(
+            { ...this.group.AbsolutePosition, width: dimension.width, height: dimension.height + (this.verticalPositions.shifted - this.verticalPositions.default) / 2 },
+            { ...this.editControls.Position, ...this.editControls.Dimension }) ?
+            this.verticalPositions.shifted :
+            this.verticalPositions.default;
+
+        if (this.group.Position.y !== shiftedY) {
+            this.group.Position = { x: this.group.Position.x, y: shiftedY };
+        }
+
     }
 
     get DebugMode(): boolean {
@@ -121,8 +150,8 @@ export class DebugControls {
             if (mode) {
                 this.debugMenuGroup = new UIObservablePositioningGroup(
                     {
-                        x: this.debugButton.AbsolutePosition.x,
-                        y: 2 * margin + 2 * sideLength
+                        x: this.debugButton.AbsolutePosition.x / this.group.Scale,
+                        y: this.group.Position.y + margin + sideLength
                     },
                     { vertical: VerticalAnchor.Top });
 
@@ -185,11 +214,11 @@ export class DebugControls {
 
         const margin = 10;
         const sideLength = 50;
-        const yOffsetFactor = 5 + +this.DeactivateButton;
+        const totalButtons = 5 + +this.DeactivateButton;
         this.breakpointMenuGroup = new UIObservablePositioningGroup(
             {
-                x: this.breakpointMenuButton.AbsolutePosition.x,
-                y: yOffsetFactor * margin + (yOffsetFactor + 1) * sideLength + margin
+                x: this.breakpointMenuButton.AbsolutePosition.x / this.breakpointMenuButton.Scale,
+                y: this.group.Position.y + totalButtons * margin + totalButtons * sideLength
             },
             { vertical: VerticalAnchor.Top });
 
@@ -297,3 +326,5 @@ export class DebugControls {
         this.isHeatmapShown = feedback.isShown;
     }
 }
+
+Inversify.bind(DebugControls).toSelf().inSingletonScope();

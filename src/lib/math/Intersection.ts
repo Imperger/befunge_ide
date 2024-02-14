@@ -42,4 +42,12 @@ export class Intersection {
             point.y >= rectangle.y
         );
     }
+
+    static RectangleRectangle(a: Rectangle, b: Rectangle): boolean {
+        const aTopRight: Vec2 = { x: a.x + a.width, y: a.y + a.height };
+        const bTopRight: Vec2 = { x: b.x + b.width, y: b.y + b.height };
+
+        return a.x < bTopRight.x && aTopRight.x > b.x &&
+            a.y < bTopRight.y && aTopRight.y > b.y;
+    }
 }

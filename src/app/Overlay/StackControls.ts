@@ -1,18 +1,26 @@
+import { inject, injectable } from "inversify";
+
+import { AppSettings } from "../AppSettings";
+
+import { Inversify } from "@/Inversify";
 import { EscapeString } from "@/lib/font/EscapeString";
 import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 import { UITextList } from "@/lib/UI/UITextList/UITextList";
 
+@injectable()
 export class StackControls {
     private group: UIObservablePositioningGroup;
 
     private stackTextList: UITextList;
 
-    constructor(private uiRenderer: UIRenderer) {
+    constructor(
+        @inject(UIRenderer) private uiRenderer: UIRenderer,
+        @inject(AppSettings) private settings: AppSettings) {
         this.group = new UIObservablePositioningGroup(
             {
                 x: 10,
-                y: 650
+                y: 480
             },
             { vertical: VerticalAnchor.Top }
         );
@@ -42,3 +50,5 @@ export class StackControls {
             .join('\n')
     }
 }
+
+Inversify.bind(StackControls).toSelf().inSingletonScope();

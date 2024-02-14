@@ -27,13 +27,9 @@ export class OverlayService implements AsyncConstructable {
 
     private editDirectionControls!: EditDirectionControls;
 
-    private debugControls!: DebugControls;
-
     private inputControls!: InputControls;
 
     private fileControls!: FileControls;
-
-    private stackControls!: StackControls;
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
@@ -41,6 +37,8 @@ export class OverlayService implements AsyncConstructable {
         @inject(SnackbarControls) private snackbarControls: SnackbarControls,
         @inject(HistoryControls) private historyControls: HistoryControls,
         @inject(EditControls) private editControls: EditControls,
+        @inject(DebugControls) private debugControls: DebugControls,
+        @inject(StackControls) private stackControls: StackControls,
         @inject(OutputControls) private outputControls: OutputControls) {
         this.settings = Inversify.get(AppSettings);
 
@@ -50,10 +48,8 @@ export class OverlayService implements AsyncConstructable {
 
     async AsyncConstructor(): Promise<void> {
         this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
-        this.debugControls = new DebugControls(this.uiRenderer);
         this.inputControls = new InputControls(this.uiRenderer);
         this.fileControls = new FileControls(this.uiRenderer);
-        this.stackControls = new StackControls(this.uiRenderer);
     }
 
     get EditDirectionControls(): EditDirectionControls {
