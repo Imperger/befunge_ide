@@ -218,6 +218,8 @@ export class DebuggingService {
             this.cellBreakpoints.splice(existIdx, 1);
 
             this.codeEditor.Select(brkRemove.Location.x, brkRemove.Location.y, [0.21568627450980393, 0.2784313725490196, 0.30980392156862746]);
+
+            this.overlay.DebugControls.DeactivateButton = false;
         }
     }
 
