@@ -16,8 +16,6 @@ export class OutputControls {
 
     private outputTextList!: UITextList;
 
-    private charactersPerLine = 24;
-
     private fontGlyphCollection: FontGlyphCollection | null = null;
 
     constructor(
