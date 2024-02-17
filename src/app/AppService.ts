@@ -313,6 +313,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.LoadSourceCodeToEditor(sourceCode);
 
         this.history.Reset();
+        router.replace({ name: 'CodeEditor' });
     }
 
     private async SaveSourceToDisk(): Promise<void> {
