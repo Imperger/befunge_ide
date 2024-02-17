@@ -48,6 +48,7 @@ export class FileControls {
             _sender => this.saveToDiskObservable.Notify(),
             this.group
         );
+        this.saveButton.Disable = true;
 
         this.shareButton = this.uiRenderer.CreateButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
@@ -78,6 +79,7 @@ export class FileControls {
     }
 
     set ShareDisabled(value: boolean) {
+        this.saveButton.Disable = value;
         this.shareButton.Disable = value;
     }
 
