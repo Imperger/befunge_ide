@@ -11,7 +11,9 @@ import { Vec2 } from "@/lib/Primitives";
 export type UIObservableEditableTextListDeleter = () => void;
 
 export class UIObservableEditableTextList implements UIEditableTextList {
-    private onDestroy = new ObservableController<void>();
+    public visible = true;
+
+    private onVanish = new ObservableController<void>();
 
     private textList: UITextList;
 
@@ -38,8 +40,8 @@ export class UIObservableEditableTextList implements UIEditableTextList {
             parent);
     }
 
-    get OnDestroy(): Observable<void> {
-        return this.onDestroy;
+    get OnVanish(): Observable<void> {
+        return this.onVanish;
     }
 
     OnInput(e: KeyboardEvent): void {
@@ -115,6 +117,20 @@ export class UIObservableEditableTextList implements UIEditableTextList {
         this.textList.Scale = scale;
     }
 
+    get Visible(): boolean {
+        return this.visible;
+    }
+
+    set Visible(value: boolean) {
+        this.visible = value;
+
+        if (!value) {
+            this.onVanish.Notify();
+        }
+
+        this.textList.Visible = value;
+    }
+
     get Observable(): Observable<UIObservableEditableTextList> {
         return this.onUpdate;
     }
@@ -136,9 +152,9 @@ export class UIObservableEditableTextList implements UIEditableTextList {
     }
 
     Destroy(): void {
-        this.onDestroy.Notify();
+        this.onVanish.Notify();
 
-        this.onDestroy.DetachAll();
+        this.onVanish.DetachAll();
         this.onUpdate.DetachAll();
 
         this.deleter();

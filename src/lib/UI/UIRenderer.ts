@@ -234,7 +234,7 @@ export class UIRenderer implements UICreator {
 
     private TouchEditableTextList(x: number, y: number): UIEditableTextList | null {
         const intersected = this.uiEditableTextLists
-            .filter(desc => Intersection.AABBRectanglePoint(
+            .filter(desc => desc.editableTextList.Visible && Intersection.AABBRectanglePoint(
                 {
                     x: desc.editableTextList.AbsolutePosition.x,
                     y: desc.editableTextList.AbsolutePosition.y,

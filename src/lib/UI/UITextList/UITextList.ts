@@ -10,4 +10,5 @@ export interface UITextList extends UIComponent {
     LineHeight: number;
     BorderWidth: number;
     ScrollToTop(): void;
+    Visible: boolean;
 }

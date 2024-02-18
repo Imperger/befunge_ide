@@ -21,7 +21,7 @@ export class ExecutionService {
     private Execute(): void {
         this.befungeToolbox.Reset(this.settings.MemoryLimit, this.editorSourceCode.Clone());
 
-        this.befungeToolbox.Interpreter.SetInput(this.overlay.InputControls.Text);
+        this.befungeToolbox.Interpreter.SetInput(this.overlay.IOControls.Input);
 
         try {
             if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
@@ -30,7 +30,7 @@ export class ExecutionService {
                 this.overlay.Snackbar.ShowWarning('Terminated due timeout');
             }
 
-            this.overlay.OutputControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+            this.overlay.IOControls.Output = this.befungeToolbox.Interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
         } catch (e) {
             if (e instanceof Error) {
                 this.overlay.Snackbar.ShowError(e.message)

@@ -31,7 +31,7 @@ export class ProfillingService {
     private BuildHeatmap(feedback: HeatmapToggleButtonState): void {
         this.befungeToolbox.Reset(this.settings.MemoryLimit, this.editorSourceCode.Clone());
 
-        this.befungeToolbox.Interpreter.SetInput(this.overlay.InputControls.Text);
+        this.befungeToolbox.Interpreter.SetInput(this.overlay.IOControls.Input);
 
         try {
             const heatmap = this.befungeToolbox.Profiler.CellHeatmapFor(1000);

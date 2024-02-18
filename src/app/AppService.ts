@@ -43,7 +43,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private projection!: mat4;
     private camera: mat4;
 
-    private inFocusOnDestroyReleaser: ObserverDetacher;
+    private inFocusOnVanishReleaser: ObserverDetacher;
     private inFocus: InputReceiver;
 
     private debugRenderer: DebugRenderer;
@@ -82,7 +82,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.inFocus = this.codeEditorServiceInputReceiverFactory();
         this.inFocus.Focus();
-        this.inFocusOnDestroyReleaser = this.inFocus.OnDestroy.Attach(() => 0);
+        this.inFocusOnVanishReleaser = this.inFocus.OnVanish.Attach(() => 0);
 
         this.debugRenderer = new DebugRenderer(gl);
         this.debugRenderer.ViewProjection = this.ViewProjection;
@@ -437,11 +437,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private SwitchFocus(component: InputReceiver): void {
         this.inFocus.Blur();
-        this.inFocusOnDestroyReleaser();
+        this.inFocusOnVanishReleaser();
 
         this.inFocus = component;
         this.inFocus.Focus();
-        this.inFocus.OnDestroy.Attach(() => this.SwitchFocus(this.codeEditorServiceInputReceiverFactory()));
+        this.inFocus.OnVanish.Attach(() => this.SwitchFocus(this.codeEditorServiceInputReceiverFactory()));
     }
 }
 

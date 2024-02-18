@@ -260,30 +260,40 @@ export class UITextListRenderer extends PrimitivesRenderer {
     }
 
     private UpdateStencilAttributes(component: UIObservableTextList): void {
-        const attrs = PrimitiveBuilder.AABBRectangle(
-            {
-                x: component.AbsolutePosition.x + component.BorderWidth,
-                y: component.AbsolutePosition.y + component.BorderWidth
-            },
-            {
-                width: component.Dimension.width - 2 * component.BorderWidth,
-                height: component.Dimension.height - 2 * component.BorderWidth
-            },
-            []
-        );
+        let attrs: number[];
+        if (component.Visible) {
+            attrs = PrimitiveBuilder.AABBRectangle(
+                {
+                    x: component.AbsolutePosition.x + component.BorderWidth,
+                    y: component.AbsolutePosition.y + component.BorderWidth
+                },
+                {
+                    width: component.Dimension.width - 2 * component.BorderWidth,
+                    height: component.Dimension.height - 2 * component.BorderWidth
+                },
+                []);
+        } else {
+            attrs = new Array(this.AttributesPerComponent).fill(0);
+        }
 
         this.UpdateComponentAttributes(attrs, component.Offset * this.AttributesPerComponent);
     }
 
     private UpdateBorderAttributes(component: UIObservableTextList): void {
-        const attrs = PrimitiveBuilder.AABBFrame(
-            component.AbsolutePosition,
-            component.Dimension,
-            component.BorderWidth,
-            [
-                [this.settings.ZFar - component.ZIndex - this.zFarIncluded]
-            ]
-        );
+        let attrs: number[];
+
+        if (component.Visible) {
+            attrs = PrimitiveBuilder.AABBFrame(
+                component.AbsolutePosition,
+                component.Dimension,
+                component.BorderWidth,
+                [
+                    [this.settings.ZFar - component.ZIndex - this.zFarIncluded]
+                ]
+            );
+        } else {
+            attrs = new Array(this.borderRenderer.AttributesPerComponent).fill(0);
+        }
 
         this.borderRenderer.UpdateComponentAttributes(attrs, component.Offset * this.borderRenderer.AttributesPerComponent);
     }

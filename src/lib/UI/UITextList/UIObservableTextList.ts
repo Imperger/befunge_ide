@@ -22,6 +22,8 @@ interface ScrollControls {
 export type UIObservableTextListDeleter = () => void;
 
 export class UIObservableTextList implements UITextList {
+    public visible = true;
+
     private scale = 1;
 
     private scroll = 0;
@@ -65,7 +67,7 @@ export class UIObservableTextList implements UITextList {
             },
             zIndex,
             text,
-            lineHeight,
+            lineHeight * this.Scale,
             parent);
 
         this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
@@ -158,6 +160,18 @@ export class UIObservableTextList implements UITextList {
         this.observable.Notify(this);
     }
 
+    get Visible(): boolean {
+        return this.visible;
+    }
+
+    set Visible(value: boolean) {
+        this.visible = value;
+
+        this.UpdateScrollControlsPresence();
+
+        this.observable.Notify(this);
+    }
+
     get Scale(): number {
         return this.parent === null ? this.scale : this.scale * this.parent.Scale;
     }
@@ -206,7 +220,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     private UpdateScrollControlsPresence(): void {
-        if (this.IsContentOverflow) {
+        if (this.visible && this.IsContentOverflow) {
             if (this.scrollControls === null) {
                 this.scroll = 0;
 

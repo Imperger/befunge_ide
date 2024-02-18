@@ -9,8 +9,7 @@ import { EditControls } from "./EditControls";
 import { EditDirectionControls } from "./EditDirectionControls";
 import { FileControls } from "./FileControls";
 import { HistoryControls } from "./HistoryControls";
-import { InputControls } from "./InputControls";
-import { OutputControls } from "./OutputControls";
+import { IOControls } from "./IOControls";
 import { SnackbarControls } from "./SnackbarControls";
 import { StackControls } from "./StackControls";
 
@@ -27,8 +26,6 @@ export class OverlayService implements AsyncConstructable {
 
     private editDirectionControls!: EditDirectionControls;
 
-    private inputControls!: InputControls;
-
     private fileControls!: FileControls;
 
     constructor(
@@ -39,16 +36,14 @@ export class OverlayService implements AsyncConstructable {
         @inject(EditControls) private editControls: EditControls,
         @inject(DebugControls) private debugControls: DebugControls,
         @inject(StackControls) private stackControls: StackControls,
-        @inject(OutputControls) private outputControls: OutputControls) {
+        @inject(IOControls) private ioControls: IOControls) {
         this.settings = Inversify.get(AppSettings);
 
         this.BuildStickyProjection();
     }
 
-
     async AsyncConstructor(): Promise<void> {
         this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
-        this.inputControls = new InputControls(this.uiRenderer);
         this.fileControls = new FileControls(this.uiRenderer);
     }
 
@@ -60,12 +55,8 @@ export class OverlayService implements AsyncConstructable {
         return this.debugControls;
     }
 
-    get InputControls(): InputControls {
-        return this.inputControls;
-    }
-
-    get OutputControls(): OutputControls {
-        return this.outputControls;
+    get IOControls(): IOControls {
+        return this.ioControls;
     }
 
     get Snackbar(): SnackbarControls {
@@ -99,8 +90,7 @@ export class OverlayService implements AsyncConstructable {
         this.historyControls.Resize();
         this.editControls.Resize();
         this.stackControls.Resize();
-        this.inputControls.Resize();
-        this.outputControls.Resize();
+        this.ioControls.Resize();
     }
 
     Touch(e: MouseEvent): InputReceiver | boolean {

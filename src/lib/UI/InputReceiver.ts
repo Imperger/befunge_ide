@@ -1,7 +1,7 @@
 import { Observable } from "../Observable";
 
 export interface InputReceiver {
-    OnDestroy: Observable<void>;
+    OnVanish: Observable<void>;
     OnInput(e: KeyboardEvent): void;
     Focus(): void;
     Blur(): void;

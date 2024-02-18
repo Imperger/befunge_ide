@@ -11,7 +11,7 @@ import { InputReceiver } from "@/lib/UI/InputReceiver";
 
 @injectable()
 export class CodeEditorServiceInputReceiver implements InputReceiver {
-    private onDestroy = new ObservableController<void>();
+    private onVanish = new ObservableController<void>();
 
     constructor(
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
@@ -44,8 +44,8 @@ export class CodeEditorServiceInputReceiver implements InputReceiver {
         this.codeEditor.Blur();
     }
 
-    get OnDestroy(): Observable<void> {
-        return this.onDestroy;
+    get OnVanish(): Observable<void> {
+        return this.onVanish;
     }
 }
 

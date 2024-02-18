@@ -61,7 +61,7 @@ export class DebuggingService {
     private RunNext(): void {
         if (!this.debugMode) {
             this.befungeToolbox.Reset(this.settings.MemoryLimit, this.editorSourceCode.Clone());
-            this.befungeToolbox.Interpreter.SetInput(this.overlay.InputControls.Text);
+            this.befungeToolbox.Interpreter.SetInput(this.overlay.IOControls.Input);
             this.befungeToolbox.Interpreter.AddMemoryWriteInterceptor((ptr: Pointer, value: number) => this.OnMemoryWrite(ptr, value));
 
             this.UploadBreakpointsToDebugger();
@@ -69,7 +69,7 @@ export class DebuggingService {
             this.debugMode = true;
             this.overlay.DebugControls.DebugMode = true;
 
-            this.overlay.OutputControls.Output = '';
+            this.overlay.IOControls.Output = '';
         }
 
         const debug = this.befungeToolbox.Debugger;
@@ -122,7 +122,7 @@ export class DebuggingService {
 
             this.overlay.StackControls.Stack = debug.Stack;
             this.overlay.StackControls.ScrollToTop();
-            this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+            this.overlay.IOControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
         }
 
 
@@ -131,7 +131,7 @@ export class DebuggingService {
             this.overlay.DebugControls.DebugMode = false;
             this.activeCellBreakpoints = [];
 
-            this.overlay.OutputControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
+            this.overlay.IOControls.Output += interpreter.CollectOutputUntil(this.settings.MaxOutputLength);
 
             this.RestoreCellBreakpointsSelection();
 
