@@ -118,7 +118,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
     }
 
     get Scale(): number {
-        return this.scale;
+        return this.parent === null ? this.scale : this.scale * this.parent.Scale;
     }
 
     set Scale(scale: number) {
