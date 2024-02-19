@@ -154,11 +154,11 @@ export class IOControls {
     }
 
     private RetrieveFontGlyphCollection(): FontGlyphCollection {
-        if (this.fontGlyphCollection !== null && this.fontGlyphCollection.LineHeight === this.outputTextList.LineHeight) {
+        if (this.fontGlyphCollection !== null && this.fontGlyphCollection.LineHeight === this.outputTextList.LineHeight * this.outputTextList.Scale) {
             return this.fontGlyphCollection;
         }
 
-        this.fontGlyphCollection = this.fontGlyphCollectionFactory({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: this.outputTextList.LineHeight } });
+        this.fontGlyphCollection = this.fontGlyphCollectionFactory({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: this.outputTextList.LineHeight * this.outputTextList.Scale } });
 
         return this.fontGlyphCollection;
     }
