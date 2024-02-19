@@ -62,8 +62,8 @@ export class UIObservableAlert implements UIComponent, UIAlert {
 
     get Dimension(): Dimension {
         return {
-            width: this.dimension.width * this.scale,
-            height: this.dimension.height * this.scale
+            width: this.dimension.width * this.Scale,
+            height: this.dimension.height * this.Scale
         };
     }
 

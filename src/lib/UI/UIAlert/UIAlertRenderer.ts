@@ -269,7 +269,7 @@ export class UIAlertRenderer extends PrimitivesRenderer {
 
     private LabelPosition(component: UIObservableAlert, label: UILabel): Vec2 {
         return {
-            x: component.Position.x + 2 * this.iconMargin + this.AlertIconSideLength(component),
+            x: component.Position.x + 2 * this.iconMargin + (component.Dimension.height / component.Scale - 2 * this.iconMargin),
             y: component.Position.y + component.Dimension.height / 2 - label.Dimension.height / 2
         };
     }
@@ -294,7 +294,7 @@ export class UIAlertRenderer extends PrimitivesRenderer {
 
     private ExtractPanelAttributes(component: UIObservableAlert): number[] {
         return PrimitiveBuilder.AABBRectangle(
-            component.Position,
+            component.AbsolutePosition,
             component.Dimension,
             [
                 [this.settings.ZFar - component.ZIndex - this.zFarIncluded],

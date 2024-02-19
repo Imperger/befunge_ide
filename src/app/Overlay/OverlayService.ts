@@ -87,6 +87,7 @@ export class OverlayService implements AsyncConstructable {
         this.editDirectionControls.Resize();
         this.debugControls.Resize();
         this.fileControls.Resize();
+        this.snackbarControls.Resize();
         this.historyControls.Resize();
         this.editControls.Resize();
         this.stackControls.Resize();

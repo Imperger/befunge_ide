@@ -6,16 +6,16 @@ import { Inversify } from "@/Inversify";
 import { Rgb } from "@/lib/Primitives";
 import { UIAlert, UIAlertIconStyle, UIAlertStyle, UIAlertText } from "@/lib/UI/UIAlert/UIAlert";
 import { UIIcon } from "@/lib/UI/UIIcon";
-import { UIObservablePositioningGroup } from "@/lib/UI/UIObservablePositioningGroup";
+import { HorizontalAnchor, UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 
 @injectable()
 export class SnackbarControls {
-    private group!: UIObservablePositioningGroup;
+    private group: UIObservablePositioningGroup;
 
     private snackbar: UIAlert | null = null;
 
-    private widthPercent = 0.40;
+    private widthPercent = 0.95;
 
     private contentColor: Rgb = [0.9, 0.9, 0.9];
 
@@ -27,22 +27,27 @@ export class SnackbarControls {
 
     constructor(
         @inject(UIRenderer) private uiRenderer: UIRenderer,
-        @inject(AppSettings) private settings: AppSettings) { }
+        @inject(AppSettings) private settings: AppSettings) {
+        this.group = new UIObservablePositioningGroup(
+            { x: 0, y: 0 },
+            { vertical: VerticalAnchor.Bottom, horizontal: HorizontalAnchor.Middle });
+    }
 
     Show(icon: UIAlertIconStyle, text: UIAlertText, style: UIAlertStyle): void {
         if (this.snackbar !== null) {
             this.Hide();
         }
 
-        const width = this.settings.ViewDimension.Width * this.widthPercent;
+        const width = Math.min(this.settings.ViewDimension.Width * this.widthPercent / this.group.Scale, 800);
 
         this.snackbar = this.uiRenderer.CreateAlert(
-            { x: (this.settings.ViewDimension.Width - width) / 2, y: 0 },
+            { x: 0, y: 0 },
             { width, height: 100 },
             1,
             icon,
             text,
-            style);
+            style,
+            this.group);
 
         this.hideTimer = setTimeout(() => this.Hide(), this.showTime);
     }
