@@ -363,7 +363,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private OpenSettings(): void {
-        this.FocusCameraAtEditor();
+        console.log('Open settings');
     }
 
     LoadSourceCodeToEditor(sourceCode: string): void {
@@ -455,9 +455,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             x: uiLeftTopEditorGridPosition.x + margin,
             y: this.settings.ViewDimension.Height - uiLeftTopEditorGridPosition.y
         };
-
-        const b = this.overlay.EditDirectionControls.Boundaries;
-        console.log(this.settings.ViewDimension.Height - b.rt.y);
 
         const posNear = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 0 }, this.ViewProjection, this.gl.canvas);
         const posFar = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 1 }, this.ViewProjection, this.gl.canvas);
