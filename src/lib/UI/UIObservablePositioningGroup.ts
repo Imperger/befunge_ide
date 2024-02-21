@@ -85,8 +85,8 @@ export class UIObservablePositioningGroup implements UIComponent {
             UIObservablePositioningGroup.MaintainExtremum(component.Position, { min, max });
 
             const rightTop = {
-                x: component.Position.x + component.Dimension.width,
-                y: component.Position.y + component.Dimension.height
+                x: component.Position.x * component.Scale + component.Dimension.width,
+                y: component.Position.y * component.Scale + component.Dimension.height
             };
 
             UIObservablePositioningGroup.MaintainExtremum(rightTop, { min, max });
