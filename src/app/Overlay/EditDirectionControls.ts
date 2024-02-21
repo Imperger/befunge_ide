@@ -1,7 +1,7 @@
 import { EditionDirection } from "../CodeEditor/CodeEditorService";
 
 import { Observable, ObservableController } from "@/lib/Observable";
-import { Rgb } from "@/lib/Primitives";
+import { Rgb, Vec2 } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
 import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
 import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
@@ -13,6 +13,11 @@ interface EditDirection {
     up: UIIconButton;
     right: UIIconButton;
     down: UIIconButton;
+}
+
+export interface EditDirectionControlsBoundaries {
+    lb: Vec2;
+    rt: Vec2;
 }
 
 export class EditDirectionControls {
@@ -122,5 +127,17 @@ export class EditDirectionControls {
 
         this.currentDirectionControl = sender;
         this.editDirectionObservable.Notify(direction)
+    }
+
+    get Boundaries(): EditDirectionControlsBoundaries {
+        const dimension = this.group.Dimension;
+
+        return {
+            lb: this.group.AbsolutePosition,
+            rt: {
+                x: this.group.AbsolutePosition.x + dimension.width,
+                y: this.group.AbsolutePosition.y + dimension.height
+            }
+        };
     }
 }

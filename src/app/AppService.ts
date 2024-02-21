@@ -25,6 +25,7 @@ import { EffectRunner, RegistrationCollisionResolver } from '@/lib/effect/Effect
 import { Intersection } from '@/lib/math/Intersection';
 import { Transformation } from '@/lib/math/Transformation';
 import { ObserverDetacher } from '@/lib/Observable';
+import { Vec2 } from '@/lib/Primitives';
 import { Camera } from '@/lib/renderer/Camera';
 import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
@@ -69,12 +70,13 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.camera = mat4.translate(
             mat4.create(),
             mat4.create(),
-            [50, 100, this.settings.ZCameraBoundary.min + (this.settings.ZCameraBoundary.max - this.settings.ZCameraBoundary.min) * 0.75]);
+            [0, 0, this.settings.ZCameraBoundary.min + (this.settings.ZCameraBoundary.max - this.settings.ZCameraBoundary.min) * 0.75]);
 
         gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         this.BuildProjection();
+        this.FocusCameraAtEditor();
 
         this.codeEditor.ViewProjection = this.ViewProjection;
 
@@ -164,7 +166,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.ViewProjection,
             this.gl.canvas);
 
-        this.camera = mat4.translate(
+        mat4.translate(
             this.camera,
             this.camera,
             [delta.x, delta.y, 0]);
@@ -314,6 +316,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.history.Reset();
         router.replace({ name: 'CodeEditor' });
+
+        this.FocusCameraAtEditor();
     }
 
     private async SaveSourceToDisk(): Promise<void> {
@@ -359,7 +363,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private OpenSettings(): void {
-        console.log('Open settings');
+        this.FocusCameraAtEditor();
     }
 
     LoadSourceCodeToEditor(sourceCode: string): void {
@@ -442,6 +446,35 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.inFocus = component;
         this.inFocus.Focus();
         this.inFocus.OnVanish.Attach(() => this.SwitchFocus(this.codeEditorServiceInputReceiverFactory()));
+    }
+
+    private FocusCameraAtEditor(): void {
+        const uiLeftTopEditorGridPosition = this.overlay.EditDirectionControls.Boundaries.rt;
+        const margin = 10;
+        const wndLeftTopEditorGridPosition: Vec2 = {
+            x: uiLeftTopEditorGridPosition.x + margin,
+            y: this.settings.ViewDimension.Height - uiLeftTopEditorGridPosition.y
+        };
+
+        const b = this.overlay.EditDirectionControls.Boundaries;
+        console.log(this.settings.ViewDimension.Height - b.rt.y);
+
+        const posNear = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 0 }, this.ViewProjection, this.gl.canvas);
+        const posFar = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 1 }, this.ViewProjection, this.gl.canvas);
+
+        const intersection = Intersection.PlaneLine(
+            { a: 0, b: 0, c: 1, d: 0 },
+            { a: [posNear[0], posNear[1], posNear[2]], b: [posFar[0], posFar[1], posFar[2]] });
+
+        intersection[1] -= this.settings.MemoryLimit.Height * this.codeEditor.CellSize;
+
+        mat4.translate(
+            this.camera,
+            mat4.create(),
+            [this.camera[12] - intersection[0], this.camera[13] - intersection[1], this.camera[14]]);
+
+        this.codeEditor.ViewProjection = this.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 }
 

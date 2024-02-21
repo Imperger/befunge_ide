@@ -252,6 +252,10 @@ export class CodeEditorService {
         return true;
     }
 
+    get CellSize(): number {
+        return this.codeEditorRenderer.CellSize;
+    }
+
     private OnSetEditableRegion(): void {
         this.touchBehavior = new SelectCellsRegion(this.editableCell);
     }
