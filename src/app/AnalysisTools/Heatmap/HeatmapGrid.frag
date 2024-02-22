@@ -1,5 +1,6 @@
 #version 300 es
-precision mediump float;
+precision highp float;
+precision highp int;
 
 in vec2 v_uvCoord;
 in vec4 v_color;
@@ -41,14 +42,14 @@ float noise(in vec2 _st) {
 
 float fbm(in vec2 _st) {
     float v = 0.0f;
-    float a = 0.364;
+    float a = 0.364f;
     vec2 shift = vec2(100.0f);
     // Rotate to reduce axial bias
     mat2 rot = mat2(cos(0.5f), sin(0.5f), -sin(0.5f), cos(0.50f));
     for(int i = 0; i < NUM_OCTAVES; ++i) {
         v += a * noise(_st);
         _st = rot * _st * 2.0f + shift;
-        a *= 0.684;
+        a *= 0.684f;
     }
     return v;
 }
@@ -71,7 +72,7 @@ void main() {
 
     color = mix(vec3(0.101961f, 0.619608f, 0.666667f), vec3(0.666667f, 0.666667f, 0.498039f), clamp((f * f) * 4.0f, 0.0f, 1.0f));
 
-    color = mix(color, vec3(0.990,0.976,0.986), clamp(length(q), 0.0f, 1.0f));
+    color = mix(color, vec3(0.990f, 0.976f, 0.986f), clamp(length(q), 0.0f, 1.0f));
 
     color = mix(color, v_color.rgb, clamp(length(r.x), 0.0f, 1.0f));
 
