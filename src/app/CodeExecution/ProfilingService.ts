@@ -10,6 +10,7 @@ import { OverlayService } from "../Overlay/OverlayService";
 import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { Inversify } from "@/Inversify";
+import { ObservablePriority } from "@/lib/Observable";
 
 @injectable()
 export class ProfillingService {
@@ -21,7 +22,9 @@ export class ProfillingService {
         @inject(OverlayService) private overlay: OverlayService,
         @inject(InjectionToken.HeatmapExtensionFactory) private heatmapExtensionFactory: HeatmapExtensionFactory
     ) {
-        this.overlay.DebugControls.Heatmap.Attach((shown: HeatmapToggleButtonState) => this.ToggleHeatmap(shown))
+        this.overlay.DebugControls.Heatmap.Attach(
+            (shown: HeatmapToggleButtonState) => this.ToggleHeatmap(shown),
+            { priority: ObservablePriority.High });
     }
 
     private ToggleHeatmap(feedback: HeatmapToggleButtonState): void {

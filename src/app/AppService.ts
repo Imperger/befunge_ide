@@ -12,6 +12,7 @@ import { SmoothCameraMove } from './Effects/SmoothCameraMove';
 import { SmoothCameraZoom } from './Effects/SmoothCameraZoom';
 import { AppHistory } from './History/AppHistory';
 import { InjectionToken, UILabelRendererTargetName } from './InjectionToken';
+import { HeatmapToggleButtonState } from './Overlay/DebugControls';
 import { OverlayService } from './Overlay/OverlayService';
 import { SnackbarControls } from './Overlay/SnackbarControls';
 import { SourceCodeMemory } from './SourceCodeMemory';
@@ -143,6 +144,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.overlay.HistoryControls.UndoObservable.Attach(() => this.history.Undo());
         this.overlay.HistoryControls.RedoObservable.Attach(() => this.history.Redo());
+
+        this.overlay.DebugControls.Heatmap.Attach(feedback => this.ControlsResponseToHeatmapActivation(feedback));
 
         this.history.UpdateObservable.Attach(() => this.OnSourceCodeChanged());
         this.Start();
@@ -446,6 +449,16 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.inFocus = component;
         this.inFocus.Focus();
         this.inFocus.OnVanish.Attach(() => this.SwitchFocus(this.codeEditorServiceInputReceiverFactory()));
+    }
+
+    private ControlsResponseToHeatmapActivation(feedback: HeatmapToggleButtonState): void {
+        this.overlay.FileControls.OpenFromDiskDisabled = feedback.isShown;
+
+        feedback.isShown ?
+            this.overlay.HistoryControls.Lock() :
+            this.overlay.HistoryControls.Unlock();
+
+        this.overlay.EditControls.Disable = feedback.isShown;
     }
 
     private FocusCameraAtEditor(): void {

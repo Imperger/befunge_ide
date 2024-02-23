@@ -90,6 +90,15 @@ export class HistoryControls {
         return this.redoObservable;
     }
 
+    Lock(): void {
+        this.undoButton.Disable = true;
+        this.redoButton.Disable = true;
+    }
+
+    Unlock(): void {
+        this.UpdateButtonsAvailability();
+    }
+
     private UpdateButtonsAvailability(): void {
         this.undoButton.Disable = !this.history.CanUndo;
         this.redoButton.Disable = !this.history.CanRedo;

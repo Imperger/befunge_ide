@@ -88,6 +88,18 @@ export class EditControls {
         this.group.Resize();
     }
 
+    get Disable(): boolean {
+        return this.selectButton.Disable;
+    }
+
+    set Disable(value: boolean) {
+        this.selectButton.Disable = value;
+        this.cutButton.Disable = value;
+        this.copyButton.Disable = value;
+        this.pasteButton.Disable = value;
+        this.deleteButton.Disable = value;
+    }
+
     get SelectObservable(): Observable<void> {
         return this.selectObservable;
     }

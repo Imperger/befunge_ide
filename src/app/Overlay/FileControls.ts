@@ -83,6 +83,14 @@ export class FileControls {
         this.shareButton.Disable = value;
     }
 
+    get OpenFromDiskDisabled(): boolean {
+        return this.openButton.Disable;
+    }
+
+    set OpenFromDiskDisabled(value: boolean) {
+        this.openButton.Disable = value;
+    }
+
     get OpenFromDiskObservable(): Observable<void> {
         return this.openFromDiskObservable;
     }
