@@ -35,13 +35,26 @@ class OnSelectStrategy {
     }
 }
 
+export interface MouseMovementEvent {
+    movementX: number;
+    movementY: number;
+}
+
+export interface MouseSelectEvent {
+    offsetX: number;
+    offsetY: number;
+}
+
 @injectable()
 export abstract class AppEventTransformer {
     private readonly selectStrategy = new OnSelectStrategy(250, 3);
 
     OnMouseMove(e: MouseEvent): void {
         if (e.buttons & MouseButtons.Left) {
-            this.OnCameraMove(e);
+            this.OnCameraMove({
+                movementX: e.movementX * window.devicePixelRatio,
+                movementY: e.movementY * window.devicePixelRatio
+            });
         }
     }
 
@@ -53,7 +66,10 @@ export abstract class AppEventTransformer {
         this.selectStrategy.OnMouseUp(e);
 
         if (this.selectStrategy.IsSelect) {
-            this.OnSelect(e);
+            this.OnSelect({
+                offsetX: e.offsetX * window.devicePixelRatio,
+                offsetY: e.offsetY * window.devicePixelRatio
+            });
         }
     }
 
@@ -61,9 +77,9 @@ export abstract class AppEventTransformer {
         this.OnZoom(e);
     }
 
-    abstract OnCameraMove(e: MouseEvent): void;
+    abstract OnCameraMove(e: MouseMovementEvent): void;
 
-    abstract OnSelect(e: MouseEvent): void;
+    abstract OnSelect(e: MouseSelectEvent): void;
 
     abstract OnZoom(e: WheelEvent): void;
 }

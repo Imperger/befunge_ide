@@ -1,6 +1,7 @@
 import { mat4 } from "gl-matrix";
 import { inject, injectable } from "inversify";
 
+import { MouseSelectEvent } from "../AppEventTransformer";
 import { AppSettings } from "../AppSettings";
 import { InjectionToken } from "../InjectionToken";
 
@@ -94,7 +95,7 @@ export class OverlayService implements AsyncConstructable {
         this.ioControls.Resize();
     }
 
-    Touch(e: MouseEvent): InputReceiver | boolean {
+    Touch(e: MouseSelectEvent): InputReceiver | boolean {
         return this.uiRenderer.Touch(e);
     }
 

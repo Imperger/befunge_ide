@@ -1,6 +1,7 @@
 import { vec3 } from "gl-matrix";
 import { inject, injectable } from "inversify";
 
+import { MouseSelectEvent } from "../AppEventTransformer";
 import { InjectionToken } from "../InjectionToken";
 import { OverlayService } from "../Overlay/OverlayService";
 import { SourceCodeMemory } from "../SourceCodeMemory";
@@ -143,7 +144,7 @@ export class CodeEditorService {
         this.tooltipService.ReleaseAll();
     }
 
-    Touch(e: MouseEvent): void {
+    Touch(e: MouseSelectEvent): void {
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
         const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.ViewProjection, this.gl.canvas);
 

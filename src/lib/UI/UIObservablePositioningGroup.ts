@@ -68,7 +68,7 @@ export class UIObservablePositioningGroup implements UIComponent {
     }
 
     get Scale(): number {
-        return this.scale / Inversify.get(AppSettings).DevicePixelRatio;
+        return this.scale * Inversify.get(AppSettings).DevicePixelRatio;
     }
 
     set Scale(scale: number) {

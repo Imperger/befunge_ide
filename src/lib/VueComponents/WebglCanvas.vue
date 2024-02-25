@@ -55,8 +55,8 @@ function UpdateViewport(): void {
 }
 
 function OnResize(): void {
-  innerWidth.value = canvas.value?.clientWidth ?? 0;
-  innerHeight.value = canvas.value?.clientHeight ?? 0;
+  innerWidth.value = (canvas.value?.clientWidth ?? 0) * window.devicePixelRatio;
+  innerHeight.value = (canvas.value?.clientHeight ?? 0) * window.devicePixelRatio;
 
   UpdateViewport();
 

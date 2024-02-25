@@ -2,7 +2,7 @@
 import { mat4, vec2, vec3 } from 'gl-matrix';
 import { inject, injectable, named } from 'inversify';
 
-import { AppEventTransformer } from './AppEventTransformer';
+import { AppEventTransformer, MouseMovementEvent, MouseSelectEvent } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
@@ -162,7 +162,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
-    OnCameraMove(e: MouseEvent): void {
+    OnCameraMove(e: MouseMovementEvent): void {
         const delta = Camera.UnprojectMovement(
             { x: e.movementX, y: e.movementY },
             { a: 0, b: 0, c: 1, d: 0 },
@@ -179,7 +179,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
-    OnSelect(e: MouseEvent): void {
+    OnSelect(e: MouseSelectEvent): void {
         const touchResult = this.overlay.Touch(e);
 
         if (touchResult === false) {

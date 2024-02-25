@@ -19,6 +19,7 @@ import { UIObservablePositioningGroup } from "./UIObservablePositioningGroup";
 import { UITextList } from "./UITextList/UITextList";
 import { UITextListRenderer, UITextListRendererFactory } from "./UITextList/UITextListRenderer";
 
+import { MouseSelectEvent } from "@/app/AppEventTransformer";
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
 
@@ -174,7 +175,7 @@ export class UIRenderer implements UICreator {
         return editableTextList;
     }
 
-    Touch(e: MouseEvent): InputReceiver | boolean {
+    Touch(e: MouseSelectEvent): InputReceiver | boolean {
         const x = e.offsetX;
         const y = this.gl.canvas.height - e.offsetY;
 
