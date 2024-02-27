@@ -270,7 +270,7 @@ export class UIAlertRenderer extends PrimitivesRenderer {
     private LabelPosition(component: UIObservableAlert, label: UILabel): Vec2 {
         return {
             x: component.Position.x + 2 * this.iconMargin + (component.Dimension.height / component.Scale - 2 * this.iconMargin),
-            y: component.Position.y + component.Dimension.height / 2 - label.Dimension.height / 2
+            y: component.Position.y + (component.Dimension.height / component.Scale - label.Dimension.height / label.Scale) / 2
         };
     }
 
