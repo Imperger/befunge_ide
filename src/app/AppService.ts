@@ -291,6 +291,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
                 this.overlay.Snackbar.ShowError(e.message)
             }
+            
+            return;
         }
 
 
