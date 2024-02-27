@@ -1,3 +1,8 @@
+import { inject, injectable } from "inversify";
+
+import { HeadlineControlsLayout } from "./Layouts/HeadlineControlsLayout";
+
+import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
@@ -5,6 +10,7 @@ import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
 import { UIObservablePositioningGroup, VerticalAnchor } from "@/lib/UI/UIObservablePositioningGroup";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 
+@injectable()
 export class FileControls {
     private group: UIObservablePositioningGroup;
 
@@ -18,7 +24,9 @@ export class FileControls {
     private shareObservable = new ObservableController<void>();
     private openSettingsObservable = new ObservableController<void>();
 
-    constructor(private uiRenderer: UIRenderer) {
+    constructor(
+        @inject(UIRenderer) private uiRenderer: UIRenderer,
+        @inject(HeadlineControlsLayout) private layout: HeadlineControlsLayout) {
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const openButtonIconColor: Rgb = [0.9411764705882353, 0.6392156862745098, 0.0392156862745098];
@@ -68,6 +76,8 @@ export class FileControls {
             _sender => this.openSettingsObservable.Notify(),
             this.group
         );
+
+        this.layout.Watch(this.group);
     }
 
     Resize(): void {
@@ -107,3 +117,5 @@ export class FileControls {
         return this.openSettingsObservable;
     }
 }
+
+Inversify.bind(FileControls).toSelf().inSingletonScope();

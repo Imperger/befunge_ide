@@ -2,6 +2,8 @@ import { inject, injectable } from "inversify";
 
 import { AppHistory } from "../History/AppHistory";
 
+import { HeadlineControlsLayout } from "./Layouts/HeadlineControlsLayout";
+
 import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
@@ -23,7 +25,8 @@ export class HistoryControls {
 
     constructor(
         @inject(UIRenderer) private uiRenderer: UIRenderer,
-        @inject(AppHistory) private history: AppHistory) {
+        @inject(AppHistory) private history: AppHistory,
+        @inject(HeadlineControlsLayout) private layout: HeadlineControlsLayout) {
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const buttonIconColor: Rgb = [0.08235294117647059, 0.396078431372549, 0.7529411764705882];
@@ -56,6 +59,8 @@ export class HistoryControls {
         this.redoButton.Disable = true;
 
         this.history.UpdateObservable.Attach(() => this.UpdateButtonsAvailability());
+
+        this.layout.Watch(this.group)
     }
 
     Resize(): void {

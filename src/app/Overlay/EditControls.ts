@@ -1,5 +1,7 @@
 import { inject, injectable } from "inversify";
 
+import { HeadlineControlsLayout } from "./Layouts/HeadlineControlsLayout";
+
 import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
@@ -25,7 +27,9 @@ export class EditControls {
     private pasteObservable = new ObservableController<void>();
     private deleteObservable = new ObservableController<void>();
 
-    constructor(@inject(UIRenderer) private uiRenderer: UIRenderer) {
+    constructor(
+        @inject(UIRenderer) private uiRenderer: UIRenderer,
+        @inject(HeadlineControlsLayout) private layout: HeadlineControlsLayout) {
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const buttonIconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
@@ -82,6 +86,8 @@ export class EditControls {
             _sender => this.deleteObservable.Notify(),
             this.group
         );
+
+        this.layout.Watch(this.group);
     }
 
     Resize(): void {

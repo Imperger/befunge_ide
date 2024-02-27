@@ -88,6 +88,10 @@ export class IOControls {
 
         this.inputEditableTextList.Visible = inputTab;
         this.outputTextList.Visible = !inputTab;
+
+        if (this.outputTextList.Visible) {
+            this.outputTextList.ScrollToTop();
+        }
     }
 
     get Output(): string {
@@ -121,8 +125,7 @@ export class IOControls {
 
     get PanelWidth(): number {
         const widthToFit = this.settings.ViewDimension.Width - this.group.AbsolutePosition.x;
-
-        return Math.min(this.maxPanelWidth, widthToFit);
+        return Math.min(this.maxPanelWidth, widthToFit) / this.group.Scale;
     }
 
     private NewLineFormatter(str: string): string {

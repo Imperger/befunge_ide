@@ -1,10 +1,9 @@
 import { inject, injectable } from "inversify";
 
-import { EditControls } from "./EditControls";
+import { DebugControlsLayout } from "./Layouts/DebugControlsLayout";
 
 import { Inversify } from "@/Inversify";
 import { PCDirection } from "@/lib/befunge/CPU/CPU";
-import { Intersection } from "@/lib/math/Intersection";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
@@ -57,13 +56,11 @@ export class DebugControls {
 
     public DeactivateButton = false;
 
-    private readonly verticalPositions = { default: 60, shifted: 100 };
-
     constructor(
         @inject(UIRenderer) private uiRenderer: UIRenderer,
-        @inject(EditControls) private editControls: EditControls) {
+        @inject(DebugControlsLayout) private layout: DebugControlsLayout) {
         this.group = new UIObservablePositioningGroup(
-            { x: 800, y: this.verticalPositions.default },
+            { x: 800, y: 60 },
             { vertical: VerticalAnchor.Top, horizontal: HorizontalAnchor.Middle });
 
         const margin = 10;
@@ -108,29 +105,14 @@ export class DebugControls {
             sender => this.ToggleHeatmap(sender),
             this.group
         );
+
+        this.layout.DebugGroup = this.group;
     }
 
     Resize(): void {
         this.group.Resize();
         this.breakpointMenuGroup?.Resize();
         this.debugMenuGroup?.Resize();
-
-        this.BeResponsible();
-    }
-
-    private BeResponsible(): void {
-        const dimension = this.group.Dimension;
-
-        const shiftedY = Intersection.RectangleRectangle(
-            { ...this.group.AbsolutePosition, width: dimension.width, height: dimension.height + (this.verticalPositions.shifted - this.verticalPositions.default) / 2 },
-            { ...this.editControls.Position, ...this.editControls.Dimension }) ?
-            this.verticalPositions.shifted :
-            this.verticalPositions.default;
-
-        if (this.group.Position.y !== shiftedY) {
-            this.group.Position = { x: this.group.Position.x, y: shiftedY };
-        }
-
     }
 
     get DebugMode(): boolean {

@@ -26,9 +26,7 @@ export class AppSettings {
     public AspectRatio = 1;
 
     public get DevicePixelRatio(): number {
-        const factor = window.devicePixelRatio === 1 ? 1 : 0.5;
-
-        return window.devicePixelRatio * factor;
+        return window.devicePixelRatio;
     }
 
     public ViewDimension: Dimension = { Width: 800, Height: 600 };
