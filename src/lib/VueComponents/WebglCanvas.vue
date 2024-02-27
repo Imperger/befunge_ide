@@ -29,14 +29,14 @@ const widthCss = computed(() => isPropsUsed.value ? SizingToCss(width.value) : '
 const heightCss = computed(() => isPropsUsed.value ? SizingToCss(height.value) : '100%');
 
 onMounted(() => {
-  SetupContext();
-
   if (isPropsUsed.value) {
     UpdateViewport();
   } else {
     OnResize();
     window.addEventListener('resize', OnResize);
   }
+
+  SetupContext();
 });
 
 onBeforeUnmount(() => {

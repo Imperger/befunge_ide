@@ -1,5 +1,6 @@
 import { inject, injectable } from "inversify";
 
+import { AppSettings } from "./AppSettings";
 import { InjectionToken } from "./InjectionToken";
 
 import { Inversify } from "@/Inversify";
@@ -13,6 +14,8 @@ export class GlobalDependencies implements AsyncConstructable {
     constructor(@inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext) { }
 
     async AsyncConstructor(): Promise<void> {
+        Inversify.get(AppSettings).ViewDimension = { Width: this.gl.canvas.width, Height: this.gl.canvas.height };
+
         await this.SetupGlobalDependencies();
     }
 
