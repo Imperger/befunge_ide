@@ -203,7 +203,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     ScrollToTop(): void {
-        if (this.IsContentOverflow) {
+        if (this.visible && this.IsContentOverflow) {
             this.scroll = 0;
             this.ScrollAligned(this.MinScroll);
         }
@@ -222,8 +222,6 @@ export class UIObservableTextList implements UITextList {
     private UpdateScrollControlsPresence(): void {
         if (this.visible && this.IsContentOverflow) {
             if (this.scrollControls === null) {
-                this.scroll = 0;
-
                 this.scrollControls = {
                     scrollTopButton: this.CreateTopScrollButton(),
                     scrollBottomButton: this.CreateBottomScrollButton()
