@@ -37,7 +37,7 @@ export class DebugControlsLayout {
         if (Intersection.RectangleRectangle(
             { ...this.debugGroup.AbsolutePosition, width: debugGroupDimension.width, height: debugGroupDimension.height + headlineDimension.height },
             { ...this.headlineLayout.AbsolutePosition, ...headlineDimension })) {
-            console.log('intersect');
+
             const margin = 10;
 
             this.skipUpdates = true;
@@ -49,8 +49,6 @@ export class DebugControlsLayout {
 
             this.skipUpdates = false;
         } else {
-            console.log('not intersect');
-
             this.skipUpdates = true;
 
             this.debugGroup.Position = {
