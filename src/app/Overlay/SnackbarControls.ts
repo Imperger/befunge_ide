@@ -15,11 +15,9 @@ export class SnackbarControls {
 
     private snackbar: UIAlert | null = null;
 
-    private widthPercent = 0.95;
-
     private contentColor: Rgb = [0.9, 0.9, 0.9];
 
-    private lineHeight = 32;
+    private lineHeight = 24;
 
     private showTime = 5000;
 
@@ -38,18 +36,25 @@ export class SnackbarControls {
             this.Hide();
         }
 
-        const width = Math.min(this.settings.ViewDimension.Width * this.widthPercent / this.group.Scale, 800);
-
         this.snackbar = this.uiRenderer.CreateAlert(
             { x: 0, y: 0 },
-            { width, height: 100 },
             1,
             icon,
             text,
             style,
             this.group);
 
+        this.LimitToViewportWidth();
+
         this.hideTimer = setTimeout(() => this.Hide(), this.showTime);
+    }
+
+    private LimitToViewportWidth(): void {
+        const alertWidth = this.group.Dimension.width;
+        if (alertWidth > this.settings.ViewDimension.Width) {
+            const targetScale = this.settings.ViewDimension.Width / alertWidth;
+            this.group.Scale = targetScale;
+        }
     }
 
     ShowError(msg: string): void {

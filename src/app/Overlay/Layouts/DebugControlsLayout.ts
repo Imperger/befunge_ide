@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 
 import { HeadlineControlsLayout } from "./HeadlineControlsLayout";
 
+import { AppSettings } from "@/app/AppSettings";
 import { Inversify } from "@/Inversify";
 import { Intersection } from "@/lib/math/Intersection";
 import { UIComponent } from "@/lib/UI/UIComponent";
@@ -14,7 +15,9 @@ export class DebugControlsLayout {
 
     private readonly verticalPosition = 60;
 
-    constructor(@inject(HeadlineControlsLayout) private headlineLayout: HeadlineControlsLayout) { }
+    constructor(
+        @inject(HeadlineControlsLayout) private headlineLayout: HeadlineControlsLayout,
+        @inject(AppSettings) private settings: AppSettings) { }
 
     set DebugGroup(group: UIComponent) {
         this.debugGroup = group;
@@ -32,11 +35,10 @@ export class DebugControlsLayout {
 
     private RecalculatePosition(): void {
         const debugGroupDimension = this.debugGroup.Dimension;
-        const headlineDimension = this.headlineLayout.Dimension;
 
-        if (Intersection.RectangleRectangle(
-            { ...this.debugGroup.AbsolutePosition, width: debugGroupDimension.width, height: debugGroupDimension.height + headlineDimension.height },
-            { ...this.headlineLayout.AbsolutePosition, ...headlineDimension })) {
+        if (Intersection.RangeRange(
+            { min: this.debugGroup.AbsolutePosition.x, max: this.debugGroup.AbsolutePosition.x + debugGroupDimension.width },
+            { min: this.headlineLayout.AbsolutePosition.x, max: this.headlineLayout.AbsolutePosition.x + this.headlineLayout.Dimension.width })) {
 
             const margin = 10;
 
@@ -44,7 +46,7 @@ export class DebugControlsLayout {
 
             this.debugGroup.Position = {
                 x: this.debugGroup.Position.x,
-                y: this.headlineLayout.Position.y + debugGroupDimension.height / this.debugGroup.Scale + margin
+                y: (this.settings.ViewDimension.Height - this.headlineLayout.AbsolutePosition.y) / this.headlineLayout.Scale + debugGroupDimension.height / this.debugGroup.Scale + margin
             };
 
             this.skipUpdates = false;

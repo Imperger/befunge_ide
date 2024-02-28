@@ -115,6 +115,7 @@ export class UIAlertRenderer extends PrimitivesRenderer {
         @inject(InjectionToken.IconAtlas) private iconAtlas: UIIconAtlas,
         @inject(InjectionToken.IconAtlasTexture) private iconAtlasTexture: WebGLTexture,
         @inject(AppSettings) private settings: AppSettings) {
+
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UIAlertPanelComponent);
         const indicesPerPrimitive = 6;
@@ -197,7 +198,6 @@ export class UIAlertRenderer extends PrimitivesRenderer {
     }
 
     Create(position: Vec2,
-        dimension: Dimension,
         zIndex: number,
         icon: UIAlertIconStyle,
         text: UIAlertText,
@@ -212,9 +212,13 @@ export class UIAlertRenderer extends PrimitivesRenderer {
             parent);
         alertText.StyleRange(0, alertText.Text.length, { color: text.color })
 
+        const iconSideLength = alertText.Dimension.height / alertText.Scale;
         const alert = new UIObservableAlert(
             position,
-            dimension,
+            {
+                width: iconSideLength + 3 * this.iconMargin + alertText.Dimension.width / alertText.Scale,
+                height: iconSideLength + 2 * this.iconMargin
+            },
             zIndex,
             icon,
             text,

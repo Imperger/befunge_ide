@@ -27,8 +27,6 @@ export class IOControls {
 
     private fontGlyphCollection: FontGlyphCollection | null = null;
 
-    private currentTab: 'input' | 'output' = 'output';
-
     private readonly maxPanelWidth = 800;
 
     constructor(
@@ -41,7 +39,7 @@ export class IOControls {
 
         const margin = 10;
         const btnSideLength = 25;
-        const textListHeight = 200;
+        const textListHeight = 100;
 
         this.group = new UIObservablePositioningGroup({ x: 145, y: 10 }, { vertical: VerticalAnchor.Bottom });
         this.inputButton = this.uiRenderer.CreateButton(
@@ -69,7 +67,7 @@ export class IOControls {
             { width: this.maxPanelWidth, height: textListHeight },
             1,
             '',
-            64,
+            32,
             this.group);
 
         this.inputEditableTextList = this.uiRenderer.CreateEditableTextList(
@@ -77,7 +75,7 @@ export class IOControls {
             { width: this.maxPanelWidth, height: textListHeight },
             1,
             '',
-            64,
+            32,
             this.group);
         this.inputEditableTextList.Visible = false;
     }
@@ -132,21 +130,21 @@ export class IOControls {
         const fontGlyphCollection = this.RetrieveFontGlyphCollection();
 
         const strArr = [...str];
+        const padding = 20 * this.group.Scale;
 
-        for (let n = 0, width = 0; n < str.length; ++n) {
+        for (let n = 0, width = padding; n < strArr.length; ++n) {
             const symbol = strArr[n];
 
             if (symbol === '\n') {
-                width = 0;
+                width = padding;
                 continue;
             }
 
             const glyph = ExceptionTrap
                 .Try(SelfBind(fontGlyphCollection, 'Lookup'), symbol)
                 .CatchFn(SelfBind(fontGlyphCollection, 'Lookup'), '?');
-
             if (width + glyph.width > this.outputTextList.Dimension.width) {
-                width = 0;
+                width = padding;
                 strArr.splice(n, 0, '\n');
             } else {
                 width += glyph.width;

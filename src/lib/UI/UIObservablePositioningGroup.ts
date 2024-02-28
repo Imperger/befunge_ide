@@ -125,7 +125,7 @@ export class UIObservablePositioningGroup implements UIComponent {
             case HorizontalAnchor.Right:
                 return viewWidth - this.position.x * this.Scale;
             case HorizontalAnchor.Middle:
-                return (viewWidth - this.Dimension.width) / 2;
+                return (viewWidth - this.Dimension.width) / 2 + this.Position.x;
         }
     }
 

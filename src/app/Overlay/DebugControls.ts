@@ -60,7 +60,7 @@ export class DebugControls {
         @inject(UIRenderer) private uiRenderer: UIRenderer,
         @inject(DebugControlsLayout) private layout: DebugControlsLayout) {
         this.group = new UIObservablePositioningGroup(
-            { x: 800, y: 60 },
+            { x: 0, y: 60 },
             { vertical: VerticalAnchor.Top, horizontal: HorizontalAnchor.Middle });
 
         const margin = 10;

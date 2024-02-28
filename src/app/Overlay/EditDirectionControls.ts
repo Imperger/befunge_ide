@@ -1,5 +1,8 @@
+import { inject, injectable } from "inversify";
+
 import { EditionDirection } from "../CodeEditor/CodeEditorService";
 
+import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
 import { UIIcon } from "@/lib/UI/UIIcon";
@@ -20,6 +23,7 @@ export interface EditDirectionControlsBoundaries {
     rt: Vec2;
 }
 
+@injectable()
 export class EditDirectionControls {
     private static CurrentDirectionInactiveIconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
     private static CurrentDirrectionActiveIconColor: Rgb = [0.1607843137254902, 0.5019607843137255, 0.7254901960784313];
@@ -30,7 +34,7 @@ export class EditDirectionControls {
 
     private editDirectionObservable = new ObservableController<EditionDirection>();
 
-    constructor(private uiRenderer: UIRenderer) {
+    constructor(@inject(UIRenderer) private uiRenderer: UIRenderer) {
         const buttonMargin = 5;
         const [buttonWidth, btnHeight] = [37.5, 25];
 
@@ -141,3 +145,5 @@ export class EditDirectionControls {
         };
     }
 }
+
+Inversify.bind(EditDirectionControls).toSelf().inSingletonScope();

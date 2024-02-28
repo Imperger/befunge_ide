@@ -15,17 +15,14 @@ import { SnackbarControls } from "./SnackbarControls";
 import { StackControls } from "./StackControls";
 
 import { Inversify } from "@/Inversify";
-import { AsyncConstructable, AsyncConstructorActivator } from "@/lib/DI/AsyncConstructorActivator";
 import { InputReceiver } from "@/lib/UI/InputReceiver";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 
 @injectable()
-export class OverlayService implements AsyncConstructable {
+export class OverlayService {
     private settings: AppSettings;
 
     private stickyProjection!: mat4;
-
-    private editDirectionControls!: EditDirectionControls;
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
@@ -34,16 +31,13 @@ export class OverlayService implements AsyncConstructable {
         @inject(FileControls) private fileControls: FileControls,
         @inject(HistoryControls) private historyControls: HistoryControls,
         @inject(EditControls) private editControls: EditControls,
+        @inject(EditDirectionControls) private editDirectionControls: EditDirectionControls,
         @inject(DebugControls) private debugControls: DebugControls,
         @inject(StackControls) private stackControls: StackControls,
         @inject(IOControls) private ioControls: IOControls) {
         this.settings = Inversify.get(AppSettings);
 
         this.BuildStickyProjection();
-    }
-
-    async AsyncConstructor(): Promise<void> {
-        this.editDirectionControls = new EditDirectionControls(this.uiRenderer);
     }
 
     get EditDirectionControls(): EditDirectionControls {
@@ -110,4 +104,4 @@ export class OverlayService implements AsyncConstructable {
     }
 }
 
-Inversify.bind(OverlayService).toSelf().inSingletonScope().onActivation(AsyncConstructorActivator);
+Inversify.bind(OverlayService).toSelf().inSingletonScope();

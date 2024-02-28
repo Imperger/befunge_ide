@@ -67,7 +67,7 @@ export class UIObservableTextList implements UITextList {
             },
             zIndex,
             text,
-            lineHeight * this.Scale,
+            lineHeight,
             parent);
 
         this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
@@ -296,7 +296,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     get MinScroll(): number {
-        return this.Position.y - this.label.Dimension.height + this.Dimension.height;
+        return this.Position.y - this.label.Dimension.height / this.label.Scale + this.dimension.height;
     }
 
     get MaxScroll(): number {

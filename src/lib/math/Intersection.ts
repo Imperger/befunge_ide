@@ -24,6 +24,11 @@ export interface Rectangle {
     height: number;
 }
 
+export interface Range {
+    min: number;
+    max: number;
+}
+
 export class Intersection {
     static PlaneLine(plane: Plane, line: Line): Vec3 {
         const d0 = vec3.dot([plane.a, plane.b, plane.c], line.a) + plane.d;
@@ -49,5 +54,9 @@ export class Intersection {
 
         return a.x < bTopRight.x && aTopRight.x > b.x &&
             a.y < bTopRight.y && aTopRight.y > b.y;
+    }
+
+    static RangeRange(a: Range, b: Range): boolean {
+        return a.min < b.max && a.max > b.min;
     }
 }

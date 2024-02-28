@@ -47,7 +47,6 @@ export interface UICreator {
         parent: UIObservablePositioningGroup | null): UILabel;
 
     CreateAlert(position: Vec2,
-        dimension: Dimension,
         zIndex: number,
         icon: UIAlertIconStyle,
         text: UIAlertText,
@@ -111,13 +110,12 @@ export class UIRenderer implements UICreator {
     }
 
     CreateAlert(position: Vec2,
-        dimension: Dimension,
         zIndex: number,
         icon: UIAlertIconStyle,
         text: UIAlertText,
         style: UIAlertStyle,
         parent: UIObservablePositioningGroup | null = null): UIAlert {
-        return this.alertRenderer.Create(position, dimension, zIndex, icon, text, style, parent);
+        return this.alertRenderer.Create(position, zIndex, icon, text, style, parent);
     }
 
     CreateTextList(position: Vec2,
