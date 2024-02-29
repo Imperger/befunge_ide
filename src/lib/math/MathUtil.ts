@@ -48,4 +48,12 @@ export class MathUtil {
 
         return { min, max };
     }
+
+    static Distance(p0: Vec2, p1: Vec2): number {
+        return Math.sqrt(MathUtil.SqrDistance(p0, p1));
+    }
+
+    public static SqrDistance(p0: Vec2, p1: Vec2): number {
+        return Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2);
+    }
 }

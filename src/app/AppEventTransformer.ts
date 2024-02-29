@@ -2,6 +2,7 @@ import { vec2 } from "gl-matrix";
 import { injectable } from "inversify";
 
 import { MouseButtons } from "@/lib/DOM/MouseButtons";
+import { MathUtil } from "@/lib/math/MathUtil";
 import { Vec2 } from "@/lib/Primitives";
 
 class OnSelectStrategy {
@@ -45,9 +46,125 @@ export interface MouseSelectEvent {
     offsetY: number;
 }
 
+interface TouchTrace {
+    id: number;
+    x: number;
+    y: number;
+}
+
+type MoveCameraFn = (e: MouseMovementEvent) => void;
+
+class TouchPan {
+    private touchPrev!: TouchTrace;
+
+    constructor(private moveCamera: MoveCameraFn) { }
+
+    OnTouchStart(e: TouchEvent): void {
+        const touch = e.targetTouches[0];
+        this.touchPrev = {
+            id: touch.identifier,
+            x: touch.pageX,
+            y: touch.pageY
+        };
+    }
+
+    OnTouchMove(e: TouchEvent): void {
+        if (e.targetTouches.item(0)?.identifier !== this.touchPrev.id) {
+            return;
+        }
+
+        const touch = e.targetTouches[0];
+
+        this.moveCamera({
+            movementX: (touch.pageX - this.touchPrev.x) * window.devicePixelRatio,
+            movementY: (touch.pageY - this.touchPrev.y) * window.devicePixelRatio
+        });
+
+        this.touchPrev.x = touch.pageX;
+        this.touchPrev.y = touch.pageY;
+    }
+}
+
+type ZoomStartFn = () => void;
+
+type ZoomProgressFn = (zoom: number) => void;
+
+export class TouchZoom {
+    private readonly prev: TouchTrace[] = [
+        { id: -1, x: 0, y: 0 },
+        { id: -1, x: 0, y: 0 }
+    ];
+
+    constructor(
+        private zoomStart: ZoomStartFn,
+        private zoomProgress: ZoomProgressFn
+    ) { }
+
+    public OnTouchStart(e: TouchEvent): void {
+        if (e.targetTouches.length !== 2) {
+            return;
+        }
+
+        this.zoomStart();
+
+        this.UpdateTrace(e);
+    }
+
+    public OnTouchEnd(e: TouchEvent): void {
+        [...e.targetTouches].forEach(touch => {
+            const prevTouch = this.prev.find(x => x.id === touch.identifier);
+
+            if (prevTouch) {
+                prevTouch.id = -1;
+            }
+        });
+    }
+
+    public OnTouchMove(e: TouchEvent): void {
+        if (
+            e.targetTouches.length !== 2 ||
+            !this.prev.every(trace => trace.id !== -1)
+        ) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const [p0, p1] = (
+            e.targetTouches[0].identifier === this.prev[0].id
+                ? [e.targetTouches[0], e.targetTouches[1]]
+                : [e.targetTouches[1], e.targetTouches[0]]
+        ).map(touch => ({ x: touch.pageX, y: touch.pageY }));
+
+        const dist0 = MathUtil.Distance(this.prev[0], this.prev[1]);
+        const dist1 = MathUtil.Distance(p0, p1);
+
+        this.zoomProgress(dist0 / dist1);
+    }
+
+    private UpdateTrace(e: TouchEvent): void {
+        for (let n = 0; n < e.targetTouches.length; ++n) {
+            this.prev[n].id = e.targetTouches[n].identifier;
+            this.prev[n].x = e.targetTouches[n].pageX;
+            this.prev[n].y = e.targetTouches[n].pageY;
+        }
+    }
+}
+
 @injectable()
 export abstract class AppEventTransformer {
     private readonly selectStrategy = new OnSelectStrategy(250, 3);
+
+    private touchPan: TouchPan;
+    private touchZoom: TouchZoom;
+
+    constructor() {
+        this.touchPan = new TouchPan((e: MouseMovementEvent) => this.OnCameraMove(e));
+        this.touchZoom = new TouchZoom(
+            () => this.OnTouchZoomStart(),
+            (zoom: number) => this.OnTouchZoom(zoom)
+        );
+    }
 
     OnMouseMove(e: MouseEvent): void {
         if (e.buttons & MouseButtons.Left) {
@@ -74,12 +191,30 @@ export abstract class AppEventTransformer {
     }
 
     OnWheel(e: WheelEvent): void {
-        this.OnZoom(e);
+        this.OnStepZoom(e);
+    }
+
+    OnTouchStart(e: TouchEvent): void {
+        this.touchPan.OnTouchStart(e);
+        this.touchZoom.OnTouchStart(e);
+    }
+
+    OnTouchMove(e: TouchEvent): void {
+        this.touchPan.OnTouchMove(e);
+        this.touchZoom.OnTouchMove(e);
+    }
+
+    OnTouchEnd(e: TouchEvent): void {
+        this.touchZoom.OnTouchEnd(e);
     }
 
     abstract OnCameraMove(e: MouseMovementEvent): void;
 
     abstract OnSelect(e: MouseSelectEvent): void;
 
-    abstract OnZoom(e: WheelEvent): void;
+    abstract OnStepZoom(e: WheelEvent): void;
+
+    abstract OnTouchZoomStart(): void;
+
+    abstract OnTouchZoom(zoom: number): void;
 }

@@ -11,7 +11,7 @@ import Webgl2Canvas from '@/lib/VueComponents/WebglCanvas.vue';
 
 let service!: AppService;
 
-const props = defineProps({ encoded: { required: false, type: String, default: '' } })
+const props = defineProps({ encoded: { required: false, type: String, default: '' } });
 
 onBeforeUnmount(() => service.Dispose());
 
@@ -52,6 +52,18 @@ function OnKeyDown(e: KeyboardEvent): void {
   service?.OnKeyDown(e);
 }
 
+function OnTouchMove(e: TouchEvent): void {
+  service?.OnTouchMove(e);
+}
+
+function OnTouchStart(e: TouchEvent): void {
+  service?.OnTouchStart(e);
+}
+
+function OnTouchEnd(e: TouchEvent): void {
+  service?.OnTouchEnd(e);
+}
+
 function OnSharedCode() {
   if (props.encoded.length > 0) {
     try {
@@ -69,5 +81,6 @@ function OnSharedCode() {
 
 <template>
   <webgl2-canvas autofocus tabindex="0" @contextReady="OnContextReady" @resize="OnResize" @mousemove="OnMouseMove"
-    @mousedown="OnMouseDown" @mouseup="OnMouseUp" @wheel.passive="OnWheel" @keydown="OnKeyDown" />
+    @mousedown="OnMouseDown" @mouseup="OnMouseUp" @wheel.passive="OnWheel" @keydown="OnKeyDown" @touchmove="OnTouchMove"
+    @touchstart="OnTouchStart" @touchend="OnTouchEnd" />
 </template>

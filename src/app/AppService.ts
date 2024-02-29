@@ -24,6 +24,7 @@ import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnal
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
 import { EffectRunner, RegistrationCollisionResolver } from '@/lib/effect/EffectRunner';
 import { Intersection } from '@/lib/math/Intersection';
+import { MathUtil } from '@/lib/math/MathUtil';
 import { Transformation } from '@/lib/math/Transformation';
 import { ObserverDetacher } from '@/lib/Observable';
 import { Vec2 } from '@/lib/Primitives';
@@ -44,6 +45,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private projection!: mat4;
     private camera: mat4;
+
+    private touchZoomStartZ = 0;
 
     private inFocusOnVanishReleaser: ObserverDetacher;
     private inFocus: InputReceiver;
@@ -205,7 +208,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.debugRenderer.UploadAttributes(this.debugPoints);
     }
 
-    OnZoom(e: WheelEvent): void {
+    OnStepZoom(e: WheelEvent): void {
         const smoothCameraZoomEffect = new SmoothCameraZoom(
             e.deltaY < 0 ? 'in' : 'out',
             this.camera,
@@ -214,6 +217,21 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.effectRunner.Register(
             smoothCameraZoomEffect,
             { id: 'camera_zoom', rule: RegistrationCollisionResolver.Replace });
+    }
+
+    OnTouchZoomStart(): void {
+        this.touchZoomStartZ = this.camera[14];
+    }
+
+    OnTouchZoom(zoom: number): void {
+        mat4.translate(
+            this.camera,
+            mat4.create(),
+            [this.camera[12], this.camera[13], MathUtil.Clamp(this.touchZoomStartZ * zoom, this.settings.ZCameraBoundary.min, this.settings.ZCameraBoundary.max)]);
+
+        this.codeEditor.ViewProjection = this.ViewProjection;
+        this.debugRenderer.ViewProjection = this.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
     OnKeyDown(e: KeyboardEvent): void {
@@ -291,7 +309,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
                 this.overlay.Snackbar.ShowError(e.message)
             }
-            
+
             return;
         }
 
