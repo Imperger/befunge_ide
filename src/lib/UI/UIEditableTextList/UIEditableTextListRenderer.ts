@@ -1,4 +1,4 @@
-import { inject, interfaces } from "inversify";
+import { inject, injectable, interfaces } from "inversify";
 
 import { Dimension } from "../UIComponent";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
@@ -20,6 +20,7 @@ import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 
 enum UIEditableTextListCursorComponent { X, Y, Z };
 
+@injectable()
 export class UIEditableTextListRenderer extends PrimitivesRenderer {
     private uiRenderer!: UICreator;
 
