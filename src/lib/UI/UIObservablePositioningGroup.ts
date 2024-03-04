@@ -22,6 +22,9 @@ export class UIObservablePositioningGroup implements UIComponent {
 
     private childs: UIComponent[] = [];
 
+    private updateNeeded = false;
+
+    private dimension: Dimension = { width: 0, height: 0 };
 
     constructor(
         private position: Vec2,
@@ -34,6 +37,20 @@ export class UIObservablePositioningGroup implements UIComponent {
 
     AppendChild(component: UIComponent): void {
         this.childs.push(component);
+
+        if (!this.updateNeeded) {
+            queueMicrotask(() => this.UpdateChilds());
+        }
+
+        this.updateNeeded = true;
+    }
+
+    private UpdateChilds(): void {
+        this.CalculateDimension();
+
+        this.observable.Notify(this);
+
+        this.updateNeeded = false;
     }
 
     RemoveChild(component: UIComponent): void {
@@ -78,6 +95,10 @@ export class UIObservablePositioningGroup implements UIComponent {
     }
 
     get Dimension(): Dimension {
+        return this.dimension;
+    }
+
+    CalculateDimension(): void {
         const min = { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY };
         const max = { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY };
 
@@ -92,7 +113,8 @@ export class UIObservablePositioningGroup implements UIComponent {
             UIObservablePositioningGroup.MaintainExtremum(rightTop, { min, max });
         }
 
-        return { width: max.x - min.x, height: max.y - min.y };
+        this.dimension.width = max.x - min.x;
+        this.dimension.height = max.y - min.y;
     }
 
     Destroy(): void {

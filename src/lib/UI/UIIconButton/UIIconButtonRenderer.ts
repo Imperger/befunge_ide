@@ -225,7 +225,9 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
 
         this.iconButtons.push(button);
 
-        this.UpdateAttributes(button);
+        if (parent === null) {
+            this.UpdateAttributes(button);
+        }
 
         return button;
     }
