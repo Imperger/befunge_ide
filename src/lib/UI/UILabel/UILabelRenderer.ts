@@ -204,20 +204,19 @@ export class UILabelRenderer extends PrimitivesRenderer {
             return;
         }
 
-        const minBaseOffset = UILabelRenderer.MinBaseOffset(lines[0].text, component, fontGlyphCollection);
-        const startBaseOffset = this.BaseStartOffset(component);
-
-        const yStart = component.AbsolutePosition.y + startBaseOffset - minBaseOffset;
+        const minBaseOffset = UILabelRenderer.MinBaseOffset(lines[lines.length - 1].text, component, fontGlyphCollection);
 
         let { x, y } = {
             x: component.AbsolutePosition.x,
-            y: yStart
+            y: component.AbsolutePosition.y - minBaseOffset
         };
 
-        for (const line of lines) {
+        for (let n = lines.length - 1; n >= 0; --n) {
+            const line = lines[n];
+
             if (line.text.length === 0) {
                 x = component.AbsolutePosition.x;
-                y -= component.LineHeight * component.Scale;
+                y += component.LineHeight * component.Scale;
                 continue;
             }
 
@@ -257,10 +256,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
             }
 
             x = component.AbsolutePosition.x;
-            y -= component.LineHeight * component.Scale;
+            y += component.LineHeight * component.Scale;
         }
 
-        component.UpdateTextDimension({ width, height: yStart - y });
+        component.UpdateTextDimension({ width, height: y - component.AbsolutePosition.y });
     }
 
     private static MinBaseOffset(line: string, component: UIObservableLabel, fontGlyphCollection: FontGlyphCollection): number {
@@ -303,12 +302,6 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
         return lines;
     }
-
-    private BaseStartOffset(component: UIObservableLabel): number {
-        return [...component.Text.trimEnd()]
-            .reduce((lineBreaks, symbol) => lineBreaks + (symbol === '\n' ? 1 : 0), 0) * component.LineHeight * component.Scale;
-    }
-
 }
 
 Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetIsDefault();
