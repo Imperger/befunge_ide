@@ -39,7 +39,7 @@ export class FileControls {
             { x: margin, y: margin + btnSideLength },
             { vertical: VerticalAnchor.Top });
 
-        this.openButton = this.uiRenderer.CreateButton({ x: 0, y: 0 },
+        this.openButton = this.uiRenderer.CreateIconButton({ x: 0, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -48,7 +48,7 @@ export class FileControls {
             this.group
         );
 
-        this.saveButton = this.uiRenderer.CreateButton({ x: btnSideLength + margin, y: 0 },
+        this.saveButton = this.uiRenderer.CreateIconButton({ x: btnSideLength + margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -58,7 +58,7 @@ export class FileControls {
         );
         this.saveButton.Disable = true;
 
-        this.shareButton = this.uiRenderer.CreateButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
+        this.shareButton = this.uiRenderer.CreateIconButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -68,7 +68,7 @@ export class FileControls {
         );
         this.shareButton.Disable = true;
 
-        this.settingsButton = this.uiRenderer.CreateButton({ x: 3 * btnSideLength + 3 * margin, y: 0 },
+        this.settingsButton = this.uiRenderer.CreateIconButton({ x: 3 * btnSideLength + 3 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },

@@ -66,7 +66,7 @@ export class DebugControls {
         const margin = 10;
         const buttonSideLength = 50;
 
-        this.executeButton = this.uiRenderer.CreateButton(
+        this.executeButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: 0 },
             { width: buttonSideLength, height: buttonSideLength },
             1,
@@ -76,7 +76,7 @@ export class DebugControls {
             this.group
         );
 
-        this.debugButton = this.uiRenderer.CreateButton(
+        this.debugButton = this.uiRenderer.CreateIconButton(
             { x: buttonSideLength + margin, y: 0 },
             { width: buttonSideLength, height: buttonSideLength },
             1,
@@ -86,7 +86,7 @@ export class DebugControls {
             this.group
         );
 
-        this.breakpointMenuButton = this.uiRenderer.CreateButton(
+        this.breakpointMenuButton = this.uiRenderer.CreateIconButton(
             { x: 2 * buttonSideLength + 2 * margin, y: 0 },
             { width: buttonSideLength, height: buttonSideLength },
             1,
@@ -96,7 +96,7 @@ export class DebugControls {
             this.group
         );
 
-        this.heatmapButton = this.uiRenderer.CreateButton(
+        this.heatmapButton = this.uiRenderer.CreateIconButton(
             { x: 3 * buttonSideLength + 3 * margin, y: 0 },
             { width: buttonSideLength, height: buttonSideLength },
             1,
@@ -137,7 +137,7 @@ export class DebugControls {
                     },
                     { vertical: VerticalAnchor.Top });
 
-                const stopDebuggingButton = this.uiRenderer.CreateButton(
+                const stopDebuggingButton = this.uiRenderer.CreateIconButton(
                     { x: 0, y: 0 },
                     { width: sideLength, height: sideLength },
                     1,
@@ -204,7 +204,7 @@ export class DebugControls {
             },
             { vertical: VerticalAnchor.Top });
 
-        const breakpointAnyDirectionButton = this.uiRenderer.CreateButton(
+        const breakpointAnyDirectionButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: 0 },
             { width: sideLength, height: sideLength },
             1,
@@ -213,7 +213,7 @@ export class DebugControls {
             _sender => this.NotifyWithPCLocationCondition({}),
             this.breakpointMenuGroup);
 
-        const breakpointLeftDirectionButton = this.uiRenderer.CreateButton(
+        const breakpointLeftDirectionButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: margin + sideLength },
             { width: sideLength, height: sideLength },
             1,
@@ -222,7 +222,7 @@ export class DebugControls {
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Left }),
             this.breakpointMenuGroup);
 
-        const breakpointUpDirectionButton = this.uiRenderer.CreateButton(
+        const breakpointUpDirectionButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: 2 * margin + 2 * sideLength },
             { width: sideLength, height: sideLength },
             1,
@@ -231,7 +231,7 @@ export class DebugControls {
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Up }),
             this.breakpointMenuGroup);
 
-        const breakpointRightDirectionButton = this.uiRenderer.CreateButton(
+        const breakpointRightDirectionButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: 3 * margin + 3 * sideLength },
             { width: sideLength, height: sideLength },
             1,
@@ -240,7 +240,7 @@ export class DebugControls {
             _sender => this.NotifyWithPCLocationCondition({ Direction: PCDirection.Right }),
             this.breakpointMenuGroup);
 
-        const breakpointDownDirectionButton = this.uiRenderer.CreateButton(
+        const breakpointDownDirectionButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: 4 * margin + 4 * sideLength },
             { width: sideLength, height: sideLength },
             1,
@@ -250,7 +250,7 @@ export class DebugControls {
             this.breakpointMenuGroup);
 
         if (this.DeactivateButton) {
-            const breakpointDeactivateButton = this.uiRenderer.CreateButton(
+            const breakpointDeactivateButton = this.uiRenderer.CreateIconButton(
                 { x: 0, y: 5 * margin + 5 * sideLength },
                 { width: sideLength, height: sideLength },
                 1,

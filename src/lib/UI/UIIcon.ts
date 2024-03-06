@@ -6,12 +6,12 @@ import { TextureAtlas, TextureAtlasBuilder, UV } from "../renderer/TextureAtlas"
 import { Inversify } from "@/Inversify";
 
 export enum UIIcon {
-    Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger,
+    Empty, Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger,
     Play, PlayDebug,
     ExclamationCircle, ExclamationTriangle, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
     Delete, Stop, Heatmap, Undo, Redo, Settings, Select, Copy, Cut, Paste, EditDelete, Share,
-    Input, Output
+    Input, Output, Keyboard, Shift, Backspace
 };
 
 export interface UVExtra extends UV {
@@ -96,6 +96,11 @@ export class UIIconAtlas implements AsyncConstructable {
         const builder = new TextureAtlasBuilder<UIIcon>();
 
         const icons = [
+            {
+                id: UIIcon.Empty,
+                filename: 'ui_icons/empty.svg',
+                dimension: { width: 128, height: 128 }
+            },
             {
                 id: UIIcon.ArrowRight,
                 filename: 'ui_icons/arrow_right.svg',
@@ -229,6 +234,21 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Output,
                 filename: 'ui_icons/output.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Keyboard,
+                filename: 'ui_icons/keyboard.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Shift,
+                filename: 'ui_icons/shift.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Backspace,
+                filename: 'ui_icons/backspace.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];

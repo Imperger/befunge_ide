@@ -54,26 +54,36 @@ export class EditableTarget {
         }
     }
 
-    CellInput(symbol: string): void {
-        this.IsSingleCell ? this.CellInputSingle(symbol) : this.CellInputRegion(symbol);
+    CellInput(keyCode: string): void {
+        this.IsSingleCell ? this.CellInputSingle(keyCode) : this.CellInputRegion(keyCode);
     }
 
-    private CellInputSingle(symbol: string): void {
-        const command = this.editCellCommandFactory(
-            this.editableRegion.lt,
-            String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt)),
-            symbol,
-            this.editionDirection,
-            this.cellMoveNextPostActionFactory());
+    private CellInputSingle(keyCode: string): void {
+        const oldValue = String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt));
+
+        const command = keyCode === 'Backspace' ?
+            this.editCellCommandFactory(
+                this.editableRegion.lt,
+                oldValue,
+                ' ',
+                this.ReversedDirection(this.editionDirection),
+                this.cellMoveNextPostActionFactory()) :
+            this.editCellCommandFactory(
+                this.editableRegion.lt,
+                oldValue,
+                keyCode,
+                this.editionDirection,
+                this.cellMoveNextPostActionFactory());
 
         command.Apply();
 
-        if (symbol !== String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt))) {
+        if (!(keyCode === String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt)) ||
+            keyCode === 'Backspace' && oldValue === ' ')) {
             this.history.Push(command);
         }
     }
 
-    private CellInputRegion(symbol: string): void {
+    private CellInputRegion(keyCode: string): void {
         const dimension = this.RegionDimension;
 
         const oldValue = Array2D.WithProvider(dimension.width, dimension.height, () => 0);
@@ -83,17 +93,38 @@ export class EditableTarget {
             }
         }
 
-        const command = this.editCellsRegionCommandFactory(
-            this.editableRegion,
-            oldValue,
-            Array2D.WithProvider(dimension.width, dimension.height, () => symbol.charCodeAt(0)),
-            this.editionDirection,
-            this.regionMoveNextPostActionFactory());
+        const command = keyCode === 'Backspace' ?
+            this.editCellsRegionCommandFactory(
+                this.editableRegion,
+                oldValue,
+                Array2D.WithProvider(dimension.width, dimension.height, () => ' '.charCodeAt(0)),
+                this.ReversedDirection(this.editionDirection),
+                this.regionMoveNextPostActionFactory()) :
+            this.editCellsRegionCommandFactory(
+                this.editableRegion,
+                oldValue,
+                Array2D.WithProvider(dimension.width, dimension.height, () => keyCode.charCodeAt(0)),
+                this.editionDirection,
+                this.regionMoveNextPostActionFactory());
 
         command.Apply();
 
-        if (!oldValue.Every(x => String.fromCharCode(x) === symbol)) {
+        if (!(keyCode === 'Backspace' && oldValue.Every(x => String.fromCharCode(x) === ' ') ||
+            oldValue.Every(x => String.fromCharCode(x) === keyCode))) {
             this.history.Push(command);
+        }
+    }
+
+    private ReversedDirection(direction: EditionDirection): EditionDirection {
+        switch (direction) {
+            case EditionDirection.Left:
+                return EditionDirection.Right;
+            case EditionDirection.Right:
+                return EditionDirection.Left;
+            case EditionDirection.Up:
+                return EditionDirection.Down;
+            case EditionDirection.Down:
+                return EditionDirection.Up
         }
     }
 

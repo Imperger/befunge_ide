@@ -32,6 +32,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     private parentDetacher: ObserverDetacher | null = null;
 
+    private updateNeeded = false;
+
     constructor(
         private position: Vec2,
         private text: string,
@@ -45,7 +47,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
         this.AdjustPoolMemory();
 
-        this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
+        this.parentDetacher = parent?.Observable.Attach(() => this.DeferredNotify()) ?? null;
     }
 
     StyleRange(begin: number, end: number, style: SymbolStyle): void {
@@ -53,7 +55,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
             this.symbolsStyle[n] = { ...style };
         }
 
-        this.observable.Notify(this);
+        this.DeferredNotify();
     }
 
     ReplaceOffset(old: number, offset: number): void {
@@ -71,7 +73,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
     set Position(position: Vec2) {
         this.position = position;
 
-        this.observable.Notify(this);
+        this.DeferredNotify();
     }
 
     get AbsolutePosition(): Vec2 {
@@ -94,7 +96,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
         this.ResizeSymbolStyles();
         this.AdjustPoolMemory();
 
-        this.observable.Notify(this);
+        this.DeferredNotify();
     }
 
     get LineHeight(): number {
@@ -104,7 +106,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
     set LineHeight(lineHeight: number) {
         this.lineHeight = lineHeight;
 
-        this.observable.Notify(this);
+        this.DeferredNotify();
     }
 
     get ZIndex(): number {
@@ -114,7 +116,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
     set ZIndex(zIndex: number) {
         this.zIndex = zIndex;
 
-        this.observable.Notify(this);
+        this.DeferredNotify();
     }
 
     get Scale(): number {
@@ -124,7 +126,7 @@ export class UIObservableLabel implements UIComponent, UILabel {
     set Scale(scale: number) {
         this.scale = scale;
 
-        this.observable.Notify(this);
+        this.DeferredNotify();
     }
 
     get Dimension(): Dimension {
@@ -164,6 +166,18 @@ export class UIObservableLabel implements UIComponent, UILabel {
         if (this.parentDetacher !== null) {
             this.parentDetacher();
         }
+    }
+
+    private DeferredNotify(): void {
+        if (!this.updateNeeded) {
+            this.updateNeeded = true;
+            queueMicrotask(() => this.Notify());
+        }
+    }
+
+    private Notify(): void {
+        this.observable.Notify(this);
+        this.updateNeeded = false;
     }
 
     private Uninitialize(): void {

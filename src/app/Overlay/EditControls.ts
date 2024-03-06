@@ -42,7 +42,7 @@ export class EditControls {
             { vertical: VerticalAnchor.Top }
         );
 
-        this.selectButton = this.uiRenderer.CreateButton({ x: 0, y: 0 },
+        this.selectButton = this.uiRenderer.CreateIconButton({ x: 0, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -51,7 +51,7 @@ export class EditControls {
             this.group
         );
 
-        this.cutButton = this.uiRenderer.CreateButton({ x: margin + btnSideLength, y: 0 },
+        this.cutButton = this.uiRenderer.CreateIconButton({ x: margin + btnSideLength, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -60,7 +60,7 @@ export class EditControls {
             this.group
         );
 
-        this.copyButton = this.uiRenderer.CreateButton({ x: 2 * margin + 2 * btnSideLength, y: 0 },
+        this.copyButton = this.uiRenderer.CreateIconButton({ x: 2 * margin + 2 * btnSideLength, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -69,7 +69,7 @@ export class EditControls {
             this.group
         );
 
-        this.pasteButton = this.uiRenderer.CreateButton({ x: 3 * margin + 3 * btnSideLength, y: 0 },
+        this.pasteButton = this.uiRenderer.CreateIconButton({ x: 3 * margin + 3 * btnSideLength, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -78,7 +78,7 @@ export class EditControls {
             this.group
         );
 
-        this.deleteButton = this.uiRenderer.CreateButton({ x: 4 * margin + 4 * btnSideLength, y: 0 },
+        this.deleteButton = this.uiRenderer.CreateIconButton({ x: 4 * margin + 4 * btnSideLength, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },

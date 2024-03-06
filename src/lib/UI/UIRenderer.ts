@@ -12,10 +12,13 @@ import { UIEditableTextList } from "./UIEditableTextList/UIEditableTextList";
 import { UIEditableTextListRenderer, UIEditableTextListRendererFactory } from "./UIEditableTextList/UIEditableTextListRenderer";
 import { UIButtonStyle, UIIconButton, UIIconStyle } from "./UIIconButton/UIIconButton";
 import { UIIconButtonRenderer } from "./UIIconButton/UIIconButtonRenderer";
-import { TouchCallback } from "./UIIconButton/UIObservableIconButton";
+import { TouchCallback as IconButtonTouchCallback } from "./UIIconButton/UIObservableIconButton";
 import { UILabel } from "./UILabel/UILabel";
 import { UILabelRenderer } from "./UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "./UIObservablePositioningGroup";
+import { TouchCallback as TextButtonTouchCallback } from "./UITextButton/UIObservableTextButton";
+import { UIObservableTextButton } from "./UITextButton/UIObservableTextButton";
+import { UICaptionStyle, UITextButton } from "./UITextButton/UITextButton";
 import { UITextList } from "./UITextList/UITextList";
 import { UITextListRenderer, UITextListRendererFactory } from "./UITextList/UITextListRenderer";
 
@@ -24,21 +27,21 @@ import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
 
 export interface UICreator {
-    CreateButton(position: Vec2,
+    CreateIconButton(position: Vec2,
         dimension: Dimension,
         zIndex: number,
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
-        touchCallback: TouchCallback,
+        touchCallback: IconButtonTouchCallback,
         parent: UIObservablePositioningGroup | null): UIIconButton;
 
-    CreateButton(position: Vec2,
+    CreateTextButton(position: Vec2,
         dimension: Dimension,
         zIndex: number,
         style: UIButtonStyle,
-        iconStyle: UIIconStyle,
-        touchCallback: TouchCallback,
-        parent: UIObservablePositioningGroup | null): UIIconButton;
+        caption: UICaptionStyle,
+        touchCallback: TextButtonTouchCallback,
+        parent: UIObservablePositioningGroup | null): UITextButton;
 
     CreateLabel(position: Vec2,
         zIndex: number,
@@ -91,14 +94,24 @@ export class UIRenderer implements UICreator {
         this.alertRenderer.UIRenderer = this;
     }
 
-    CreateButton(position: Vec2,
+    CreateIconButton(position: Vec2,
         dimension: Dimension,
         zIndex: number,
         style: UIButtonStyle,
         iconStyle: UIIconStyle,
-        touchCallback: TouchCallback,
+        touchCallback: IconButtonTouchCallback,
         parent: UIObservablePositioningGroup | null = null): UIIconButton {
         return this.iconButtonRenderer.Create(position, dimension, zIndex, style, iconStyle, touchCallback, parent);
+    }
+
+    CreateTextButton(position: Vec2,
+        dimension: Dimension,
+        zIndex: number,
+        style: UIButtonStyle,
+        caption: UICaptionStyle,
+        touchCallback: TextButtonTouchCallback,
+        parent: UIObservablePositioningGroup | null = null): UITextButton {
+        return new UIObservableTextButton(position, dimension, zIndex, style, caption, touchCallback, this, parent);
     }
 
     CreateLabel(position: Vec2,

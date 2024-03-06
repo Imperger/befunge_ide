@@ -29,7 +29,7 @@ import { Transformation } from '@/lib/math/Transformation';
 import { ObserverDetacher } from '@/lib/Observable';
 import { Vec2 } from '@/lib/Primitives';
 import { Camera } from '@/lib/renderer/Camera';
-import { InputReceiver, IsInputReceiver } from '@/lib/UI/InputReceiver';
+import { InputReceiver, IsInputReceiver, MyInputEvent } from '@/lib/UI/InputReceiver';
 import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 import './History/Commands';
 import router from '@/router';
@@ -151,6 +151,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.overlay.DebugControls.Heatmap.Attach(feedback => this.ControlsResponseToHeatmapActivation(feedback));
 
         this.history.UpdateObservable.Attach(() => this.OnSourceCodeChanged());
+
+        this.overlay.VirtualKeyboardControls.Observable.Attach((key: string) => this.inFocus.OnInput({ key }));
+
         this.Start();
     }
 
@@ -234,7 +237,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
     }
 
-    OnKeyDown(e: KeyboardEvent): void {
+    OnKeyDown(e: MyInputEvent): void {
         this.inFocus.OnInput(e);
     }
 

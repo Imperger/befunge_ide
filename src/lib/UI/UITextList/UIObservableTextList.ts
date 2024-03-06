@@ -72,7 +72,7 @@ export class UIObservableTextList implements UITextList {
 
         this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
 
-        this.UpdateScrollControlsPresence();
+        this.ScheduleUpdateScrollControlsPresence();
     }
 
     get Position(): Vec2 {
@@ -96,7 +96,7 @@ export class UIObservableTextList implements UITextList {
         this.dimension = dimension;
 
         this.observable.Notify(this);
-        this.UpdateScrollControlsPresence();
+        this.ScheduleUpdateScrollControlsPresence();
     }
 
     get AbsolutePosition(): Vec2 {
@@ -124,7 +124,7 @@ export class UIObservableTextList implements UITextList {
         }
 
         this.observable.Notify(this);
-        this.UpdateScrollControlsPresence();
+        this.ScheduleUpdateScrollControlsPresence();
     }
 
     get ZIndex(): number {
@@ -147,7 +147,7 @@ export class UIObservableTextList implements UITextList {
         this.label.LineHeight = lineHeight;
 
         this.observable.Notify(this);
-        this.UpdateScrollControlsPresence();
+        this.ScheduleUpdateScrollControlsPresence();
     }
 
     get BorderWidth(): number {
@@ -167,7 +167,7 @@ export class UIObservableTextList implements UITextList {
     set Visible(value: boolean) {
         this.visible = value;
 
-        this.UpdateScrollControlsPresence();
+        this.ScheduleUpdateScrollControlsPresence();
 
         this.observable.Notify(this);
     }
@@ -183,7 +183,7 @@ export class UIObservableTextList implements UITextList {
             this.label.Scale = scale;
         }
 
-        this.UpdateScrollControlsPresence();
+        this.ScheduleUpdateScrollControlsPresence();
 
         if (this.scrollControls !== null) {
             this.scrollControls.scrollTopButton.Scale = scale;
@@ -217,6 +217,10 @@ export class UIObservableTextList implements UITextList {
         }
 
         this.deleter();
+    }
+
+    private ScheduleUpdateScrollControlsPresence(): void {
+        queueMicrotask(() => this.UpdateScrollControlsPresence());
     }
 
     private UpdateScrollControlsPresence(): void {
@@ -266,7 +270,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     private CreateTopScrollButton(): UIIconButton {
-        return this.uiRenderer.CreateButton(
+        return this.uiRenderer.CreateIconButton(
             {
                 x: this.ScrollButtonX,
                 y: this.ScrollTopButtonY
@@ -281,7 +285,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     private CreateBottomScrollButton(): UIIconButton {
-        return this.uiRenderer.CreateButton(
+        return this.uiRenderer.CreateIconButton(
             {
                 x: this.ScrollButtonX,
                 y: this.ScrollBottomButtonY

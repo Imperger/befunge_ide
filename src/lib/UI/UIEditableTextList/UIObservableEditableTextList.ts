@@ -1,3 +1,4 @@
+import { MyInputEvent } from "../InputReceiver";
 import { Dimension } from "../UIComponent";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator } from "../UIRenderer";
@@ -44,7 +45,7 @@ export class UIObservableEditableTextList implements UIEditableTextList {
         return this.onVanish;
     }
 
-    OnInput(e: KeyboardEvent): void {
+    OnInput(e: MyInputEvent): void {
         const keyCode = e.key.charCodeAt(0);
 
         if (e.key === 'Backspace' && this.Text.length > 0) {

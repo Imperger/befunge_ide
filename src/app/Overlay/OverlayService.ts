@@ -13,6 +13,7 @@ import { HistoryControls } from "./HistoryControls";
 import { IOControls } from "./IOControls";
 import { SnackbarControls } from "./SnackbarControls";
 import { StackControls } from "./StackControls";
+import { VirtualKeyboardControls } from "./VirtualKeyboardControls";
 
 import { Inversify } from "@/Inversify";
 import { InputReceiver } from "@/lib/UI/InputReceiver";
@@ -34,6 +35,7 @@ export class OverlayService {
         @inject(EditDirectionControls) private editDirectionControls: EditDirectionControls,
         @inject(DebugControls) private debugControls: DebugControls,
         @inject(StackControls) private stackControls: StackControls,
+        @inject(VirtualKeyboardControls) private virtualKeyboardControls: VirtualKeyboardControls,
         @inject(IOControls) private ioControls: IOControls) {
         this.settings = Inversify.get(AppSettings);
 
@@ -72,6 +74,10 @@ export class OverlayService {
         return this.stackControls;
     }
 
+    get VirtualKeyboardControls(): VirtualKeyboardControls {
+        return this.virtualKeyboardControls;
+    }
+
     Resize(): void {
         this.BuildStickyProjection();
 
@@ -84,6 +90,7 @@ export class OverlayService {
         this.historyControls.Resize();
         this.editControls.Resize();
         this.stackControls.Resize();
+        this.virtualKeyboardControls.Resize();
         this.ioControls.Resize();
     }
 

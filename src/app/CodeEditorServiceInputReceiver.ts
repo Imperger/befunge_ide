@@ -7,7 +7,7 @@ import { OverlayService } from "./Overlay/OverlayService";
 
 import { Inversify } from "@/Inversify";
 import { Observable, ObservableController } from "@/lib/Observable";
-import { InputReceiver } from "@/lib/UI/InputReceiver";
+import { InputReceiver, MyInputEvent } from "@/lib/UI/InputReceiver";
 
 @injectable()
 export class CodeEditorServiceInputReceiver implements InputReceiver {
@@ -18,10 +18,10 @@ export class CodeEditorServiceInputReceiver implements InputReceiver {
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeExecutionService) private codeExecutionService: CodeExecutionService) { }
 
-    OnInput(e: KeyboardEvent): void {
+    OnInput(e: MyInputEvent): void {
         const keyCode = e.key.charCodeAt(0);
 
-        if (e.key.length === 1 && keyCode >= ' '.charCodeAt(0) && keyCode <= '~'.charCodeAt(0)) {
+        if (e.key.length === 1 && keyCode >= ' '.charCodeAt(0) && keyCode <= '~'.charCodeAt(0) || e.key === 'Backspace') {
             if (this.overlay.DebugControls.DebugMode) {
                 this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
             } else if (this.overlay.DebugControls.IsHeatmapShown) {

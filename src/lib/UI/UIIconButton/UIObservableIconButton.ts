@@ -3,8 +3,7 @@ import { vec2 } from "gl-matrix";
 import { UIComponent } from "../UIComponent";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
-import { Dimension, UIButtonStyle, UIIconStyle } from "./UIIconButton";
-import { UIIconButton } from "./UIIconButton";
+import { Dimension, UIButtonStyle, UIIconStyle, UIIconButton } from "./UIIconButton";
 
 import { Observable, ObservableController, ObserverDetacher } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";

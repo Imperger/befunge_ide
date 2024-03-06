@@ -21,6 +21,7 @@ import { Rgb, Vec2 } from "@/lib/Primitives";
 import { Camera } from "@/lib/renderer/Camera";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 import { SelfBind } from "@/lib/SelfBind";
+import { MyInputEvent } from "@/lib/UI/InputReceiver";
 
 export enum EditionDirection { Left, Up, Right, Down };
 
@@ -182,7 +183,7 @@ export class CodeEditorService {
         this.editableCell.SelectRegion(p0, p1);
     }
 
-    CellInput(e: KeyboardEvent): void {
+    CellInput(e: MyInputEvent): void {
         this.editableCell.CellInput(e.key);
     }
 

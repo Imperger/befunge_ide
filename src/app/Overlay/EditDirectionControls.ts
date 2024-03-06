@@ -50,7 +50,7 @@ export class EditDirectionControls {
 
         this.editDirectionControls = {
             group: this.group,
-            left: this.uiRenderer.CreateButton(
+            left: this.uiRenderer.CreateIconButton(
                 { x: 0, y: buttonWidth + buttonMargin },
                 { width: buttonWidth, height: btnHeight },
                 1,
@@ -58,7 +58,7 @@ export class EditDirectionControls {
                 { icon: UIIcon.ArrowLeft, color: EditDirectionControls.CurrentDirectionInactiveIconColor },
                 sender => this.UpdateEditDirection(sender, EditionDirection.Left),
                 this.group),
-            up: this.uiRenderer.CreateButton(
+            up: this.uiRenderer.CreateIconButton(
                 { x: buttonWidth + buttonMargin / 2 - btnHeight / 2, y: buttonWidth + 2 * buttonMargin + btnHeight },
                 { width: btnHeight, height: buttonWidth },
                 1,
@@ -66,7 +66,7 @@ export class EditDirectionControls {
                 { icon: UIIcon.ArrowUp, color: EditDirectionControls.CurrentDirectionInactiveIconColor },
                 sender => this.UpdateEditDirection(sender, EditionDirection.Up),
                 this.group),
-            right: this.uiRenderer.CreateButton(
+            right: this.uiRenderer.CreateIconButton(
                 { x: buttonWidth + buttonMargin, y: buttonWidth + buttonMargin },
                 { width: buttonWidth, height: btnHeight },
                 1,
@@ -74,7 +74,7 @@ export class EditDirectionControls {
                 { icon: UIIcon.ArrowRight, color: EditDirectionControls.CurrentDirrectionActiveIconColor },
                 sender => this.UpdateEditDirection(sender, EditionDirection.Right),
                 this.group),
-            down: this.uiRenderer.CreateButton(
+            down: this.uiRenderer.CreateIconButton(
                 { x: buttonWidth + buttonMargin / 2 - btnHeight / 2, y: 0 },
                 { width: btnHeight, height: buttonWidth },
                 1,

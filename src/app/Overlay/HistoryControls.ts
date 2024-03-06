@@ -38,7 +38,7 @@ export class HistoryControls {
             { x: 6 * margin + 4 * btnSideLength, y: margin + btnSideLength },
             { vertical: VerticalAnchor.Top });
 
-        this.undoButton = this.uiRenderer.CreateButton({ x: 0, y: 0 },
+        this.undoButton = this.uiRenderer.CreateIconButton({ x: 0, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
@@ -48,7 +48,7 @@ export class HistoryControls {
         );
         this.undoButton.Disable = true;
 
-        this.redoButton = this.uiRenderer.CreateButton({ x: btnSideLength + margin, y: 0 },
+        this.redoButton = this.uiRenderer.CreateIconButton({ x: btnSideLength + margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },

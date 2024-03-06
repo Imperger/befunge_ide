@@ -42,7 +42,7 @@ export class IOControls {
         const textListHeight = 100;
 
         this.group = new UIObservablePositioningGroup({ x: 145, y: 10 }, { vertical: VerticalAnchor.Bottom });
-        this.inputButton = this.uiRenderer.CreateButton(
+        this.inputButton = this.uiRenderer.CreateIconButton(
             { x: 0, y: textListHeight + margin / 2 },
             { width: btnSideLength, height: btnSideLength },
             1,
@@ -52,7 +52,7 @@ export class IOControls {
             this.group);
 
 
-        this.outputButton = this.uiRenderer.CreateButton(
+        this.outputButton = this.uiRenderer.CreateIconButton(
             { x: btnSideLength + margin, y: textListHeight + margin / 2 },
             { width: btnSideLength, height: btnSideLength },
             1,
