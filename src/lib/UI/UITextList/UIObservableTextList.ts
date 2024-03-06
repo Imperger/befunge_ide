@@ -203,10 +203,12 @@ export class UIObservableTextList implements UITextList {
     }
 
     ScrollToTop(): void {
-        if (this.visible && this.IsContentOverflow) {
-            this.scroll = 0;
-            this.ScrollAligned(this.MinScroll);
-        }
+        queueMicrotask(() => {
+            if (this.visible && this.IsContentOverflow) {
+                this.scroll = 0;
+                this.ScrollAligned(this.MinScroll);
+            }
+        });
     }
 
     Destroy(): void {
