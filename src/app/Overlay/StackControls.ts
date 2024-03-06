@@ -31,8 +31,9 @@ export class StackControls {
             1,
             '',
             32,
-            this.group
-        );
+            this.group);
+
+        this.stackTextList.Visible = false;
     }
 
     ScrollToTop(): void {
@@ -48,6 +49,14 @@ export class StackControls {
             .reverse()
             .map(x => `${x} (${EscapeString(String.fromCharCode(x))})`)
             .join('\n')
+    }
+
+    get Visible(): boolean {
+        return this.stackTextList.Visible;
+    }
+
+    set Visible(visible: boolean) {
+        this.stackTextList.Visible = visible;
     }
 }
 

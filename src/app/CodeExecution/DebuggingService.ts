@@ -59,14 +59,14 @@ export class DebuggingService {
     }
 
     private RunNext(): void {
-        if (!this.debugMode) {
+        if (!this.DebugMode) {
             this.befungeToolbox.Reset(this.settings.MemoryLimit, this.editorSourceCode.Clone());
             this.befungeToolbox.Interpreter.SetInput(this.overlay.IOControls.Input);
             this.befungeToolbox.Interpreter.AddMemoryWriteInterceptor((ptr: Pointer, value: number) => this.OnMemoryWrite(ptr, value));
 
             this.UploadBreakpointsToDebugger();
 
-            this.debugMode = true;
+            this.DebugMode = true;
             this.overlay.DebugControls.DebugMode = true;
 
             this.overlay.IOControls.Output = '';
@@ -99,7 +99,7 @@ export class DebuggingService {
                 this.overlay.StackControls.Stack = [];
             }
 
-            this.debugMode = false;
+            this.DebugMode = false;
             this.overlay.DebugControls.DebugMode = false;
             this.activeCellBreakpoints = [];
 
@@ -127,7 +127,7 @@ export class DebuggingService {
 
 
         if (debug.IsHalted) {
-            this.debugMode = false;
+            this.DebugMode = false;
             this.overlay.DebugControls.DebugMode = false;
             this.activeCellBreakpoints = [];
 
@@ -144,7 +144,7 @@ export class DebuggingService {
     }
 
     private Interrupt(): void {
-        this.debugMode = false;
+        this.DebugMode = false;
         this.overlay.DebugControls.DebugMode = false;
         this.activeCellBreakpoints = [];
 
@@ -153,6 +153,16 @@ export class DebuggingService {
         this.codeEditor.HideAllTooltips();
 
         this.overlay.StackControls.Stack = [];
+    }
+
+    private get DebugMode(): boolean {
+        return this.debugMode;
+    }
+
+    private set DebugMode(debug: boolean) {
+        this.debugMode = debug;
+
+        this.overlay.StackControls.Visible = debug;
     }
 
     private DebugCodeAction(next: boolean): void {
@@ -186,14 +196,14 @@ export class DebuggingService {
         };
 
         if (existIdx === -1) {
-            const releaser = this.debugMode ? this.SetCellBreakpoint(condition) : null;
+            const releaser = this.DebugMode ? this.SetCellBreakpoint(condition) : null;
             this.cellBreakpoints.push({ ...condition, releaser });
 
             this.codeEditor.Select(condition.Location.x, condition.Location.y, this.inactiveBreakpointColor);
 
             this.overlay.DebugControls.DeactivateButton = true;
         } else {
-            const releaser = this.debugMode ? this.SetCellBreakpoint(condition) : null;
+            const releaser = this.DebugMode ? this.SetCellBreakpoint(condition) : null;
             this.cellBreakpoints[existIdx] = { ...condition, releaser };
         }
     }
