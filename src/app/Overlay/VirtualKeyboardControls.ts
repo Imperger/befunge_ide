@@ -205,27 +205,6 @@ export class VirtualKeyboardControls {
         this.CreateBottomRow();
     }
 
-    private CreateDigitRow(position: Vec2, digits: number[]): void {
-        for (let n = 0; n < digits.length; ++n) {
-            const button = this.uiRenderer.CreateTextButton(
-                {
-                    x: position.x + (this.buttonDimension.width + this.symbolMargin) * n,
-                    y: position.y
-                },
-                {
-                    width: this.buttonDimension.width,
-                    height: this.buttonDimension.height * 0.75
-                },
-                this.zIndex,
-                { fillColor: this.fillColor, outlineColor: this.outlineColor },
-                { text: digits[n].toString(), lineHeight: 16, color: this.buttonContentColor },
-                (sender: UITextButton) => this.observable.Notify(sender.Caption.text),
-                this.keyboardGroup);
-
-            this.buttonDeleter.push(() => button.Destroy());
-        }
-    }
-
     private CreateSymbolRow(position: Vec2, layouts: KeyboardButtonLayout[]): void {
         for (let n = 0; n < layouts.length; ++n) {
             const layout = layouts[n];
