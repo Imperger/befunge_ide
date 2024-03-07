@@ -236,6 +236,8 @@ export class UIRenderer implements UICreator {
             return false;
         }
 
+        intersected[0].Destroy();
+
         return true;
     }
 
