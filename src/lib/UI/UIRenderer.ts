@@ -187,14 +187,11 @@ export class UIRenderer implements UICreator {
     }
 
     Touch(e: MouseSelectEvent): InputReceiver | boolean {
-        const x = e.offsetX;
-        const y = this.gl.canvas.height - e.offsetY;
+        const touchResult = this.TouchAlerts(e.offsetX, e.offsetY) ||
+            this.TouchButtons(e.offsetX, e.offsetY) ||
+            this.TouchLabels(e.offsetX, e.offsetY);
 
-        const touchResult = this.TouchAlerts(x, y) ||
-            this.TouchButtons(x, y) ||
-            this.TouchLabels(x, y);
-
-        return touchResult || (this.TouchEditableTextList(x, y) ?? false);
+        return touchResult || (this.TouchEditableTextList(e.offsetX, e.offsetY) ?? false);
     }
 
     private TouchButtons(x: number, y: number): boolean {

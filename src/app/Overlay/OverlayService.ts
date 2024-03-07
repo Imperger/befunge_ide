@@ -16,6 +16,7 @@ import { StackControls } from "./StackControls";
 import { VirtualKeyboardControls } from "./VirtualKeyboardControls";
 
 import { Inversify } from "@/Inversify";
+import { Intersection } from "@/lib/math/Intersection";
 import { InputReceiver } from "@/lib/UI/InputReceiver";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 
@@ -95,7 +96,19 @@ export class OverlayService {
     }
 
     Touch(e: MouseSelectEvent): InputReceiver | boolean {
-        return this.uiRenderer.Touch(e);
+        const x = e.offsetX;
+        const y = this.gl.canvas.height - e.offsetY;
+
+        const isKeyboardTouched = Intersection.AABBRectanglePoint(
+            {
+                x: this.virtualKeyboardControls.AbsolutePosition.x,
+                y: this.virtualKeyboardControls.AbsolutePosition.y,
+                width: this.virtualKeyboardControls.Dimension.width,
+                height: this.virtualKeyboardControls.Dimension.height
+            },
+            { x, y });
+
+        return this.uiRenderer.Touch({ offsetX: x, offsetY: y }) || isKeyboardTouched;
     }
 
     Draw(): void {

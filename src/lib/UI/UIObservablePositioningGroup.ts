@@ -59,6 +59,12 @@ export class UIObservablePositioningGroup implements UIComponent {
         if (removeIdx !== -1) {
             this.childs.splice(removeIdx, 1);
         }
+
+        if (!this.updateNeeded) {
+            queueMicrotask(() => this.UpdateChilds());
+        }
+
+        this.updateNeeded = true;
     }
 
     get Observable(): Observable<UIComponent> {
@@ -99,6 +105,14 @@ export class UIObservablePositioningGroup implements UIComponent {
     }
 
     CalculateDimension(): void {
+        if (this.childs.length === 0) {
+
+            this.dimension.width = 0;
+            this.dimension.height = 0;
+
+            return;
+        }
+
         const min = { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY };
         const max = { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY };
 

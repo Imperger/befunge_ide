@@ -4,6 +4,7 @@ import { Inversify } from "@/Inversify";
 import { EnumSize } from "@/lib/EnumSize";
 import { Observable, ObservableController } from "@/lib/Observable";
 import { Rgb, Vec2 } from "@/lib/Primitives";
+import { Dimension } from "@/lib/UI/UIComponent";
 import { UIIcon } from "@/lib/UI/UIIcon";
 import { UIIconButton } from "@/lib/UI/UIIconButton/UIIconButton";
 import { HorizontalAnchor, UIObservablePositioningGroup } from "@/lib/UI/UIObservablePositioningGroup";
@@ -334,6 +335,14 @@ export class VirtualKeyboardControls {
 
     get Observable(): Observable<string> {
         return this.observable;
+    }
+
+    get AbsolutePosition(): Vec2 {
+        return this.keyboardGroup.AbsolutePosition;
+    }
+
+    get Dimension(): Dimension {
+        return this.keyboardGroup.Dimension;
     }
 
     Resize(): void {
