@@ -163,6 +163,7 @@ export class DebuggingService {
         this.debugMode = debug;
 
         this.overlay.StackControls.Visible = debug;
+        this.overlay.EditControls.Disable = debug;
     }
 
     private DebugCodeAction(next: boolean): void {
