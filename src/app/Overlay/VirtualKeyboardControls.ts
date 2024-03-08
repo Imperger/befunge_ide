@@ -13,11 +13,16 @@ import { UITextButton } from "@/lib/UI/UITextButton/UITextButton";
 
 enum KeyboardShiftMode { Lovercase, Uppercase, Secondary };
 
+interface KeyboardStateFetcher {
+    shift: () => KeyboardShiftMode;
+    ascii: () => boolean;
+}
+
 class KeyboardButtonLayout {
     private symbols: string[];
 
     constructor(
-        private ShiftStateFetcher: () => KeyboardShiftMode,
+        private keyboardState: KeyboardStateFetcher,
         primary: string,
         secondary?: string) {
         this.symbols = secondary === undefined ?
@@ -26,9 +31,24 @@ class KeyboardButtonLayout {
     }
 
     get Caption(): string {
-        const caption = this.symbols.join('\n');
+        let primary = this.symbols[this.symbols.length - 1];
+        primary = this.IsUppercase ? primary.toUpperCase() : primary.toLowerCase();
 
-        return this.IsUppercase ? caption.toUpperCase() : caption.toLowerCase();
+        if (this.keyboardState.shift() !== KeyboardShiftMode.Secondary && this.keyboardState.ascii()) {
+            primary = primary.charCodeAt(0).toString();
+        }
+
+        if (this.HasSecondary) {
+            let secondary = this.symbols[0];
+
+            if (this.keyboardState.shift() === KeyboardShiftMode.Secondary && this.keyboardState.ascii()) {
+                secondary = secondary.charCodeAt(0).toString();
+            }
+
+            return `${secondary}\n${primary}`;
+        } else {
+            return primary;
+        }
     }
 
     get Symbol(): string {
@@ -38,7 +58,9 @@ class KeyboardButtonLayout {
     }
 
     get CaptionDelimiter(): number {
-        return this.symbols[0].length;
+        return this.keyboardState.shift() === KeyboardShiftMode.Secondary && this.keyboardState.ascii() ?
+            this.symbols[0].charCodeAt(0).toString().length :
+            this.symbols[0].length;
     }
 
     get HasSecondary(): boolean {
@@ -46,12 +68,12 @@ class KeyboardButtonLayout {
     }
 
     private get Index(): number {
-        return +(this.ShiftStateFetcher() === KeyboardShiftMode.Lovercase ||
-            this.ShiftStateFetcher() === KeyboardShiftMode.Uppercase) % this.symbols.length;
+        return +(this.keyboardState.shift() === KeyboardShiftMode.Lovercase ||
+            this.keyboardState.shift() === KeyboardShiftMode.Uppercase) % this.symbols.length;
     }
 
     private get IsUppercase(): boolean {
-        return this.ShiftStateFetcher() === KeyboardShiftMode.Uppercase;
+        return this.keyboardState.shift() === KeyboardShiftMode.Uppercase;
     }
 }
 
@@ -82,6 +104,11 @@ export class VirtualKeyboardControls {
         active: [0.17254901960784313, 0.24313725490196078, 0.3137254901960784] as Rgb
     };
 
+    private asciiToggleOutlineColor = {
+        inactive: [0.4980392156862745, 0.5490196078431373, 0.5529411764705883] as Rgb,
+        active: [0, 0, 0] as Rgb
+    };
+
     private buttonContentColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
 
     private keyboardGroup: UIObservablePositioningGroup;
@@ -89,10 +116,14 @@ export class VirtualKeyboardControls {
     private buttonDimension = { width: 30, height: 60 };
     private readonly symbolMargin = 5;
 
+    private spacebarButton!: UITextButton;
+
     private buttonDeleter: ButtonDeleter[] = [];
 
     private shiftWidth = 50;
     private shiftMode = KeyboardShiftMode.Lovercase;
+
+    private asciiMode = false;
 
     private digitsSymbolRow!: KeyboardButtonLayout[];
     private firstSymbolRow!: KeyboardButtonLayout[];
@@ -123,54 +154,57 @@ export class VirtualKeyboardControls {
     }
 
     private SetupKeyboardLayouts(): void {
-        const shiftStateFetcer = () => this.shiftMode;
+        const keyboardStateFetcher = {
+            shift: () => this.shiftMode,
+            ascii: () => this.asciiMode
+        };
 
         this.digitsSymbolRow = [
-            new KeyboardButtonLayout(shiftStateFetcer, '1', '!'),
-            new KeyboardButtonLayout(shiftStateFetcer, '2', '?'),
-            new KeyboardButtonLayout(shiftStateFetcer, '3', ','),
-            new KeyboardButtonLayout(shiftStateFetcer, '4', '.'),
-            new KeyboardButtonLayout(shiftStateFetcer, '5', '\\'),
-            new KeyboardButtonLayout(shiftStateFetcer, '6', '`'),
-            new KeyboardButtonLayout(shiftStateFetcer, '7'),
-            new KeyboardButtonLayout(shiftStateFetcer, '8'),
-            new KeyboardButtonLayout(shiftStateFetcer, '9'),
-            new KeyboardButtonLayout(shiftStateFetcer, '0')
+            new KeyboardButtonLayout(keyboardStateFetcher, '1', '!'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '2', '?'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '3', ','),
+            new KeyboardButtonLayout(keyboardStateFetcher, '4', '.'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '5', '\\'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '6', '`'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '7'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '8'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '9'),
+            new KeyboardButtonLayout(keyboardStateFetcher, '0')
         ];
 
         this.firstSymbolRow = [
-            new KeyboardButtonLayout(shiftStateFetcer, 'q', '%'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'w', '^'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'e', '~'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'r', '|'),
-            new KeyboardButtonLayout(shiftStateFetcer, 't', '['),
-            new KeyboardButtonLayout(shiftStateFetcer, 'y', ']'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'u', '<'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'i', '>'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'o', '{'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'p', '}')
+            new KeyboardButtonLayout(keyboardStateFetcher, 'q', '%'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'w', '^'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'e', '~'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'r', '|'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 't', '['),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'y', ']'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'u', '<'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'i', '>'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'o', '{'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'p', '}')
         ];
 
         this.secondSymbolRow = [
-            new KeyboardButtonLayout(shiftStateFetcer, 'a', '@'),
-            new KeyboardButtonLayout(shiftStateFetcer, 's', '#'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'd', '&'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'f', '*'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'g', '-'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'h', '+'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'j', '='),
-            new KeyboardButtonLayout(shiftStateFetcer, 'k', '('),
-            new KeyboardButtonLayout(shiftStateFetcer, 'l', ')')
+            new KeyboardButtonLayout(keyboardStateFetcher, 'a', '@'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 's', '#'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'd', '&'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'f', '*'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'g', '-'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'h', '+'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'j', '='),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'k', '('),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'l', ')')
         ];
 
         this.thirdSymbolRow = [
-            new KeyboardButtonLayout(shiftStateFetcer, 'z', '_'),
-            new KeyboardButtonLayout(shiftStateFetcer, 's', '$'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'c', '"'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'v', '\''),
-            new KeyboardButtonLayout(shiftStateFetcer, 'b', ':'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'n', ';'),
-            new KeyboardButtonLayout(shiftStateFetcer, 'm', '/')
+            new KeyboardButtonLayout(keyboardStateFetcher, 'z', '_'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 's', '$'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'c', '"'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'v', '\''),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'b', ':'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'n', ';'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'm', '/')
         ];
     }
 
@@ -247,7 +281,7 @@ export class VirtualKeyboardControls {
         this.buttonDeleter.push(() => shift.Destroy());
 
 
-        const spacebar = this.uiRenderer.CreateIconButton(
+        this.spacebarButton = this.uiRenderer.CreateTextButton(
             {
                 x: this.shiftWidth + this.symbolMargin,
                 y: this.symbolMargin
@@ -258,11 +292,11 @@ export class VirtualKeyboardControls {
             },
             this.zIndex,
             { fillColor: this.fillColor, outlineColor: this.outlineColor },
-            { icon: UIIcon.Empty, color: this.buttonContentColor },
-            (_sender: UIIconButton) => this.observable.Notify(' '),
+            { text: '', lineHeight: 16, color: this.buttonContentColor },
+            (_sender: UITextButton) => this.observable.Notify(' '),
             this.keyboardGroup);
 
-        this.buttonDeleter.push(() => spacebar.Destroy());
+        this.buttonDeleter.push(() => this.spacebarButton.Destroy());
 
 
         const backspace = this.uiRenderer.CreateIconButton(
@@ -278,6 +312,21 @@ export class VirtualKeyboardControls {
             this.keyboardGroup);
 
         this.buttonDeleter.push(() => backspace.Destroy());
+
+
+        const asciiCodes = this.uiRenderer.CreateTextButton(
+            {
+                x: this.shiftWidth + this.thirdSymbolRow.length * this.buttonDimension.width + (this.thirdSymbolRow.length + 1) * this.symbolMargin,
+                y: this.symbolMargin
+            },
+            { width: this.shiftWidth, height: this.buttonDimension.height },
+            this.zIndex,
+            { fillColor: this.fillColor, outlineColor: this.outlineColor },
+            { text: 'ASCII', lineHeight: 16, color: this.buttonContentColor },
+            (sender: UITextButton) => this.ToggleASCII(sender),
+            this.keyboardGroup);
+
+        this.buttonDeleter.push(() => asciiCodes.Destroy());
     }
 
     private ToggleShift(sender: UIIconButton): void {
@@ -293,6 +342,29 @@ export class VirtualKeyboardControls {
 
         sender.Icon = { ...sender.Icon, color };
 
+        this.UpdateSymbolButtonsCaptions();
+    }
+
+    private ToggleASCII(sender: UITextButton): void {
+        this.TouchFeedback();
+
+        this.asciiMode = !this.asciiMode;
+
+        this.spacebarButton.Caption = {
+            ...this.spacebarButton.Caption,
+            text: this.asciiMode ? ' '.charCodeAt(0).toString() : ''
+        };
+
+
+        sender.Style = {
+            ...sender.Style,
+            outlineColor: this.asciiToggleOutlineColor[this.asciiMode ? 'active' : 'inactive']
+        };
+
+        this.UpdateSymbolButtonsCaptions();
+    }
+
+    private UpdateSymbolButtonsCaptions(): void {
         this.symbolButtons.forEach(descriptor => {
             const { button, layout } = descriptor;
 
