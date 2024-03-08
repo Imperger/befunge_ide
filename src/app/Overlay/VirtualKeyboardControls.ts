@@ -252,7 +252,10 @@ export class VirtualKeyboardControls {
                 x: this.shiftWidth + this.symbolMargin,
                 y: this.symbolMargin
             },
-            { width: 100, height: this.buttonDimension.height },
+            {
+                width: this.thirdSymbolRow.length * this.buttonDimension.width + this.symbolMargin * (this.thirdSymbolRow.length - 1),
+                height: this.buttonDimension.height
+            },
             this.zIndex,
             { fillColor: this.fillColor, outlineColor: this.outlineColor },
             { icon: UIIcon.Empty, color: this.buttonContentColor },
