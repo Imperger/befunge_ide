@@ -302,7 +302,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     get MinScroll(): number {
-        return this.Position.y - this.label.Dimension.height / this.label.Scale + this.dimension.height;
+        return this.Position.y - this.label.Dimension.height / this.label.Scale + this.dimension.height - 2 * this.borderWidth;
     }
 
     get MaxScroll(): number {
