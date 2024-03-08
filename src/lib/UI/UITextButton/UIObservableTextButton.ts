@@ -135,7 +135,7 @@ export class UIObservableTextButton implements UIComponent, UITextButton {
         this.label.LineHeight = style.lineHeight;
         this.label.StyleRange(0, this.label.Text.length, { color: style.color });
 
-        this.label.Position = this.CaptionPosition;
+        queueMicrotask(() => this.label.Position = this.CaptionPosition);
 
         this.observable.Notify(this);
     }
