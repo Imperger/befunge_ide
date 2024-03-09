@@ -256,7 +256,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
             }
 
             x = component.AbsolutePosition.x;
-            y += component.LineHeight * component.Scale;
+            y += component.LineHeight * component.Scale + minBaseOffset;
         }
 
         component.UpdateTextDimension({ width, height: y - component.AbsolutePosition.y });
