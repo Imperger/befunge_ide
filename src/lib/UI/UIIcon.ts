@@ -7,7 +7,7 @@ import { Inversify } from "@/Inversify";
 
 export enum UIIcon {
     Empty, Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger,
-    Play, PlayDebug,
+    Play, PlayDebug, DebugStepInto,
     ExclamationCircle, ExclamationTriangle, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
     Delete, Stop, Heatmap, Undo, Redo, Settings, Select, Copy, Cut, Paste, EditDelete, Share,
@@ -134,6 +134,11 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.PlayDebug,
                 filename: 'ui_icons/play_debug.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.DebugStepInto,
+                filename: 'ui_icons/debug_step_into.svg',
                 dimension: { width: 128, height: 128 }
             },
             {

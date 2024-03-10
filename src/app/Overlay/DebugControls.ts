@@ -19,6 +19,8 @@ export interface HeatmapToggleButtonState {
     isShown: boolean;
 }
 
+export enum DebugAction { RunNextBreakpoint, RunNextInstruction, Interrupt };
+
 @injectable()
 export class DebugControls {
     private static readonly DefaultButtonFillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
@@ -44,7 +46,7 @@ export class DebugControls {
 
     private readonly executeObservable = new ObservableController<void>();
 
-    private readonly debugObservable = new ObservableController<boolean>();
+    private readonly debugObservable = new ObservableController<DebugAction>();
 
     private readonly cellBreakpointObservable = new ObservableController<PCDirectionCondition>();
     private readonly cellBreakpointDeleteObservable = new ObservableController<void>();
@@ -82,7 +84,7 @@ export class DebugControls {
             1,
             { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
             { icon: UIIcon.PlayDebug, color: DebugControls.DefaultButtonIconColor },
-            _sender => this.debugObservable.Notify(true),
+            _sender => this.debugObservable.Notify(DebugAction.RunNextBreakpoint),
             this.group
         );
 
@@ -133,9 +135,18 @@ export class DebugControls {
                 this.debugMenuGroup = new UIObservablePositioningGroup(
                     {
                         x: this.debugButton.AbsolutePosition.x / this.group.Scale,
-                        y: this.group.Position.y + margin + sideLength
+                        y: this.group.Position.y + 2 * margin + 2 * sideLength
                     },
                     { vertical: VerticalAnchor.Top });
+
+                const executeNextInstructionButton = this.uiRenderer.CreateIconButton(
+                    { x: 0, y: margin + sideLength },
+                    { width: sideLength, height: sideLength },
+                    1,
+                    { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
+                    { icon: UIIcon.DebugStepInto, color: DebugControls.DebugModeButtonIconColor },
+                    _sender => this.debugObservable.Notify(DebugAction.RunNextInstruction),
+                    this.debugMenuGroup);
 
                 const stopDebuggingButton = this.uiRenderer.CreateIconButton(
                     { x: 0, y: 0 },
@@ -143,7 +154,7 @@ export class DebugControls {
                     1,
                     { fillColor: DebugControls.DefaultButtonFillColor, outlineColor: DebugControls.DefaultButtonOutlineColor },
                     { icon: UIIcon.Stop, color: [0.8980392156862745, 0.2235294117647059, 0.20784313725490197] },
-                    _sender => this.debugObservable.Notify(false),
+                    _sender => this.debugObservable.Notify(DebugAction.Interrupt),
                     this.debugMenuGroup);
             } else {
                 this.debugMenuGroup?.Destroy();
@@ -165,7 +176,7 @@ export class DebugControls {
         return this.executeObservable;
     }
 
-    get Debug(): Observable<boolean> {
+    get Debug(): Observable<DebugAction> {
         return this.debugObservable;
     }
 

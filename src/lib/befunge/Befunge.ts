@@ -221,6 +221,10 @@ export class Befunge {
     return this.instructionsExecuted;
   }
 
+  get IP(): Pointer {
+    return this.cpu.PC.Location;
+  }
+
   private get IsMemoryLimitDynamic(): boolean {
     return (
       this.memoryLimit.Width === Number.POSITIVE_INFINITY ||
