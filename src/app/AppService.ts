@@ -1,9 +1,10 @@
 
-import { mat4, vec2, vec3 } from 'gl-matrix';
+import { vec2, vec3 } from 'gl-matrix';
 import { inject, injectable, named } from 'inversify';
 
 import { AppEventTransformer, MouseMovementEvent, MouseSelectEvent } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
+import { CameraService } from './CameraService';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
@@ -43,9 +44,6 @@ async function Delay(delay: number): Promise<void> {
 export class AppService extends AppEventTransformer implements AsyncConstructable {
     private isRunning = true;
 
-    private projection!: mat4;
-    private camera: mat4;
-
     private touchZoomStartZ = 0;
 
     private inFocusOnVanishReleaser: ObserverDetacher;
@@ -60,6 +58,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
+        @inject(CameraService) private camera: CameraService,
         @inject(AppSettings) private settings: AppSettings,
         @inject(EffectRunner) private effectRunner: EffectRunner,
         @inject(OverlayService) private overlay: OverlayService,
@@ -71,18 +70,19 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         @inject(InjectionToken.CodeEditorServiceInputReceiverFactory) private codeEditorServiceInputReceiverFactory: CodeEditorServiceInputReceiverFactory) {
         super();
 
-        this.camera = mat4.translate(
-            mat4.create(),
-            mat4.create(),
-            [0, 0, this.settings.ZCameraBoundary.min + (this.settings.ZCameraBoundary.max - this.settings.ZCameraBoundary.min) * 0.75]);
+        this.camera.MoveTo(
+            {
+                x: 0,
+                y: 0,
+                z: this.settings.ZCameraBoundary.min + (this.settings.ZCameraBoundary.max - this.settings.ZCameraBoundary.min) * 0.75
+            });
 
         gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        this.BuildProjection();
-        this.FocusCameraAtEditor();
 
-        this.codeEditor.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.camera.ViewProjection;
+        this.FocusCameraAtEditor();
 
         this.editorSourceCode.Initialize(ArrayMemory, this.settings.MemoryLimit);
 
@@ -91,7 +91,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.inFocusOnVanishReleaser = this.inFocus.OnVanish.Attach(() => 0);
 
         this.debugRenderer = new DebugRenderer(gl);
-        this.debugRenderer.ViewProjection = this.ViewProjection;
+        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
         this.debugRenderer.UploadAttributes(this.debugPoints);
 
         const label = this.perspectiveLabelRenderer.Create({ x: 0, y: 0 }, 499, 'TESTING (d) \n 1234567890', 8, null);
@@ -159,30 +159,29 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     Resize(): void {
         this.settings.ViewDimension = { Width: this.gl.canvas.width, Height: this.gl.canvas.height };
+        this.settings.AspectRatio = this.gl.canvas.width / this.gl.canvas.height;
 
-        this.BuildProjection();
+        this.camera.Resize();
+
         this.overlay.Resize();
 
-        this.codeEditor.ViewProjection = this.ViewProjection;
-        this.debugRenderer.ViewProjection = this.ViewProjection;
-        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.camera.ViewProjection;
+        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 
     OnCameraMove(e: MouseMovementEvent): void {
         const delta = Camera.UnprojectMovement(
             { x: e.movementX, y: e.movementY },
             { a: 0, b: 0, c: 1, d: 0 },
-            this.ViewProjection,
+            this.camera.ViewProjection,
             this.gl.canvas);
 
-        mat4.translate(
-            this.camera,
-            this.camera,
-            [delta.x, delta.y, 0]);
+        this.camera.Translate({ x: delta.x, y: delta.y });
 
-        this.codeEditor.ViewProjection = this.ViewProjection;
-        this.debugRenderer.ViewProjection = this.ViewProjection;
-        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.camera.ViewProjection;
+        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 
     OnSelect(e: MouseSelectEvent): void {
@@ -199,8 +198,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.SwitchFocus(touchResult);
         }
 
-        const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
-        const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.ViewProjection, this.gl.canvas);
+        const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.camera.ViewProjection, this.gl.canvas);
+        const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.camera.ViewProjection, this.gl.canvas);
 
         const intersection = Intersection.PlaneLine(
             { a: 0, b: 0, c: 1, d: 0 },
@@ -223,38 +222,21 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     OnTouchZoomStart(): void {
-        this.touchZoomStartZ = this.camera[14];
+        this.touchZoomStartZ = this.camera.Position.z;
     }
 
     OnTouchZoom(zoom: number): void {
-        mat4.translate(
-            this.camera,
-            mat4.create(),
-            [this.camera[12], this.camera[13], MathUtil.Clamp(this.touchZoomStartZ * zoom, this.settings.ZCameraBoundary.min, this.settings.ZCameraBoundary.max)]);
+        this.camera.MoveTo({
+            z: MathUtil.Clamp(this.touchZoomStartZ * zoom, this.settings.ZCameraBoundary.min, this.settings.ZCameraBoundary.max)
+        });
 
-        this.codeEditor.ViewProjection = this.ViewProjection;
-        this.debugRenderer.ViewProjection = this.ViewProjection;
-        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.camera.ViewProjection;
+        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 
     OnKeyDown(e: MyInputEvent): void {
         this.inFocus.OnInput(e);
-    }
-
-    private BuildProjection(): void {
-        this.settings.AspectRatio = this.gl.canvas.width / this.gl.canvas.height;
-
-        this.projection = mat4.perspective(
-            mat4.create(),
-            this.settings.Fovy,
-            this.settings.AspectRatio,
-            this.settings.ZNear,
-            this.settings.ZFar);
-    }
-
-    private get ViewProjection(): mat4 {
-        const view = mat4.invert(mat4.create(), this.camera);
-        return mat4.mul(mat4.create(), this.projection, view);
     }
 
     public Dispose(): void {
@@ -269,9 +251,9 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
 
         if (this.effectRunner.Draw(elapsed)) {
-            this.codeEditor.ViewProjection = this.ViewProjection;
-            this.debugRenderer.ViewProjection = this.ViewProjection;
-            this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+            this.codeEditor.ViewProjection = this.camera.ViewProjection;
+            this.debugRenderer.ViewProjection = this.camera.ViewProjection;
+            this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
         }
 
         this.codeEditor.Draw();
@@ -417,8 +399,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private FollowEditableCell(): void {
         const cellRect = this.codeEditor.EditableCellRect;
-        const lbNDC = vec3.transformMat4(vec3.create(), cellRect.lb, this.ViewProjection);
-        const rtNDC = vec3.transformMat4(vec3.create(), cellRect.rt, this.ViewProjection);
+        const lbNDC = vec3.transformMat4(vec3.create(), cellRect.lb, this.camera.ViewProjection);
+        const rtNDC = vec3.transformMat4(vec3.create(), cellRect.rt, this.camera.ViewProjection);
 
         const ndcDiagonal = vec3.sub(vec3.create(), rtNDC, lbNDC);
         const ndcStickToEdgeMovement = Transformation.MoveRectangleToPlaceInsideRectangle(
@@ -452,8 +434,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const effect = new SmoothCameraMove(
             this.camera,
             movement,
-            this.gl.canvas,
-            () => this.ViewProjection);
+            this.gl.canvas);
 
         this.effectRunner.Register(
             effect,
@@ -492,8 +473,8 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             y: this.settings.ViewDimension.Height - uiLeftTopEditorGridPosition.y
         };
 
-        const posNear = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 0 }, this.ViewProjection, this.gl.canvas);
-        const posFar = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 1 }, this.ViewProjection, this.gl.canvas);
+        const posNear = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 0 }, this.camera.ViewProjection, this.gl.canvas);
+        const posFar = Camera.Unproject({ ...wndLeftTopEditorGridPosition, z: 1 }, this.camera.ViewProjection, this.gl.canvas);
 
         const intersection = Intersection.PlaneLine(
             { a: 0, b: 0, c: 1, d: 0 },
@@ -501,13 +482,13 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         intersection[1] -= this.settings.MemoryLimit.Height * this.codeEditor.CellSize;
 
-        mat4.translate(
-            this.camera,
-            mat4.create(),
-            [this.camera[12] - intersection[0], this.camera[13] - intersection[1], this.camera[14]]);
+        this.camera.Translate({
+            x: -intersection[0],
+            y: -intersection[1]
+        });
 
-        this.codeEditor.ViewProjection = this.ViewProjection;
-        this.perspectiveLabelRenderer.ViewProjection = this.ViewProjection;
+        this.codeEditor.ViewProjection = this.camera.ViewProjection;
+        this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 }
 

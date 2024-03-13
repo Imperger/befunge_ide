@@ -1,6 +1,5 @@
-import { mat4 } from "gl-matrix";
-
 import { ZCameraBoundary } from "../AppSettings";
+import { CameraService } from "../CameraService";
 
 import { Effect } from "@/lib/effect/Effect";
 
@@ -15,7 +14,7 @@ export class SmoothCameraZoom implements Effect {
 
     constructor(
         private direction: 'in' | 'out',
-        private camera: mat4,
+        private camera: CameraService,
         private boundary: ZCameraBoundary) {
     }
 
@@ -30,17 +29,14 @@ export class SmoothCameraZoom implements Effect {
 
         const delta = this.distance * fract * (this.direction === 'in' ? -1 : 1);
 
-        const z = this.camera[14] + delta;
+        const z = this.camera.Position.z + delta;
 
         if (z >= this.boundary.max || z <= this.boundary.min) {
             this.isDone = true;
             return;
         }
 
-        mat4.translate(
-            this.camera,
-            this.camera,
-            [0, 0, delta]);
+        this.camera.Translate({ z: delta });
 
         if (this.progress >= 1) {
             this.isDone = true;

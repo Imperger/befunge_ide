@@ -1,4 +1,6 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+
+import { InjectionToken } from "./InjectionToken";
 
 import { Inversify } from "@/Inversify";
 import { MemoryLimit } from "@/lib/befunge/memory/MemoryLimit";
@@ -15,6 +17,10 @@ export interface ZCameraBoundary {
 
 @injectable()
 export class AppSettings {
+    constructor(@inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext) {
+        this.AspectRatio = this.gl.canvas.width / this.gl.canvas.height;
+    }
+
     public readonly ZNear = 1;
 
     public readonly ZFar = 500;

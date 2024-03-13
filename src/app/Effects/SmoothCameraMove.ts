@@ -1,9 +1,9 @@
-import { mat4, vec2 } from "gl-matrix";
+import { vec2 } from "gl-matrix";
+
+import { CameraService } from "../CameraService";
 
 import { Effect } from "@/lib/effect/Effect";
 import { Camera, Viewport } from "@/lib/renderer/Camera";
-
-export type ViewProjectionFetcher = () => mat4;
 
 export class SmoothCameraMove implements Effect {
     private isDone = false;
@@ -13,10 +13,9 @@ export class SmoothCameraMove implements Effect {
     private duration = 400;
 
     constructor(
-        private camera: mat4,
+        private camera: CameraService,
         private destination: vec2,
-        private viewport: Viewport,
-        private viewProjectionFetcher: ViewProjectionFetcher
+        private viewport: Viewport
     ) { }
 
     get IsDone(): boolean {
@@ -37,13 +36,13 @@ export class SmoothCameraMove implements Effect {
         const delta = Camera.UnprojectMovement(
             { x: movement[0], y: -movement[1] },
             { a: 0, b: 0, c: 1, d: 0 },
-            this.viewProjectionFetcher(),
+            this.camera.ViewProjection,
             this.viewport);
 
-        mat4.translate(
-            this.camera,
-            this.camera,
-            [delta.x, delta.y, 0]);
+        this.camera.Translate({
+            x: delta.x,
+            y: delta.y
+        });
 
         if (this.progress >= 1) {
             this.isDone = true;
