@@ -63,6 +63,36 @@ export class Transformation {
         return { x: closest.diff[0], y: closest.diff[1] };
     }
 
+    static ShortestMoveForIntersection(movable: Rectangle, destination: Rectangle): Vec2 {
+        const leftToRight = destination.rt.x - movable.lb.x;
+        const rightToLeft = destination.lb.x - movable.rt.x;
+
+        const bottomToTop = destination.rt.y - movable.lb.y;
+        const topToBottom = destination.lb.y - movable.rt.y;
+
+        const intersectByX = !(leftToRight < 0 || rightToLeft > 0);
+        const intersectByY = !(bottomToTop < 0 || topToBottom > 0);
+
+        if (intersectByX && intersectByY) {
+            return { x: 0, y: 0 };
+        }
+
+        const x = leftToRight < 0 ?
+            leftToRight :
+            rightToLeft > 0 ?
+                rightToLeft :
+                0;
+
+        const y = bottomToTop < 0 ?
+            bottomToTop :
+            topToBottom > 0 ?
+                topToBottom :
+                0;
+
+
+        return { x, y };
+    }
+
     private static DistanceDiff(a: vec2, b: vec2): DistanceDiffResult {
         return {
             distance: vec2.distance(a, b),

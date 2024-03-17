@@ -5,10 +5,9 @@ import { AppSettings } from "./AppSettings";
 import { CodeEditorRenderer } from "./CodeEditor/CodeEditorRenderer";
 
 import { Inversify } from "@/Inversify";
-import { Intersection } from "@/lib/math/Intersection";
+import { Transformation } from "@/lib/math/Transformation";
 import { Vec3 } from "@/lib/Primitives";
-
-type CameraBackup = [number, number, number, number];
+import { Camera } from "@/lib/renderer/Camera";
 
 @injectable()
 export class CameraService {
@@ -24,22 +23,15 @@ export class CameraService {
     }
 
     MoveTo(position: Partial<Vec3>): void {
-        const cameraBackup: CameraBackup = [this.camera[12], this.camera[13], this.camera[14], this.camera[15]];
-
         position.x !== undefined && (this.camera[12] = position.x);
         position.y !== undefined && (this.camera[13] = position.y);
         position.z !== undefined && (this.camera[14] = position.z);
 
         this.UpdateViewProjection();
-
-        if (!this.IsCodeEditorVisible) {
-            this.RestoreCamera(cameraBackup);
-        }
+        this.MaintainCodeEditorVisible();
     }
 
     Translate(delta: Partial<Vec3>): void {
-        const cameraBackup: CameraBackup = [this.camera[12], this.camera[13], this.camera[14], this.camera[15]];
-
         mat4.translate(
             this.camera,
             this.camera,
@@ -50,10 +42,7 @@ export class CameraService {
             ]);
 
         this.UpdateViewProjection();
-
-        if (!this.IsCodeEditorVisible) {
-            this.RestoreCamera(cameraBackup);
-        }
+        this.MaintainCodeEditorVisible();
     }
 
     get Position(): Vec3 {
@@ -87,11 +76,9 @@ export class CameraService {
         mat4.mul(this.viewProjection, this.projection, view);
     }
 
-    private get IsCodeEditorVisible(): boolean {
+    private MaintainCodeEditorVisible(): void {
         const cellSize = this.codeEditorRenderer.CellSize;
-
         const lbNDC = vec3.transformMat4(vec3.create(), [cellSize, cellSize, 0], this.viewProjection);
-
         const rtNDC = vec3.transformMat4(
             vec3.create(),
             [
@@ -101,16 +88,36 @@ export class CameraService {
             ],
             this.viewProjection);
 
-        return Intersection.RectangleRectangle(
-            { x: lbNDC[0], y: lbNDC[1], width: rtNDC[0] - lbNDC[0], height: rtNDC[1] - lbNDC[1] },
-            { x: -1, y: -1, width: 2, height: 2 });
-    }
+        const ndcCompensation = Transformation.ShortestMoveForIntersection(
+            { lb: { x: lbNDC[0], y: lbNDC[1] }, rt: { x: rtNDC[0], y: rtNDC[1] } },
+            { lb: { x: -1, y: -1 }, rt: { x: 1, y: 1 } });
 
-    private RestoreCamera(backup: CameraBackup): void {
-        this.camera[12] = backup[0];
-        this.camera[13] = backup[1];
-        this.camera[14] = backup[2];
-        this.camera[15] = backup[3];
+        if (ndcCompensation.x === 0 && ndcCompensation.y === 0) {
+            return;
+        }
+
+        const screenCompensation = {
+            x: ndcCompensation.x * this.settings.ViewDimension.Width / 2,
+            y: ndcCompensation.y * this.settings.ViewDimension.Height / 2
+        };
+
+        const worldCompensation = Camera.UnprojectMovement(
+            { x: screenCompensation.x, y: -screenCompensation.y },
+            { a: 0, b: 0, c: 1, d: 0 },
+            this.ViewProjection,
+            {
+                width: this.settings.ViewDimension.Width,
+                height: this.settings.ViewDimension.Height
+            });
+
+        mat4.translate(
+            this.camera,
+            this.camera,
+            [
+                worldCompensation.x,
+                worldCompensation.y,
+                0
+            ]);
 
         this.UpdateViewProjection();
     }
