@@ -22,6 +22,7 @@ import { BefungeSourceCodeCodec } from '@/lib/befunge/BefungeSourceCodeCodec';
 import { ArrayMemory } from '@/lib/befunge/memory/ArrayMemory';
 import { SourceCodeValidityAnalyser } from '@/lib/befunge/SourceCodeValidityAnalyser';
 import { AsyncConstructable, AsyncConstructorActivator } from '@/lib/DI/AsyncConstructorActivator';
+import { AbortOperationException, FileStorage } from '@/lib/DOM/FileStorage/FileStorage';
 import { EffectRunner, RegistrationCollisionResolver } from '@/lib/effect/EffectRunner';
 import { Intersection } from '@/lib/math/Intersection';
 import { MathUtil } from '@/lib/math/MathUtil';
@@ -51,12 +52,11 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     private debugRenderer: DebugRenderer;
     private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
-    private openedFilename: string | null = null;
-
     private lastFrameTime = Date.now();
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
+        @inject(InjectionToken.FileStorage) private fileStorage: FileStorage,
         @inject(CameraService) private camera: CameraService,
         @inject(AppSettings) private settings: AppSettings,
         @inject(EffectRunner) private effectRunner: EffectRunner,
@@ -275,28 +275,16 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         let sourceCode = '';
 
         try {
-            const [fileHandle] = await window.showOpenFilePicker({ multiple: false });
-
-            if (fileHandle.kind !== "file") {
-                return;
-            }
-            this.openedFilename = fileHandle.name;
-            const file = await fileHandle.getFile();
-
-            sourceCode = await file.text();
+            sourceCode = await this.fileStorage.Open();
         } catch (e) {
-            if (e instanceof DOMException) {
-                switch (e.name) {
-                    case 'AbortError':
-                        return;
-                }
-
-                this.overlay.Snackbar.ShowError(e.message)
+            if (e instanceof AbortOperationException) {
+                return;
+            } else if (e instanceof Error) {
+                this.overlay.Snackbar.ShowError(e.message);
             }
 
             return;
         }
-
 
         const validator = new SourceCodeValidityAnalyser(sourceCode);
 
@@ -329,22 +317,15 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private async SaveSourceToDisk(): Promise<void> {
         try {
-            const fileHandle = await window.showSaveFilePicker({ suggestedName: this.openedFilename ?? '' });
-
-            const stream = await fileHandle.createWritable();
-
-            await stream.write(this.SourceCodeString());
-
-            await stream.close();
+            await this.fileStorage.Save(this.SourceCodeString());
         } catch (e) {
-            if (e instanceof DOMException) {
-                switch (e.name) {
-                    case 'AbortError':
-                        return;
-                }
-
+            if (e instanceof AbortOperationException) {
+                return;
+            } else if (e instanceof Error) {
                 this.overlay.Snackbar.ShowError(e.message)
             }
+
+            return;
         }
     }
 

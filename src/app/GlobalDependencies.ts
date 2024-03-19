@@ -5,6 +5,9 @@ import { InjectionToken } from "./InjectionToken";
 
 import { Inversify } from "@/Inversify";
 import { AsyncConstructable, AsyncConstructorActivator } from "@/lib/DI/AsyncConstructorActivator";
+import { DOMEmulatedFileStorage } from "@/lib/DOM/FileStorage/DOMEmulatedFileStorage";
+import { FilePickerApiDiskStorage } from "@/lib/DOM/FileStorage/FilePickerApiFileStorage";
+import { FileStorage } from "@/lib/DOM/FileStorage/FileStorage";
 import { FontAtlas, FontAtlasBuilder } from "@/lib/font/FontAtlasBuilder";
 import { NotNull } from "@/lib/NotNull";
 import { UIIconAtlas } from "@/lib/UI/UIIcon";
@@ -35,6 +38,16 @@ export class GlobalDependencies implements AsyncConstructable {
         Inversify
             .bind<WebGLTexture>(InjectionToken.IconAtlasTexture)
             .toConstantValue(this.BuildTexture(Inversify.get<UIIconAtlas>(InjectionToken.IconAtlas).Image));
+
+        Inversify
+            .bind<FileStorage>(InjectionToken.FileStorage)
+            .to(this.IsPickerApiAvailable ? FilePickerApiDiskStorage : DOMEmulatedFileStorage)
+            .inSingletonScope();
+    }
+
+    private get IsPickerApiAvailable(): boolean {
+        return window.showOpenFilePicker !== undefined &&
+            window.showSaveFilePicker !== undefined;
     }
 
     private BuildTexture(data: TexImageSource): WebGLTexture {

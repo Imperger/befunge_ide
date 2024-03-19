@@ -9,7 +9,8 @@ export const InjectionToken = {
     HeatmapExtensionFactory: Symbol('Heatmap extension factory'),
     UITextListRendererFactory: Symbol('UITetList renderer factory'),
     CodeEditorServiceInputReceiverFactory: Symbol('CodeEditorServiceInputReceiver factory'),
-    UIEditableTextListRendererFactory: Symbol('UIEditableTextListRenderer factory')
+    UIEditableTextListRendererFactory: Symbol('UIEditableTextListRenderer factory'),
+    FileStorage: Symbol('File storage')
 };
 
 
