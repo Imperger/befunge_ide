@@ -20,6 +20,13 @@ import { Intersection } from "@/lib/math/Intersection";
 import { InputReceiver } from "@/lib/UI/InputReceiver";
 import { UIRenderer } from "@/lib/UI/UIRenderer";
 
+export interface ScrollEvent {
+    startX: number;
+    startY: number;
+    scroll: number;
+    units: 'px' | 'row';
+}
+
 @injectable()
 export class OverlayService {
     private settings: AppSettings;
@@ -109,6 +116,24 @@ export class OverlayService {
             { x, y });
 
         return this.uiRenderer.Touch({ offsetX: x, offsetY: y }) || isKeyboardTouched;
+    }
+
+    Scroll(e: ScrollEvent): boolean {
+        e.startY = this.gl.canvas.height - e.startY;
+
+        const textList = this.uiRenderer.FindTextList(e.startX, e.startY);
+
+        if (textList === null) {
+            return false;
+        }
+
+        if (e.units === 'px') {
+            textList.ScrollAligned(e.scroll);
+        } else if (e.units === 'row') {
+            textList.ScrollAligned(e.scroll * textList.LineHeight);
+        }
+
+        return true;
     }
 
     Draw(): void {

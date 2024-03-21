@@ -169,18 +169,25 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 
-    OnCameraMove(e: MouseMovementEvent): void {
-        const delta = Camera.UnprojectMovement(
-            { x: e.movementX, y: e.movementY },
-            { a: 0, b: 0, c: 1, d: 0 },
-            this.camera.ViewProjection,
-            this.gl.canvas);
+    OnPan(e: MouseMovementEvent): void {
+        if (!this.overlay.Scroll({
+            startX: e.startX,
+            startY: e.startY,
+            scroll: -e.movementY / window.devicePixelRatio,
+            units: 'px'
+        })) {
+            const delta = Camera.UnprojectMovement(
+                { x: e.movementX, y: e.movementY },
+                { a: 0, b: 0, c: 1, d: 0 },
+                this.camera.ViewProjection,
+                this.gl.canvas);
 
-        this.camera.Translate({ x: delta.x, y: delta.y });
+            this.camera.Translate({ x: delta.x, y: delta.y });
 
-        this.codeEditor.ViewProjection = this.camera.ViewProjection;
-        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
-        this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
+            this.codeEditor.ViewProjection = this.camera.ViewProjection;
+            this.debugRenderer.ViewProjection = this.camera.ViewProjection;
+            this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
+        }
     }
 
     OnSelect(e: MouseSelectEvent): void {
@@ -209,15 +216,22 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.debugRenderer.UploadAttributes(this.debugPoints);
     }
 
-    OnStepZoom(e: WheelEvent): void {
-        const smoothCameraZoomEffect = new SmoothCameraZoom(
-            e.deltaY < 0 ? 'in' : 'out',
-            this.camera,
-            this.settings.ZCameraBoundary);
+    OnWheel(e: WheelEvent): void {
+        if (!this.overlay.Scroll({
+            startX: e.offsetX,
+            startY: e.offsetY,
+            scroll: Math.sign(e.deltaY),
+            units: 'row'
+        })) {
+            const smoothCameraZoomEffect = new SmoothCameraZoom(
+                e.deltaY < 0 ? 'in' : 'out',
+                this.camera,
+                this.settings.ZCameraBoundary);
 
-        this.effectRunner.Register(
-            smoothCameraZoomEffect,
-            { id: 'camera_zoom', rule: RegistrationCollisionResolver.Replace });
+            this.effectRunner.Register(
+                smoothCameraZoomEffect,
+                { id: 'camera_zoom', rule: RegistrationCollisionResolver.Replace });
+        }
     }
 
     OnTouchZoomStart(): void {

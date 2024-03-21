@@ -10,5 +10,6 @@ export interface UITextList extends UIComponent {
     LineHeight: number;
     BorderWidth: number;
     ScrollToTop(): void;
+    ScrollAligned(offset: number): void;
     Visible: boolean;
 }

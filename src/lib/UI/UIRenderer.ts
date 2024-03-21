@@ -71,18 +71,18 @@ export interface UICreator {
         parent: UIObservablePositioningGroup | null): UIEditableTextList;
 }
 
-interface UIEditableTextListDescriptor {
-    renderer: UIEditableTextListRenderer;
-    editableTextList: UIEditableTextList;
+interface UITextListDescriptor<TRenderer, TComponent extends UITextList> {
+    renderer: TRenderer;
+    component: TComponent;
 }
 
 @injectable()
 export class UIRenderer implements UICreator {
     private viewProjection: Mat4 | Float32Array | null = null;
 
-    private uiTextListRenderers: UITextListRenderer[] = [];
+    private uiTextLists: UITextListDescriptor<UITextListRenderer, UITextList>[] = [];
 
-    private uiEditableTextLists: UIEditableTextListDescriptor[] = [];
+    private uiEditableTextLists: UITextListDescriptor<UIEditableTextListRenderer, UIEditableTextList>[] = [];
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) private gl: WebGL2RenderingContext,
@@ -143,16 +143,22 @@ export class UIRenderer implements UICreator {
             renderer.ViewProjection = this.viewProjection;
         }
 
-        this.uiTextListRenderers.push(renderer);
+        const descriptor = { renderer } as UITextListDescriptor<UITextListRenderer, UITextList>;
 
-        return renderer.Create(
+        const textList = renderer.Create(
             position,
             dimension,
             zIndex,
             text,
             lineHeight,
-            () => this.UIObservableTextListDeleter(renderer),
+            () => this.UIObservableTextListDeleter(descriptor),
             parent);
+
+        descriptor.component = textList;
+
+        this.uiTextLists.push(descriptor);
+
+        return textList;
     }
 
     CreateEditableTextList(position: Vec2,
@@ -168,7 +174,7 @@ export class UIRenderer implements UICreator {
         }
 
 
-        const descriptor: UIEditableTextListDescriptor = { renderer } as UIEditableTextListDescriptor;
+        const descriptor = { renderer } as UITextListDescriptor<UIEditableTextListRenderer, UIEditableTextList>;
 
         const editableTextList = renderer.Create(
             position,
@@ -179,7 +185,7 @@ export class UIRenderer implements UICreator {
             () => this.UIObservableEditableTextListDeleter(descriptor),
             parent);
 
-        descriptor.editableTextList = editableTextList;
+        descriptor.component = editableTextList;
 
         this.uiEditableTextLists.push(descriptor);
 
@@ -191,7 +197,24 @@ export class UIRenderer implements UICreator {
             this.TouchButtons(e.offsetX, e.offsetY) ||
             this.TouchLabels(e.offsetX, e.offsetY);
 
-        return touchResult || (this.TouchEditableTextList(e.offsetX, e.offsetY) ?? false);
+        return touchResult || (this.TouchTextList(this.uiEditableTextLists, e.offsetX, e.offsetY) ?? false);
+    }
+
+    FindTextList(x: number, y: number): UITextList | null {
+        const textList = this.TouchTextList(this.uiTextLists, x, y);
+        const editableTextList = this.TouchTextList(this.uiEditableTextLists, x, y);
+
+        if (textList === null) {
+            return editableTextList;
+        }
+
+        if (editableTextList === null) {
+            return textList;
+        }
+
+        return textList.ZIndex > editableTextList.ZIndex ?
+            textList :
+            editableTextList;
     }
 
     private TouchButtons(x: number, y: number): boolean {
@@ -241,14 +264,14 @@ export class UIRenderer implements UICreator {
         return true;
     }
 
-    private TouchEditableTextList(x: number, y: number): UIEditableTextList | null {
-        const intersected = this.uiEditableTextLists
-            .filter(desc => desc.editableTextList.Visible && Intersection.AABBRectanglePoint(
+    private TouchTextList<TRenderer, TComponent extends UITextList>(components: UITextListDescriptor<TRenderer, TComponent>[], x: number, y: number): TComponent | null {
+        const intersected = components
+            .filter(desc => desc.component.Visible && Intersection.AABBRectanglePoint(
                 {
-                    x: desc.editableTextList.AbsolutePosition.x,
-                    y: desc.editableTextList.AbsolutePosition.y,
-                    width: desc.editableTextList.Dimension.width,
-                    height: desc.editableTextList.Dimension.height
+                    x: desc.component.AbsolutePosition.x,
+                    y: desc.component.AbsolutePosition.y,
+                    width: desc.component.Dimension.width,
+                    height: desc.component.Dimension.height
                 },
                 { x, y }));
 
@@ -260,15 +283,15 @@ export class UIRenderer implements UICreator {
         return ArrayHelper
             .Max(
                 intersected,
-                (a: UIEditableTextListDescriptor, b: UIEditableTextListDescriptor) => a.editableTextList.ZIndex < b.editableTextList.ZIndex)
-            .editableTextList;
+                (a: UITextListDescriptor<TRenderer, TComponent>, b: UITextListDescriptor<TRenderer, TComponent>) => a.component.ZIndex < b.component.ZIndex)
+            .component;
     }
 
-    private UIObservableTextListDeleter(renderer: UITextListRenderer): void {
-        this.uiTextListRenderers.splice(this.uiTextListRenderers.findIndex(x => x === renderer), 1);
+    private UIObservableTextListDeleter(descriptor: UITextListDescriptor<UITextListRenderer, UITextList>): void {
+        this.uiTextLists.splice(this.uiTextLists.findIndex(x => x === descriptor), 1);
     }
 
-    private UIObservableEditableTextListDeleter(descriptor: UIEditableTextListDescriptor): void {
+    private UIObservableEditableTextListDeleter(descriptor: UITextListDescriptor<UIEditableTextListRenderer, UIEditableTextList>): void {
         this.uiEditableTextLists.splice(this.uiEditableTextLists.findIndex(x => x === descriptor), 1);
     }
 
@@ -276,7 +299,7 @@ export class UIRenderer implements UICreator {
         this.alertRenderer.Draw();
         this.iconButtonRenderer.Draw();
         this.labelsRenderer.Draw();
-        this.uiTextListRenderers.forEach(x => x.Draw());
+        this.uiTextLists.forEach(x => x.renderer.Draw());
         this.uiEditableTextLists.forEach(x => x.renderer.Draw());
     }
 
@@ -286,7 +309,7 @@ export class UIRenderer implements UICreator {
         this.iconButtonRenderer.ViewProjection = projection;
         this.labelsRenderer.ViewProjection = projection;
         this.alertRenderer.ViewProjection = projection;
-        this.uiTextListRenderers.forEach(x => x.ViewProjection = projection);
+        this.uiTextLists.forEach(x => x.renderer.ViewProjection = projection);
         this.uiEditableTextLists.forEach(x => x.renderer.ViewProjection = projection);
     }
 }

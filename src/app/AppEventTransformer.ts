@@ -37,6 +37,8 @@ class OnSelectStrategy {
 }
 
 export interface MouseMovementEvent {
+    startX: number;
+    startY: number;
     movementX: number;
     movementY: number;
 }
@@ -52,12 +54,12 @@ interface TouchTrace {
     y: number;
 }
 
-type MoveCameraFn = (e: MouseMovementEvent) => void;
+type OnPanFn = (e: MouseMovementEvent) => void;
 
 class TouchPan {
     private touchPrev!: TouchTrace;
 
-    constructor(private moveCamera: MoveCameraFn) { }
+    constructor(private pan: OnPanFn) { }
 
     OnTouchStart(e: TouchEvent): void {
         const touch = e.targetTouches[0];
@@ -75,7 +77,9 @@ class TouchPan {
 
         const touch = e.targetTouches[0];
 
-        this.moveCamera({
+        this.pan({
+            startX: this.touchPrev.x * window.devicePixelRatio,
+            startY: this.touchPrev.y * window.devicePixelRatio,
             movementX: (touch.pageX - this.touchPrev.x) * window.devicePixelRatio,
             movementY: (touch.pageY - this.touchPrev.y) * window.devicePixelRatio
         });
@@ -159,7 +163,7 @@ export abstract class AppEventTransformer {
     private touchZoom: TouchZoom;
 
     constructor() {
-        this.touchPan = new TouchPan((e: MouseMovementEvent) => this.OnCameraMove(e));
+        this.touchPan = new TouchPan((e: MouseMovementEvent) => this.OnPan(e));
         this.touchZoom = new TouchZoom(
             () => this.OnTouchZoomStart(),
             (zoom: number) => this.OnTouchZoom(zoom)
@@ -168,7 +172,9 @@ export abstract class AppEventTransformer {
 
     OnMouseMove(e: MouseEvent): void {
         if (e.buttons & MouseButtons.Left) {
-            this.OnCameraMove({
+            this.OnPan({
+                startX: e.offsetX * window.devicePixelRatio,
+                startY: e.offsetY * window.devicePixelRatio,
                 movementX: e.movementX * window.devicePixelRatio,
                 movementY: e.movementY * window.devicePixelRatio
             });
@@ -190,10 +196,6 @@ export abstract class AppEventTransformer {
         }
     }
 
-    OnWheel(e: WheelEvent): void {
-        this.OnStepZoom(e);
-    }
-
     OnTouchStart(e: TouchEvent): void {
         this.touchPan.OnTouchStart(e);
         this.touchZoom.OnTouchStart(e);
@@ -208,11 +210,9 @@ export abstract class AppEventTransformer {
         this.touchZoom.OnTouchEnd(e);
     }
 
-    abstract OnCameraMove(e: MouseMovementEvent): void;
+    abstract OnPan(e: MouseMovementEvent): void;
 
     abstract OnSelect(e: MouseSelectEvent): void;
-
-    abstract OnStepZoom(e: WheelEvent): void;
 
     abstract OnTouchZoomStart(): void;
 

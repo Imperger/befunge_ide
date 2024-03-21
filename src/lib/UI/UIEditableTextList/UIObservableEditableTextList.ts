@@ -152,6 +152,10 @@ export class UIObservableEditableTextList implements UIEditableTextList {
         this.textList.ScrollToTop();
     }
 
+    ScrollAligned(offset: number): void {
+        this.textList.ScrollAligned(offset);
+    }
+
     Destroy(): void {
         this.onVanish.Notify();
 

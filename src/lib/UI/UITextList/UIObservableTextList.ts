@@ -309,7 +309,11 @@ export class UIObservableTextList implements UITextList {
         return this.Position.y;
     }
 
-    private ScrollAligned(offset: number): void {
+    ScrollAligned(offset: number): void {
+        if (!this.IsContentOverflow) {
+            return;
+        }
+
         this.scroll += offset;
 
         this.scroll = MathUtil.Clamp(this.scroll, this.MinScroll, this.MaxScroll);
