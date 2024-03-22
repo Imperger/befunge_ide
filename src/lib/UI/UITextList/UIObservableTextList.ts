@@ -218,6 +218,12 @@ export class UIObservableTextList implements UITextList {
             this.parentDetacher();
         }
 
+        if (this.scrollControls !== null) {
+            this.scrollControls.scrollTopButton.Destroy();
+            this.scrollControls.scrollBottomButton.Destroy();
+            this.scrollControls = null;
+        }
+
         this.deleter();
     }
 
