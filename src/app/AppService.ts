@@ -142,7 +142,7 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.overlay.FileControls.OpenFromDiskObservable.Attach(() => this.OpenFileFromDisk());
         this.overlay.FileControls.SaveToDiskObservable.Attach(() => this.SaveSourceToDisk());
         this.overlay.FileControls.ShareObservable.Attach(() => this.ShareSourceCode());
-        this.overlay.FileControls.OpenSettingsObservable.Attach(() => this.OpenSettings());
+        this.overlay.FileControls.ShowHelpObservable.Attach(() => this.overlay.LanguageSyntaxHelpControls.ToggleHelp());
 
         this.overlay.HistoryControls.UndoObservable.Attach(() => this.history.Undo());
         this.overlay.HistoryControls.RedoObservable.Attach(() => this.history.Redo());
@@ -362,10 +362,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         const encoded = BefungeSourceCodeCodec.Encode(this.SourceCodeString());
 
         router.replace({ name: 'Share', params: { encoded } });
-    }
-
-    private OpenSettings(): void {
-        console.log('Open settings');
     }
 
     LoadSourceCodeToEditor(sourceCode: string): void {

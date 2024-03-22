@@ -17,12 +17,12 @@ export class FileControls {
     private openButton: UIIconButton;
     private saveButton: UIIconButton;
     private shareButton: UIIconButton;
-    private settingsButton: UIIconButton;
+    private helpButton: UIIconButton;
 
     private openFromDiskObservable = new ObservableController<void>();
     private saveToDiskObservable = new ObservableController<void>();
     private shareObservable = new ObservableController<void>();
-    private openSettingsObservable = new ObservableController<void>();
+    private showHelpObservable = new ObservableController<void>();
 
     constructor(
         @inject(UIRenderer) private uiRenderer: UIRenderer,
@@ -31,7 +31,7 @@ export class FileControls {
         const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const openButtonIconColor: Rgb = [0.9411764705882353, 0.6392156862745098, 0.0392156862745098];
         const saveButtonIconColor: Rgb = [0.08235294117647059, 0.396078431372549, 0.7529411764705882];
-        const settingsButtonIconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
+        const helpButtonIconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
         const margin = 10;
         const btnSideLength = 30;
 
@@ -68,12 +68,12 @@ export class FileControls {
         );
         this.shareButton.Disable = true;
 
-        this.settingsButton = this.uiRenderer.CreateIconButton({ x: 3 * btnSideLength + 3 * margin, y: 0 },
+        this.helpButton = this.uiRenderer.CreateIconButton({ x: 3 * btnSideLength + 3 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
             { fillColor, outlineColor },
-            { icon: UIIcon.Settings, color: settingsButtonIconColor },
-            _sender => this.openSettingsObservable.Notify(),
+            { icon: UIIcon.QuestionMark, color: helpButtonIconColor },
+            _sender => this.showHelpObservable.Notify(),
             this.group
         );
 
@@ -113,8 +113,8 @@ export class FileControls {
         return this.shareObservable;
     }
 
-    get OpenSettingsObservable(): Observable<void> {
-        return this.openSettingsObservable;
+    get ShowHelpObservable(): Observable<void> {
+        return this.showHelpObservable;
     }
 }
 

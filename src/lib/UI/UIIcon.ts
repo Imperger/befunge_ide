@@ -8,7 +8,7 @@ import { Inversify } from "@/Inversify";
 export enum UIIcon {
     Empty, Open, Save, ArrowRight, ArrowDown, ArrowLeft, ArrowUp, Debugger,
     Play, PlayDebug, DebugStepInto,
-    ExclamationCircle, ExclamationTriangle, CheckCircle,
+    ExclamationCircle, ExclamationTriangle, QuestionMark, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
     Delete, Stop, Heatmap, Undo, Redo, Settings, Select, Copy, Cut, Paste, EditDelete, Share,
     Input, Output, Keyboard, Shift, Backspace
@@ -149,6 +149,11 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.ExclamationTriangle,
                 filename: 'ui_icons/exclamation_triangle.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.QuestionMark,
+                filename: 'ui_icons/question_mark.svg',
                 dimension: { width: 128, height: 128 }
             },
             {

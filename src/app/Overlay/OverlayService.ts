@@ -11,6 +11,7 @@ import { EditDirectionControls } from "./EditDirectionControls";
 import { FileControls } from "./FileControls";
 import { HistoryControls } from "./HistoryControls";
 import { IOControls } from "./IOControls";
+import { LanguageSyntaxHelpControls } from "./LanguageSyntaxHelpControls";
 import { SnackbarControls } from "./SnackbarControls";
 import { StackControls } from "./StackControls";
 import { VirtualKeyboardControls } from "./VirtualKeyboardControls";
@@ -38,6 +39,7 @@ export class OverlayService {
         @inject(UIRenderer) private uiRenderer: UIRenderer,
         @inject(SnackbarControls) private snackbarControls: SnackbarControls,
         @inject(FileControls) private fileControls: FileControls,
+        @inject(LanguageSyntaxHelpControls) private languageSyntaxHelpControls: LanguageSyntaxHelpControls,
         @inject(HistoryControls) private historyControls: HistoryControls,
         @inject(EditControls) private editControls: EditControls,
         @inject(EditDirectionControls) private editDirectionControls: EditDirectionControls,
@@ -68,6 +70,10 @@ export class OverlayService {
 
     get FileControls(): FileControls {
         return this.fileControls;
+    }
+
+    get LanguageSyntaxHelpControls(): LanguageSyntaxHelpControls {
+        return this.languageSyntaxHelpControls;
     }
 
     get HistoryControls(): HistoryControls {
