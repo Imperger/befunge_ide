@@ -17,7 +17,12 @@ export class FileControls {
     private openButton: UIIconButton;
     private saveButton: UIIconButton;
     private shareButton: UIIconButton;
+
     private helpButton: UIIconButton;
+    private helpShowed = false;
+    private static readonly DefaultButtonOutlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
+    private static readonly ToggleButtonOutlineColor: Rgb = [0, 0, 0];
+
 
     private openFromDiskObservable = new ObservableController<void>();
     private saveToDiskObservable = new ObservableController<void>();
@@ -28,10 +33,10 @@ export class FileControls {
         @inject(UIRenderer) private uiRenderer: UIRenderer,
         @inject(HeadlineControlsLayout) private layout: HeadlineControlsLayout) {
         const fillColor: Rgb = [0.9254901960784314, 0.9411764705882353, 0.9450980392156862];
-        const outlineColor: Rgb = [0.4980392156862745, 0.5490196078431373, 0.5529411764705883];
         const openButtonIconColor: Rgb = [0.9411764705882353, 0.6392156862745098, 0.0392156862745098];
         const saveButtonIconColor: Rgb = [0.08235294117647059, 0.396078431372549, 0.7529411764705882];
         const helpButtonIconColor: Rgb = [0.17254901960784313, 0.24313725490196078, 0.3137254901960784];
+
         const margin = 10;
         const btnSideLength = 30;
 
@@ -42,7 +47,7 @@ export class FileControls {
         this.openButton = this.uiRenderer.CreateIconButton({ x: 0, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
-            { fillColor, outlineColor },
+            { fillColor, outlineColor: FileControls.DefaultButtonOutlineColor },
             { icon: UIIcon.Open, color: openButtonIconColor },
             _sender => this.openFromDiskObservable.Notify(),
             this.group
@@ -51,7 +56,7 @@ export class FileControls {
         this.saveButton = this.uiRenderer.CreateIconButton({ x: btnSideLength + margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
-            { fillColor, outlineColor },
+            { fillColor, outlineColor: FileControls.DefaultButtonOutlineColor },
             { icon: UIIcon.Save, color: saveButtonIconColor },
             _sender => this.saveToDiskObservable.Notify(),
             this.group
@@ -61,7 +66,7 @@ export class FileControls {
         this.shareButton = this.uiRenderer.CreateIconButton({ x: 2 * btnSideLength + 2 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
-            { fillColor, outlineColor },
+            { fillColor, outlineColor: FileControls.DefaultButtonOutlineColor },
             { icon: UIIcon.Share, color: saveButtonIconColor },
             _sender => this.shareObservable.Notify(),
             this.group
@@ -71,13 +76,24 @@ export class FileControls {
         this.helpButton = this.uiRenderer.CreateIconButton({ x: 3 * btnSideLength + 3 * margin, y: 0 },
             { width: btnSideLength, height: btnSideLength },
             1,
-            { fillColor, outlineColor },
+            { fillColor, outlineColor: FileControls.DefaultButtonOutlineColor },
             { icon: UIIcon.QuestionMark, color: helpButtonIconColor },
-            _sender => this.showHelpObservable.Notify(),
+            _sender => this.ToggleHelpButton(),
             this.group
         );
 
         this.layout.Watch(this.group);
+    }
+
+    private ToggleHelpButton(): void {
+        this.helpButton.Style = {
+            ...this.helpButton.Style,
+            outlineColor: this.helpShowed ? FileControls.DefaultButtonOutlineColor : FileControls.ToggleButtonOutlineColor
+        };
+
+        this.helpShowed = !this.helpShowed;
+
+        this.showHelpObservable.Notify()
     }
 
     Resize(): void {
