@@ -3,7 +3,7 @@ import { vec2 } from "gl-matrix";
 import { Dimension } from "../UIComponent";
 import { UIIcon } from "../UIIcon";
 import { UIButtonStyle, UIIconButton } from "../UIIconButton/UIIconButton";
-import { UILabel } from "../UILabel/UILabel";
+import { SymbolStyle, UILabel } from "../UILabel/UILabel";
 import { UILabelRenderer } from "../UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator } from "../UIRenderer";
@@ -73,6 +73,10 @@ export class UIObservableTextList implements UITextList {
         this.parentDetacher = parent?.Observable.Attach(() => this.observable.Notify(this)) ?? null;
 
         this.ScheduleUpdateScrollControlsPresence();
+    }
+
+    StyleRange(begin: number, end: number, style: SymbolStyle): void {
+        this.label.StyleRange(begin, end, style);
     }
 
     get Position(): Vec2 {

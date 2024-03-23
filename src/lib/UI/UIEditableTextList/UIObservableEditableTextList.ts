@@ -1,5 +1,6 @@
 import { MyInputEvent } from "../InputReceiver";
 import { Dimension } from "../UIComponent";
+import { SymbolStyle } from "../UILabel/UILabel";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator } from "../UIRenderer";
 import { UITextList } from "../UITextList/UITextList";
@@ -39,6 +40,10 @@ export class UIObservableEditableTextList implements UIEditableTextList {
             text,
             lineHeight,
             parent);
+    }
+
+    StyleRange(begin: number, end: number, style: SymbolStyle): void {
+        this.textList.StyleRange(begin, end, style);
     }
 
     get OnVanish(): Observable<void> {
