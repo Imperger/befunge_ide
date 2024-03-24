@@ -52,27 +52,29 @@ export class CodeEditorTooltipService {
 
         instance.Scale = 0.2;
 
-        let x = 0, y = 0;
-        switch (position) {
-            case TooltipPosition.LeftBottom:
-                x = margin + column * cellSize;
-                y = margin + (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize;
-                break;
-            case TooltipPosition.LeftTop:
-                x = margin + column * cellSize;
-                y = (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize + cellSize - instance.Dimension.height - margin;
-                break;
-            case TooltipPosition.RightTop:
-                x = column * cellSize + cellSize - instance.Dimension.width - margin;
-                y = (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize + cellSize - instance.Dimension.height - margin;
-                break;
-            case TooltipPosition.RightBottom:
-                x = column * cellSize + cellSize - instance.Dimension.width - margin;
-                y = margin + (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize;
-                break;
-        }
+        queueMicrotask(() => {
+            let x = 0, y = 0;
+            switch (position) {
+                case TooltipPosition.LeftBottom:
+                    x = margin + column * cellSize;
+                    y = margin + (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize;
+                    break;
+                case TooltipPosition.LeftTop:
+                    x = margin + column * cellSize;
+                    y = (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize + cellSize - instance.Dimension.height - margin;
+                    break;
+                case TooltipPosition.RightTop:
+                    x = column * cellSize + cellSize - instance.Dimension.width - margin;
+                    y = (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize + cellSize - instance.Dimension.height - margin;
+                    break;
+                case TooltipPosition.RightBottom:
+                    x = column * cellSize + cellSize - instance.Dimension.width - margin;
+                    y = margin + (this.codeEditorRenderer.Dimension.Rows - row - 1) * cellSize;
+                    break;
+            }
 
-        instance.Position = { x, y };
+            instance.Position = { x, y };
+        });
 
         this.tooltips.push({ column, row, position, instance });
 
