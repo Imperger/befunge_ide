@@ -30,6 +30,7 @@ export class StackControls {
             { width: 130, height: 300 },
             1,
             '',
+            { borderWidth: 2, fillColor: [0, 0, 0, 0] },
             32,
             this.group);
 

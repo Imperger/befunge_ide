@@ -131,8 +131,9 @@ export class LanguageSyntaxHelpControls {
                     width: Math.min(this.maxWidth, this.settings.ViewDimension.Width) / this.group.Scale,
                     height: this.settings.ViewDimension.Height / this.group.Scale * 0.75
                 },
-                1,
+                6,
                 '',
+                { borderWidth: 2, fillColor: [1, 1, 1, 1] },
                 this.lineHeight,
                 this.group);
 

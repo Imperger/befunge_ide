@@ -67,6 +67,7 @@ export class IOControls {
             { width: this.maxPanelWidth, height: textListHeight },
             1,
             '',
+            { borderWidth: 2, fillColor: [0, 0, 0, 0] },
             32,
             this.group);
 
@@ -75,6 +76,7 @@ export class IOControls {
             { width: this.maxPanelWidth, height: textListHeight },
             1,
             '',
+            { borderWidth: 2, fillColor: [0, 0, 0, 0] },
             32,
             this.group);
         this.inputEditableTextList.Visible = false;
