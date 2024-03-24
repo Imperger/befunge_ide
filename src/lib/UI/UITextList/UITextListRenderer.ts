@@ -6,7 +6,7 @@ import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator, UIRenderer } from "../UIRenderer";
 
 import { UIObservableTextList, UIObservableTextListDeleter } from "./UIObservableTextList";
-import { UITextList } from "./UITextList";
+import { ContainerStyle, UITextList } from "./UITextList";
 import FTextListBorder from './UITextListBorder.frag'
 import VTextListBorder from './UITextListBorder.vert'
 import FUITextListStencil from './UITextListStencil.frag';
@@ -26,7 +26,7 @@ import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 
 enum UITextListBorderComponent { X, Y, Z };
 
-enum UITextListStencilComponent { X, Y };
+enum UITextListStencilComponent { X, Y, Z, Fr, Fg, Fb };
 
 class UITextListBorderRenderer extends PrimitivesRenderer {
     public readonly IndicesPerPrimitive;
@@ -71,8 +71,6 @@ export class UITextListRenderer extends PrimitivesRenderer {
 
     private readonly zFarIncluded = 0.1;
 
-    private readonly borderWidth = 2;
-
     private borderRenderer: UITextListBorderRenderer;
 
     private vertexAttributesTracker: MemoryPoolTracker;
@@ -92,11 +90,19 @@ export class UITextListRenderer extends PrimitivesRenderer {
             { fragment: FUITextListStencil, vertex: VUITextListStencil },
             [{
                 name: 'a_vertex',
-                size: 2,
+                size: 3,
                 type: gl.FLOAT,
                 normalized: false,
                 stride,
                 offset: 0
+            },
+            {
+                name: 'a_fill_color',
+                size: 4,
+                type: gl.FLOAT,
+                normalized: false,
+                stride,
+                offset: 3
             }],
             { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
 
@@ -167,6 +173,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         deleter: UIObservableTextListDeleter,
         parent: UIObservablePositioningGroup | null = null): UITextList {
@@ -177,7 +184,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
             zIndex,
             text,
             lineHeight,
-            this.borderWidth,
+            containerStyle,
             this.vertexAttributesTracker.Allocate(),
             this.labelRenderer,
             this.UIRenderer,
@@ -207,7 +214,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
 
         this.gl.stencilOp(
             this.gl.KEEP,
-            this.gl.REPLACE,// Rendering occurs behind the scene. See UITextListStencil.vert
+            this.gl.KEEP,
             this.gl.REPLACE
         );
 
@@ -232,7 +239,6 @@ export class UITextListRenderer extends PrimitivesRenderer {
 
         this.borderRenderer.Draw();
     }
-
 
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
@@ -264,14 +270,17 @@ export class UITextListRenderer extends PrimitivesRenderer {
         if (component.Visible) {
             attrs = PrimitiveBuilder.AABBRectangle(
                 {
-                    x: component.AbsolutePosition.x + component.BorderWidth,
-                    y: component.AbsolutePosition.y + component.BorderWidth
+                    x: component.AbsolutePosition.x + component.ContainerStyle.borderWidth,
+                    y: component.AbsolutePosition.y + component.ContainerStyle.borderWidth
                 },
                 {
-                    width: component.Dimension.width - 2 * component.BorderWidth,
-                    height: component.Dimension.height - 2 * component.BorderWidth
+                    width: component.Dimension.width - 2 * component.ContainerStyle.borderWidth,
+                    height: component.Dimension.height - 2 * component.ContainerStyle.borderWidth
                 },
-                []);
+                [
+                    [this.settings.ZFar - component.ZIndex - this.zFarIncluded + 0.1],
+                    component.ContainerStyle.fillColor
+                ]);
         } else {
             attrs = new Array(this.AttributesPerComponent).fill(0);
         }
@@ -286,7 +295,7 @@ export class UITextListRenderer extends PrimitivesRenderer {
             attrs = PrimitiveBuilder.AABBFrame(
                 component.AbsolutePosition,
                 component.Dimension,
-                component.BorderWidth,
+                component.ContainerStyle.borderWidth,
                 [
                     [this.settings.ZFar - component.ZIndex - this.zFarIncluded]
                 ]

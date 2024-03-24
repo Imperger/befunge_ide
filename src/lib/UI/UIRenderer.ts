@@ -19,7 +19,7 @@ import { UIObservablePositioningGroup } from "./UIObservablePositioningGroup";
 import { TouchCallback as TextButtonTouchCallback } from "./UITextButton/UIObservableTextButton";
 import { UIObservableTextButton } from "./UITextButton/UIObservableTextButton";
 import { UICaptionStyle, UITextButton } from "./UITextButton/UITextButton";
-import { UITextList } from "./UITextList/UITextList";
+import { ContainerStyle, UITextList } from "./UITextList/UITextList";
 import { UITextListRenderer, UITextListRendererFactory } from "./UITextList/UITextListRenderer";
 
 import { MouseSelectEvent } from "@/app/AppEventTransformer";
@@ -60,6 +60,7 @@ export interface UICreator {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         parent: UIObservablePositioningGroup | null): UITextList;
 
@@ -67,6 +68,7 @@ export interface UICreator {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         parent: UIObservablePositioningGroup | null): UIEditableTextList;
 }
@@ -135,6 +137,7 @@ export class UIRenderer implements UICreator {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         parent: UIObservablePositioningGroup | null = null): UITextList {
         const renderer = this.uiTextListRendererFactory(this);
@@ -150,6 +153,7 @@ export class UIRenderer implements UICreator {
             dimension,
             zIndex,
             text,
+            containerStyle,
             lineHeight,
             () => this.UIObservableTextListDeleter(descriptor),
             parent);
@@ -165,6 +169,7 @@ export class UIRenderer implements UICreator {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         parent: UIObservablePositioningGroup | null = null): UIEditableTextList {
         const renderer = this.uiEditableTextListRendererFactory(this);
@@ -181,6 +186,7 @@ export class UIRenderer implements UICreator {
             dimension,
             zIndex,
             text,
+            containerStyle,
             lineHeight,
             () => this.UIObservableEditableTextListDeleter(descriptor),
             parent);

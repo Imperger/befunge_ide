@@ -3,7 +3,7 @@ import { Dimension } from "../UIComponent";
 import { SymbolStyle } from "../UILabel/UILabel";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator } from "../UIRenderer";
-import { UITextList } from "../UITextList/UITextList";
+import { ContainerStyle, UITextList } from "../UITextList/UITextList";
 
 import { UIEditableTextList } from "./UIEditableTextList";
 
@@ -28,6 +28,7 @@ export class UIObservableEditableTextList implements UIEditableTextList {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         uiRenderer: UICreator,
         private deleter: UIObservableEditableTextListDeleter,
@@ -38,6 +39,7 @@ export class UIObservableEditableTextList implements UIEditableTextList {
             dimension,
             zIndex,
             text,
+            containerStyle,
             lineHeight,
             parent);
     }
@@ -107,12 +109,12 @@ export class UIObservableEditableTextList implements UIEditableTextList {
         this.textList.LineHeight = lineHeight;
     }
 
-    get BorderWidth(): number {
-        return this.textList.BorderWidth;
+    get ContainerStyle(): ContainerStyle {
+        return this.textList.ContainerStyle;
     }
 
-    set BorderWdith(borderWidth: number) {
-        this.textList.BorderWidth = borderWidth;
+    set ContainerStyle(style: ContainerStyle) {
+        this.textList.ContainerStyle = style;
     }
 
     get Scale(): number {

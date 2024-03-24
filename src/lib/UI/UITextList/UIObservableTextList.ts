@@ -8,7 +8,7 @@ import { UILabelRenderer } from "../UILabel/UILabelRenderer";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator } from "../UIRenderer";
 
-import { UITextList } from "./UITextList";
+import { ContainerStyle, UITextList } from "./UITextList";
 
 import { MathUtil } from "@/lib/math/MathUtil";
 import { Observable, ObservableController, ObserverDetacher } from "@/lib/Observable";
@@ -53,7 +53,7 @@ export class UIObservableTextList implements UITextList {
         private zIndex: number,
         text: string,
         lineHeight: number,
-        private borderWidth: number,
+        private containerStyle: ContainerStyle,
         public Offset: number,
         private labelRenderer: UILabelRenderer,
         private uiRenderer: UICreator,
@@ -62,7 +62,7 @@ export class UIObservableTextList implements UITextList {
     ) {
         this.label = this.labelRenderer.Create(
             {
-                x: position.x + this.BorderWidth,
+                x: position.x + this.ContainerStyle.borderWidth,
                 y: position.y
             },
             zIndex,
@@ -123,7 +123,7 @@ export class UIObservableTextList implements UITextList {
 
         this.scroll = 0;
         this.label.Position = {
-            x: this.position.x + this.BorderWidth,
+            x: this.position.x + this.ContainerStyle.borderWidth,
             y: this.position.y
         }
 
@@ -154,12 +154,16 @@ export class UIObservableTextList implements UITextList {
         this.ScheduleUpdateScrollControlsPresence();
     }
 
-    get BorderWidth(): number {
-        return this.borderWidth * this.Scale;
+    get ContainerStyle(): ContainerStyle {
+        return {
+            borderWidth: this.containerStyle.borderWidth * this.Scale,
+            fillColor: this.containerStyle.fillColor
+        };
     }
 
-    set BorderWidth(width: number) {
-        this.borderWidth = width;
+    set BorderWidth(style: ContainerStyle) {
+        this.containerStyle.borderWidth = style.borderWidth;
+        this.containerStyle.fillColor = style.fillColor;
 
         this.observable.Notify(this);
     }
@@ -270,15 +274,15 @@ export class UIObservableTextList implements UITextList {
     }
 
     private get ScrollButtonX(): number {
-        return this.Position.x + this.dimension.width - this.borderWidth - this.scrollButtonDimension.width - this.margin;
+        return this.Position.x + this.dimension.width - this.containerStyle.borderWidth - this.scrollButtonDimension.width - this.margin;
     }
 
     private get ScrollTopButtonY(): number {
-        return this.Position.y + this.dimension.height - this.scrollButtonDimension.height - this.borderWidth - this.margin;
+        return this.Position.y + this.dimension.height - this.scrollButtonDimension.height - this.containerStyle.borderWidth - this.margin;
     }
 
     private get ScrollBottomButtonY(): number {
-        return this.Position.y + this.BorderWidth + this.margin;
+        return this.Position.y + this.ContainerStyle.borderWidth + this.margin;
     }
 
     private CreateTopScrollButton(): UIIconButton {
@@ -312,7 +316,7 @@ export class UIObservableTextList implements UITextList {
     }
 
     get MinScroll(): number {
-        return this.Position.y - this.label.Dimension.height / this.label.Scale + this.dimension.height - 2 * this.borderWidth;
+        return this.Position.y - this.label.Dimension.height / this.label.Scale + this.dimension.height - 2 * this.containerStyle.borderWidth;
     }
 
     get MaxScroll(): number {

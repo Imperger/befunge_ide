@@ -3,6 +3,7 @@ import { inject, injectable, interfaces } from "inversify";
 import { Dimension } from "../UIComponent";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 import { UICreator, UIRenderer } from "../UIRenderer";
+import { ContainerStyle } from "../UITextList/UITextList";
 
 import { UIEditableTextList } from "./UIEditableTextList";
 import FEditableTextListCursor from './UIEditableTextListCursor.frag';
@@ -46,6 +47,7 @@ export class UIEditableTextListRenderer extends PrimitivesRenderer {
         dimension: Dimension,
         zIndex: number,
         text: string,
+        containerStyle: ContainerStyle,
         lineHeight: number,
         deleter: UIObservableEditableTextListDeleter,
         parent: UIObservablePositioningGroup | null = null): UIEditableTextList {
@@ -55,6 +57,7 @@ export class UIEditableTextListRenderer extends PrimitivesRenderer {
             dimension,
             zIndex,
             text,
+            containerStyle,
             lineHeight,
             this.uiRenderer,
             deleter,
