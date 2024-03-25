@@ -16,13 +16,21 @@ export class IOPort {
   }
 
   InputReadNumber(): number {
-    let numberEnd = 0;
+    let nonSpaceIdx = this.input.findIndex(x => x !== ' ');
+
+    if (['-', '+'].includes(this.input[nonSpaceIdx])) {
+      ++nonSpaceIdx;
+    }
+
+    let numberEnd = nonSpaceIdx;
+
     for (
       let char = this.input[numberEnd];
       numberEnd < this.input.length && char >= '0' && char <= '9';
-      ++numberEnd);
+      char = this.input[++numberEnd]);
 
-    if (numberEnd === 0) {
+
+    if (numberEnd === nonSpaceIdx) {
       throw new Error('Failed to read number from IO port');
     }
 
