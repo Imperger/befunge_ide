@@ -21,6 +21,7 @@ import { TouchCallback, UIObservableIconButton } from "./UIObservableIconButton"
 import { AppSettings } from "@/app/AppSettings";
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
+import { ArrayHelper } from "@/lib/ArrayHelper";
 import { TextureAtlas } from "@/lib/renderer/TextureAtlas";
 
 enum UIIconButtonComponent { X, Y, Z, fillR, fillG, fillB, iconR, iconG, iconB, Ux, Uy };
@@ -28,10 +29,6 @@ enum UIIconButtonComponent { X, Y, Z, fillR, fillG, fillB, iconR, iconG, iconB, 
 enum UIIconButtonOutlineComponent { X, Y, Z, R, G, B };
 
 class UIButtonOutlineRenderer extends PrimitivesRenderer {
-    static IndicesPerPrimitive = 24;
-
-    static readonly AttributesPerComponent = EnumSize(UIIconButtonOutlineComponent) * UIButtonOutlineRenderer.IndicesPerPrimitive;
-
     constructor(gl: WebGL2RenderingContext) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UIIconButtonOutlineComponent);
@@ -54,15 +51,11 @@ class UIButtonOutlineRenderer extends PrimitivesRenderer {
                 stride,
                 offset: 3 * floatSize
             }],
-            { indicesPerPrimitive: UIButtonOutlineRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive: 24, basePrimitiveType: gl.TRIANGLES });
     }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
-    }
-
-    get Attributes(): Float32Array {
-        return this.attributes;
     }
 }
 
@@ -74,10 +67,6 @@ interface TouchAnimationStart {
 
 @injectable()
 export class UIIconButtonRenderer extends PrimitivesRenderer {
-    private readonly IndicesPerPrimitive;
-
-    private readonly AttributesPerComponent
-
     private readonly zFarIncluded = 0.1;
 
     private settings: AppSettings;
@@ -89,7 +78,6 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
     private vertexAttributesTracker: MemoryPoolTracker;
 
     private touchStart: TouchAnimationStart[] = [];
-
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
@@ -135,9 +123,6 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             }],
             { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
 
-        this.IndicesPerPrimitive = indicesPerPrimitive;
-        this.AttributesPerComponent = EnumSize(UIIconButtonComponent) * this.IndicesPerPrimitive;
-
         this.settings = Inversify.get(AppSettings);
 
         this.outline = new UIButtonOutlineRenderer(gl);
@@ -147,24 +132,32 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
                 const initialCapacity = 2;
                 super(initialCapacity);
 
-                renderer.UploadAttributes(Array.from({ length: renderer.AttributesPerComponent * initialCapacity }, () => 0));
-                renderer.outline.UploadAttributes(Array.from({ length: UIButtonOutlineRenderer.AttributesPerComponent * initialCapacity }, () => 0));
+                renderer.UploadAttributes(Array.from({ length: renderer.ComponentsPerPrimitive * initialCapacity }, () => 0));
+                renderer.outline.UploadAttributes(Array.from({ length: renderer.outline.ComponentsPerPrimitive * initialCapacity }, () => 0));
             }
 
             OnShrink(inUseIndices: number[]): void {
-                const buttonAttrs = new Array(this.renderer.AttributesPerComponent * inUseIndices.length).fill(0);
-                const buttonOutlineAttrs = new Array(UIButtonOutlineRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
+                const buttonAttrs = new Array(this.renderer.ComponentsPerPrimitive * inUseIndices.length).fill(0);
+                const buttonOutlineAttrs = new Array(this.renderer.outline.ComponentsPerPrimitive * inUseIndices.length).fill(0);
 
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
 
-                    for (let attribOffset = 0; attribOffset < this.renderer.AttributesPerComponent; ++attribOffset) {
-                        buttonAttrs[n * this.renderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * this.renderer.AttributesPerComponent + attribOffset];
-                    }
+                    const buttonComponents = this.renderer.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        buttonAttrs,
+                        n * this.renderer.ComponentsPerPrimitive,
+                        buttonComponents,
+                        0,
+                        buttonComponents.length);
 
-                    for (let attribOffset = 0; attribOffset < UIButtonOutlineRenderer.AttributesPerComponent; ++attribOffset) {
-                        buttonOutlineAttrs[n * UIButtonOutlineRenderer.AttributesPerComponent + attribOffset] = this.renderer.outline.Attributes[offset * UIButtonOutlineRenderer.AttributesPerComponent + attribOffset];
-                    }
+                    const buttonOutlineComponents = this.renderer.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        buttonAttrs,
+                        n * this.renderer.outline.ComponentsPerPrimitive,
+                        buttonOutlineComponents,
+                        0,
+                        buttonOutlineComponents.length);
                 }
 
                 this.renderer.UploadAttributes(buttonAttrs);
@@ -182,16 +175,19 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
             }
 
             OnExtend(extendedCapacity: number): void {
+                const buttonComponents = this.renderer.PrimitiveComponentsRange(0, this.renderer.TotalPrimitives);
+
                 const extendedButtonAttrs = Array.from(
-                    { length: extendedCapacity * this.renderer.AttributesPerComponent },
-                    (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.ComponentsPerPrimitive },
+                    (_, n) => n < buttonComponents.length ? buttonComponents[n] : 0);
 
                 this.renderer.UploadAttributes(extendedButtonAttrs);
 
 
+                const buttonOutlineComponents = this.renderer.outline.PrimitiveComponentsRange(0, this.renderer.outline.TotalPrimitives);
                 const extendedOutlineAttrs = Array.from(
-                    { length: extendedCapacity * UIButtonOutlineRenderer.AttributesPerComponent },
-                    (_, n) => n < this.renderer.outline.Attributes.length ? this.renderer.outline.Attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.outline.ComponentsPerPrimitive },
+                    (_, n) => n < buttonOutlineComponents.length ? buttonOutlineComponents[n] : 0);
 
                 this.renderer.outline.UploadAttributes(extendedOutlineAttrs);
             }
@@ -337,21 +333,21 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
     }
 
     private UpdateContentAttributes(component: UIObservableIconButton): void {
-        this.UpdateComponentAttributes(
+        this.UpdatePrimitiveComponents(
             this.ExtractContentAttributes(component),
-            component.Offset * this.AttributesPerComponent);
+            component.Offset * this.ComponentsPerPrimitive);
     }
 
     private ResetOutlineAttributes(component: UIObservableIconButton): void {
-        this.outline.UpdateComponentAttributes(
-            new Array(UIButtonOutlineRenderer.IndicesPerPrimitive * EnumSize(UIIconButtonOutlineComponent)).fill(0),
-            component.Offset * UIButtonOutlineRenderer.AttributesPerComponent);
+        this.outline.UpdatePrimitiveComponents(
+            new Array(this.outline.ComponentsPerPrimitive).fill(0),
+            component.Offset * this.outline.ComponentsPerPrimitive);
     }
 
     private UpdateOutlineAttributes(component: UIObservableIconButton): void {
-        this.outline.UpdateComponentAttributes(
+        this.outline.UpdatePrimitiveComponents(
             this.ExtractOutlineAttributes(component),
-            component.Offset * UIButtonOutlineRenderer.AttributesPerComponent);
+            component.Offset * this.outline.ComponentsPerPrimitive);
     }
 
     private ExtractContentAttributes(component: UIObservableIconButton): number[] {

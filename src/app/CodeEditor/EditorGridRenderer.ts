@@ -86,43 +86,39 @@ export class EditorGridRenderer extends PrimitivesRenderer {
 
     Symbol(symbol: string, column: number, row: number): void {
         row = this.settings.MemoryLimit.Height - row - 1;
-
-        const cellAttrs = this.PrimitiveAttributes(row * this.settings.MemoryLimit.Width + column);
+        const cellIdx = row * this.settings.MemoryLimit.Width + column;
+        const cellAttrs = this.PrimitiveComponents(cellIdx);
         const symbolUV = this.fontAtlas.LookupUV(symbol);
 
-        const UVOffset = 5;
-        const UVStartOffset = cellAttrs.offset + UVOffset;
+        const UVStartOffset = 5;
 
         // Left bottom
-        cellAttrs.buffer[UVStartOffset] = symbolUV.A.x;
-        cellAttrs.buffer[UVStartOffset + 1] = symbolUV.B.y;
+        cellAttrs[UVStartOffset] = symbolUV.A.x;
+        cellAttrs[UVStartOffset + 1] = symbolUV.B.y;
 
         const stride = EnumSize(CodeCellComponent);
 
         // Right top
-        cellAttrs.buffer[UVStartOffset + stride] = symbolUV.B.x;
-        cellAttrs.buffer[UVStartOffset + stride + 1] = symbolUV.A.y;
+        cellAttrs[UVStartOffset + stride] = symbolUV.B.x;
+        cellAttrs[UVStartOffset + stride + 1] = symbolUV.A.y;
 
         // Left top
-        cellAttrs.buffer[UVStartOffset + 2 * stride] = symbolUV.A.x;
-        cellAttrs.buffer[UVStartOffset + 2 * stride + 1] = symbolUV.A.y;
+        cellAttrs[UVStartOffset + 2 * stride] = symbolUV.A.x;
+        cellAttrs[UVStartOffset + 2 * stride + 1] = symbolUV.A.y;
 
         // Left bottom
-        cellAttrs.buffer[UVStartOffset + 3 * stride] = symbolUV.A.x;
-        cellAttrs.buffer[UVStartOffset + 3 * stride + 1] = symbolUV.B.y;
+        cellAttrs[UVStartOffset + 3 * stride] = symbolUV.A.x;
+        cellAttrs[UVStartOffset + 3 * stride + 1] = symbolUV.B.y;
 
         // Right bottom
-        cellAttrs.buffer[UVStartOffset + 4 * stride] = symbolUV.B.x;
-        cellAttrs.buffer[UVStartOffset + 4 * stride + 1] = symbolUV.B.y;
+        cellAttrs[UVStartOffset + 4 * stride] = symbolUV.B.x;
+        cellAttrs[UVStartOffset + 4 * stride + 1] = symbolUV.B.y;
 
         // Right top
-        cellAttrs.buffer[UVStartOffset + 5 * stride] = symbolUV.B.x;
-        cellAttrs.buffer[UVStartOffset + 5 * stride + 1] = symbolUV.A.y;
+        cellAttrs[UVStartOffset + 5 * stride] = symbolUV.B.x;
+        cellAttrs[UVStartOffset + 5 * stride + 1] = symbolUV.A.y;
 
-        const floatSize = TypeSizeResolver.Resolve(this.gl.FLOAT);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
-        this.gl.bufferSubData(this.gl.ARRAY_BUFFER, floatSize * UVStartOffset, this.attributes, UVStartOffset, 5 * stride + 2);
+        this.UpdatePrimitiveComponents(cellAttrs, cellIdx * this.ComponentsPerPrimitive);
     }
 
     Draw(): void {

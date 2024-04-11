@@ -16,6 +16,7 @@ import { UIObservableAlert } from './UIObservableAlert';
 import { AppSettings } from '@/app/AppSettings';
 import { InjectionToken } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
+import { ArrayHelper } from '@/lib/ArrayHelper';
 import { EnumSize } from "@/lib/EnumSize";
 import { MemoryPoolTracker } from '@/lib/MemoryPoolTracker';
 import { Vec2 } from '@/lib/Primitives';
@@ -24,20 +25,13 @@ import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
 import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 
-enum UIAlertIconComponent { X, Y, Z, fillR, fillG, fillB, iconR, iconG, iconB, Ux, Uy };
-
 enum UIAlertPanelComponent { X, Y, Z, R, G, B };
 
 @injectable()
 class UIAlertIconRenderer extends PrimitivesRenderer {
-    public readonly IndicesPerPrimitive = 6;
-
-    public readonly AttributesPerComponent;
-
     constructor(@inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UIAlertPanelComponent);
-        const indicesPerPrimitive = 6;
 
         super(gl,
             { fragment: FUIALertIcon, vertex: VUIAlertIcon },
@@ -73,30 +67,18 @@ class UIAlertIconRenderer extends PrimitivesRenderer {
                 stride,
                 offset: 9 * floatSize
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
-
-        this.IndicesPerPrimitive = indicesPerPrimitive;
-        this.AttributesPerComponent = EnumSize(UIAlertIconComponent) * this.IndicesPerPrimitive;
+            { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
     }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
     }
-
-    get Attributes(): Float32Array {
-        return this.attributes;
-    }
-
 }
 
 Inversify.bind(UIAlertIconRenderer).toSelf().inSingletonScope();
 
 @injectable()
 export class UIAlertRenderer extends PrimitivesRenderer {
-    private readonly IndicesPerPrimitive;
-
-    private readonly AttributesPerComponent;
-
     private readonly zFarIncluded = 0.1;
 
     private uiRenderer!: UICreator;
@@ -118,7 +100,6 @@ export class UIAlertRenderer extends PrimitivesRenderer {
 
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UIAlertPanelComponent);
-        const indicesPerPrimitive = 6;
 
         super(gl,
             { fragment: FUIAlertPanel, vertex: VUIAlertPanel },
@@ -138,37 +119,44 @@ export class UIAlertRenderer extends PrimitivesRenderer {
                 stride,
                 offset: 3 * floatSize
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
-
-        this.IndicesPerPrimitive = indicesPerPrimitive;
-        this.AttributesPerComponent = EnumSize(UIAlertPanelComponent) * this.IndicesPerPrimitive;
+            { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
         this.vertexAttributesTracker = new (class extends MemoryPoolTracker {
             constructor(private renderer: UIAlertRenderer) {
                 const initialCapacity = 1;
                 super(initialCapacity);
 
-                renderer.UploadAttributes(Array.from({ length: renderer.AttributesPerComponent * initialCapacity }, () => 0));
-                renderer.alertIcon.UploadAttributes(Array.from({ length: this.renderer.alertIcon.AttributesPerComponent * initialCapacity }, () => 0));
+                renderer.UploadAttributes(Array.from({ length: renderer.ComponentsPerPrimitive * initialCapacity }, () => 0));
+                renderer.alertIcon.UploadAttributes(Array.from({ length: this.renderer.alertIcon.ComponentsPerPrimitive * initialCapacity }, () => 0));
             }
 
             OnShrink(inUseIndices: number[]): void {
-                const panelAttrs = new Array(this.renderer.AttributesPerComponent * inUseIndices.length).fill(0);
-                const buttonOutlineAttrs = new Array(this.renderer.alertIcon.AttributesPerComponent * inUseIndices.length).fill(0);
+                const panelAttrs = new Array(this.renderer.ComponentsPerPrimitive * inUseIndices.length).fill(0);
+                const alertIconComponents = new Array(this.renderer.alertIcon.ComponentsPerPrimitive * inUseIndices.length).fill(0);
 
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
 
-                    for (let attribOffset = 0; attribOffset < this.renderer.AttributesPerComponent; ++attribOffset) {
-                        panelAttrs[n * this.renderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * this.renderer.AttributesPerComponent + attribOffset];
-                    }
+                    const panelComponents = this.renderer.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        panelAttrs,
+                        n * this.renderer.ComponentsPerPrimitive,
+                        panelComponents,
+                        0,
+                        panelComponents.length);
 
-                    for (let attribOffset = 0; attribOffset < this.renderer.alertIcon.AttributesPerComponent; ++attribOffset) {
-                        buttonOutlineAttrs[n * this.renderer.alertIcon.AttributesPerComponent + attribOffset] = this.renderer.alertIcon.Attributes[offset * this.renderer.alertIcon.AttributesPerComponent + attribOffset];
-                    }
+
+                    const alertIconComponents = this.renderer.alertIcon.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        alertIconComponents,
+                        n * this.renderer.alertIcon.ComponentsPerPrimitive,
+                        alertIconComponents,
+                        0,
+                        alertIconComponents.length);
                 }
 
                 this.renderer.UploadAttributes(panelAttrs);
+                this.renderer.alertIcon.UploadAttributes(alertIconComponents);
 
                 this.renderer.alerts.forEach(alert => {
                     const idx = inUseIndices.indexOf(alert.Offset);
@@ -182,15 +170,20 @@ export class UIAlertRenderer extends PrimitivesRenderer {
             }
 
             OnExtend(extendedCapacity: number): void {
+                const panelComponents = this.renderer.PrimitiveComponentsRange(0, this.renderer.TotalPrimitives);
+
                 const extendedPanelAttrs = Array.from(
-                    { length: extendedCapacity * this.renderer.AttributesPerComponent },
-                    (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.ComponentsPerPrimitive },
+                    (_, n) => n < panelComponents.length ? panelComponents[n] : 0);
 
                 this.renderer.UploadAttributes(extendedPanelAttrs);
 
+
+                const alertIconsComponents = this.renderer.PrimitiveComponentsRange(0, this.renderer.TotalPrimitives);
+
                 const extendedAlertIconAttrs = Array.from(
-                    { length: extendedCapacity * this.renderer.alertIcon.AttributesPerComponent },
-                    (_, n) => n < this.renderer.alertIcon.Attributes.length ? this.renderer.alertIcon.Attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.alertIcon.ComponentsPerPrimitive },
+                    (_, n) => n < alertIconsComponents.length ? alertIconsComponents[n] : 0);
 
                 this.renderer.alertIcon.UploadAttributes(extendedAlertIconAttrs);
             }
@@ -279,20 +272,20 @@ export class UIAlertRenderer extends PrimitivesRenderer {
     }
 
     private UpdateAttributes(component: UIObservableAlert): void {
-        this.UpdateComponentAttributes(
+        this.UpdatePrimitiveComponents(
             this.ExtractPanelAttributes(component),
-            component.Offset * this.AttributesPerComponent);
+            component.Offset * this.ComponentsPerPrimitive);
 
         if (component.IsDestroyed) {
-            const emptyAttrs = new Array(this.IndicesPerPrimitive * EnumSize(UIAlertIconComponent)).fill(0);
+            const emptyAttrs = new Array(this.alertIcon.ComponentsPerPrimitive).fill(0);
 
-            this.alertIcon.UpdateComponentAttributes(
+            this.alertIcon.UpdatePrimitiveComponents(
                 emptyAttrs,
-                component.Offset * this.alertIcon.AttributesPerComponent);
+                component.Offset * this.alertIcon.ComponentsPerPrimitive);
         } else {
-            this.alertIcon.UpdateComponentAttributes(
+            this.alertIcon.UpdatePrimitiveComponents(
                 this.ExtractIconAttributes(component),
-                component.Offset * this.alertIcon.AttributesPerComponent);
+                component.Offset * this.alertIcon.ComponentsPerPrimitive);
         }
     }
 

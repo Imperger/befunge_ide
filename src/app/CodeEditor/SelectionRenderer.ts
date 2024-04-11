@@ -80,29 +80,22 @@ export class SelectionRenderer extends PrimitivesRenderer {
 
         if (selectionIdx !== -1) {
             const colorOffset = 2;
-            const attrs = this.PrimitiveAttributes(selectionIdx);
-
-            const floatSize = TypeSizeResolver.Resolve(this.gl.FLOAT);
+            const attrs = this.PrimitiveComponents(selectionIdx);
             const componentsPerVertex = EnumSize(SelectionComponent);
 
             for (let n = 0; n < SelectionRenderer.IndicesPerPrimitive; ++n) {
-                const colorStart = attrs.offset + colorOffset + n * componentsPerVertex;
+                const colorStart = colorOffset + n * componentsPerVertex;
 
-                attrs.buffer[colorStart] = color[0];
-                attrs.buffer[colorStart + 1] = color[1];
-                attrs.buffer[colorStart + 2] = color[2];
+                attrs[colorStart] = color[0];
+                attrs[colorStart + 1] = color[1];
+                attrs[colorStart + 2] = color[2];
             }
 
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
-            this.gl.bufferSubData(this.gl.ARRAY_BUFFER,
-                floatSize * (attrs.offset + colorOffset),
-                this.attributes,
-                attrs.offset + colorOffset,
-                (SelectionRenderer.IndicesPerPrimitive - 1) * componentsPerVertex + 3);
+            this.UpdatePrimitiveComponents(attrs, selectionIdx * componentsPerVertex * SelectionRenderer.IndicesPerPrimitive)
         } else {
             this.selected.push({ a: region.min, b: region.max });
 
-            const selection = PrimitiveBuilder.AABBFrame(
+            const attributes = PrimitiveBuilder.AABBFrame(
                 {
                     x: region.min.x * this.editorGridRenderer.CellSize,
                     y: region.min.y * this.editorGridRenderer.CellSize
@@ -114,7 +107,10 @@ export class SelectionRenderer extends PrimitivesRenderer {
                 0.5,
                 [color]);
 
-            this.UploadAttributes([...this.attributes, ...selection]);
+            this.UploadAttributes([
+                ...this.PrimitiveComponentsRange(0, this.TotalPrimitives),
+                ...attributes
+            ]);
         }
     }
 
@@ -144,12 +140,10 @@ export class SelectionRenderer extends PrimitivesRenderer {
             return;
         }
 
-        const attrs = this.PrimitiveAttributes(selectionIdx);
+        const attributes = this.PrimitiveComponentsRange(0, this.TotalPrimitives);
+        attributes.splice(selectionIdx * this.ComponentsPerPrimitive, this.ComponentsPerPrimitive);
 
-        const copy = [...this.attributes];
-
-        copy.splice(attrs.offset, EnumSize(SelectionComponent) * SelectionRenderer.IndicesPerPrimitive);
-        this.UploadAttributes(copy);
+        this.UploadAttributes(attributes);
 
         this.selected.splice(selectionIdx, 1);
     }

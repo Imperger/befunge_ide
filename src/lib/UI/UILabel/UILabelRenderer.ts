@@ -99,7 +99,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
             Free(index: number): void {
                 const emptyAttrs = new Array(this.renderer.AttributesPerComponent).fill(0);
 
-                this.renderer.UpdateComponentAttributes(emptyAttrs, index * this.renderer.AttributesPerComponent);
+                this.renderer.UpdatePrimitiveComponents(emptyAttrs, index * this.renderer.AttributesPerComponent);
 
                 super.Free(index);
             }
@@ -110,9 +110,13 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
 
-                    for (let attribOffset = 0; attribOffset < this.renderer.AttributesPerComponent; ++attribOffset) {
-                        labelAttrs[n * this.renderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * this.renderer.AttributesPerComponent + attribOffset];
-                    }
+                    const components = this.renderer.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        labelAttrs,
+                        n * this.renderer.AttributesPerComponent,
+                        components,
+                        0,
+                        components.length);
                 }
 
                 this.renderer.UploadAttributes(labelAttrs);
@@ -129,9 +133,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
             }
 
             OnExtend(extendedCapacity: number): void {
+                const components = this.renderer.PrimitiveComponentsRange(0, this.renderer.TotalPrimitives);
                 const extendedLabelAttrs = Array.from(
-                    { length: extendedCapacity * this.renderer.AttributesPerComponent },
-                    (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.ComponentsPerPrimitive },
+                    (_, n) => n < components.length ? components[n] : 0);
 
                 this.renderer.UploadAttributes(extendedLabelAttrs);
             }
@@ -248,7 +253,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
                         }
                     ]);
 
-                this.UpdateComponentAttributes(attributes, offset * this.AttributesPerComponent);
+                this.UpdatePrimitiveComponents(attributes, offset * this.AttributesPerComponent);
 
                 x += glyphBlueprint.width * component.Scale;
 

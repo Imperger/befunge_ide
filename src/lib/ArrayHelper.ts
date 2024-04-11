@@ -1,5 +1,10 @@
 type Comparator<T> = (a: T, b: T) => boolean;
 
+export interface ArrayLikeMut<T> {
+    readonly length: number;
+    [n: number]: T;
+}
+
 export class ArrayHelper {
     static Max<T>(array: T[], comparator: Comparator<T>): T {
         if (array.length === 1) {
@@ -29,5 +34,11 @@ export class ArrayHelper {
         }
 
         return min;
+    }
+
+    static Copy<T>(dest: ArrayLikeMut<T>, destStart: number, src: ArrayLikeMut<T>, srcStart: number, length: number): void {
+        for (let n = 0; n < length; ++n) {
+            dest[destStart + n] = src[srcStart + n];
+        }
     }
 }

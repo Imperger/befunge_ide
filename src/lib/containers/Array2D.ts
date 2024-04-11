@@ -61,6 +61,10 @@ export class Array2D<T> {
         return this.Every((value, index) => value === arr.Get(index));
     }
 
+    get RawRef(): T[] {
+        return this.data;
+    }
+
     private Initialize(): void {
         this.data = Array.from({ length: this.width * this.height }, () => this.provider!());
     }

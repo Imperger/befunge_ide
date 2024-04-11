@@ -15,6 +15,7 @@ import VUITextListStencil from './UITextListStencil.vert';
 import { AppSettings } from "@/app/AppSettings";
 import { InjectionToken, UILabelRendererTargetName } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
+import { ArrayHelper } from "@/lib/ArrayHelper";
 import { EnumSize } from "@/lib/EnumSize";
 import { MemoryPoolTracker } from "@/lib/MemoryPoolTracker";
 import { Vec2 } from "@/lib/Primitives";
@@ -29,10 +30,6 @@ enum UITextListBorderComponent { X, Y, Z };
 enum UITextListStencilComponent { X, Y, Z, Fr, Fg, Fb };
 
 class UITextListBorderRenderer extends PrimitivesRenderer {
-    public readonly IndicesPerPrimitive;
-
-    public readonly AttributesPerComponent;
-
     constructor(gl: WebGL2RenderingContext) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
         const stride = floatSize * EnumSize(UITextListBorderComponent);
@@ -49,26 +46,15 @@ class UITextListBorderRenderer extends PrimitivesRenderer {
                 offset: 0
             }],
             { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
-
-        this.IndicesPerPrimitive = indicesPerPrimitive;
-        this.AttributesPerComponent = EnumSize(UITextListBorderComponent) * this.IndicesPerPrimitive;
     }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
         this.shader.SetUniformMatrix4fv('u_viewProject', mat);
     }
-
-    get Attributes(): Float32Array {
-        return this.attributes;
-    }
 }
 
 @injectable()
 export class UITextListRenderer extends PrimitivesRenderer {
-    private readonly IndicesPerPrimitive;
-
-    private readonly AttributesPerComponent;
-
     private readonly zFarIncluded = 0.1;
 
     private borderRenderer: UITextListBorderRenderer;
@@ -106,9 +92,6 @@ export class UITextListRenderer extends PrimitivesRenderer {
             }],
             { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
 
-        this.IndicesPerPrimitive = indicesPerPrimitive;
-        this.AttributesPerComponent = EnumSize(UITextListStencilComponent) * this.IndicesPerPrimitive;
-
         this.borderRenderer = new UITextListBorderRenderer(this.gl);
 
         this.vertexAttributesTracker = new (class extends MemoryPoolTracker {
@@ -116,36 +99,44 @@ export class UITextListRenderer extends PrimitivesRenderer {
                 const initialCapacity = 2;
                 super(initialCapacity);
 
-                renderer.UploadAttributes(Array.from({ length: renderer.AttributesPerComponent * initialCapacity }, () => 0));
-                this.renderer.borderRenderer.UploadAttributes(Array.from({ length: renderer.borderRenderer.AttributesPerComponent * initialCapacity }, () => 0));
+                renderer.UploadAttributes(Array.from({ length: renderer.ComponentsPerPrimitive * initialCapacity }, () => 0));
+                this.renderer.borderRenderer.UploadAttributes(Array.from({ length: renderer.borderRenderer.ComponentsPerPrimitive * initialCapacity }, () => 0));
             }
 
             Free(index: number): void {
-                this.renderer.UpdateComponentAttributes(
-                    new Array(this.renderer.AttributesPerComponent).fill(0),
-                    index * this.renderer.AttributesPerComponent);
+                this.renderer.UpdatePrimitiveComponents(
+                    new Array(this.renderer.ComponentsPerPrimitive).fill(0),
+                    index * this.renderer.ComponentsPerPrimitive);
 
-                this.renderer.borderRenderer.UpdateComponentAttributes(
-                    new Array(this.renderer.borderRenderer.AttributesPerComponent).fill(0),
-                    index * this.renderer.borderRenderer.AttributesPerComponent);
+                this.renderer.borderRenderer.UpdatePrimitiveComponents(
+                    new Array(this.renderer.borderRenderer.ComponentsPerPrimitive).fill(0),
+                    index * this.renderer.borderRenderer.ComponentsPerPrimitive);
 
                 super.Free(index);
             }
 
             OnShrink(inUseIndices: number[]): void {
-                const scencilRectAttrs = new Array(this.renderer.AttributesPerComponent * inUseIndices.length).fill(0);
-                const borderAttrs = new Array(this.renderer.borderRenderer.AttributesPerComponent * inUseIndices.length).fill(0);
+                const scencilRectAttrs = new Array(this.renderer.ComponentsPerPrimitive * inUseIndices.length).fill(0);
+                const borderAttrs = new Array(this.renderer.borderRenderer.ComponentsPerPrimitive * inUseIndices.length).fill(0);
 
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
 
-                    for (let attribOffset = 0; attribOffset < this.renderer.AttributesPerComponent; ++attribOffset) {
-                        scencilRectAttrs[n * this.renderer.AttributesPerComponent + attribOffset] = this.renderer.attributes[offset * this.renderer.AttributesPerComponent + attribOffset];
-                    }
+                    const stencilComponents = this.renderer.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        scencilRectAttrs,
+                        n * this.renderer.ComponentsPerPrimitive,
+                        stencilComponents,
+                        0,
+                        stencilComponents.length);
 
-                    for (let attribOffset = 0; attribOffset < this.renderer.borderRenderer.AttributesPerComponent; ++attribOffset) {
-                        borderAttrs[n * this.renderer.borderRenderer.AttributesPerComponent + attribOffset] = this.renderer.borderRenderer.Attributes[offset * this.renderer.borderRenderer.AttributesPerComponent + attribOffset];
-                    }
+                    const borderComponents = this.renderer.borderRenderer.PrimitiveComponents(offset);
+                    ArrayHelper.Copy(
+                        borderAttrs,
+                        n * this.renderer.borderRenderer.ComponentsPerPrimitive,
+                        borderComponents,
+                        0,
+                        borderComponents.length);
                 }
 
                 this.renderer.UploadAttributes(scencilRectAttrs);
@@ -153,16 +144,18 @@ export class UITextListRenderer extends PrimitivesRenderer {
             }
 
             OnExtend(extendedCapacity: number): void {
+                const stencilComponents = this.renderer.PrimitiveComponentsRange(0, this.renderer.TotalPrimitives);
                 const extendedLabelAttrs = Array.from(
-                    { length: extendedCapacity * this.renderer.AttributesPerComponent },
-                    (_, n) => n < this.renderer.attributes.length ? this.renderer.attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.ComponentsPerPrimitive },
+                    (_, n) => n < stencilComponents.length ? stencilComponents[n] : 0);
 
                 this.renderer.UploadAttributes(extendedLabelAttrs);
 
 
+                const borderComponents = this.renderer.borderRenderer.PrimitiveComponentsRange(0, this.renderer.borderRenderer.TotalPrimitives);
                 const extendedBorderAttrs = Array.from(
-                    { length: extendedCapacity * this.renderer.borderRenderer.AttributesPerComponent },
-                    (_, n) => n < this.renderer.borderRenderer.Attributes.length ? this.renderer.borderRenderer.Attributes[n] : 0);
+                    { length: extendedCapacity * this.renderer.borderRenderer.ComponentsPerPrimitive },
+                    (_, n) => n < borderComponents.length ? borderComponents[n] : 0);
 
                 this.renderer.UploadAttributes(extendedBorderAttrs);
             }
@@ -282,10 +275,10 @@ export class UITextListRenderer extends PrimitivesRenderer {
                     component.ContainerStyle.fillColor
                 ]);
         } else {
-            attrs = new Array(this.AttributesPerComponent).fill(0);
+            attrs = new Array(this.ComponentsPerPrimitive).fill(0);
         }
 
-        this.UpdateComponentAttributes(attrs, component.Offset * this.AttributesPerComponent);
+        this.UpdatePrimitiveComponents(attrs, component.Offset * this.ComponentsPerPrimitive);
     }
 
     private UpdateBorderAttributes(component: UIObservableTextList): void {
@@ -301,10 +294,10 @@ export class UITextListRenderer extends PrimitivesRenderer {
                 ]
             );
         } else {
-            attrs = new Array(this.borderRenderer.AttributesPerComponent).fill(0);
+            attrs = new Array(this.borderRenderer.ComponentsPerPrimitive).fill(0);
         }
 
-        this.borderRenderer.UpdateComponentAttributes(attrs, component.Offset * this.borderRenderer.AttributesPerComponent);
+        this.borderRenderer.UpdatePrimitiveComponents(attrs, component.Offset * this.borderRenderer.ComponentsPerPrimitive);
     }
 }
 
