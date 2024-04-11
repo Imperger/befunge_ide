@@ -24,7 +24,7 @@ export class HeatmapGridRenderer extends PrimitivesRenderer {
 
     constructor(gl: WebGL2RenderingContext, attributes: number[]) {
         const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const gridStride = floatSize * EnumSize(HeatmapCellComponent);
+        const gridStride = floatSize * EnumSize(HeatmapCellComponent) + 4;
 
         super(gl,
             { fragment: FHeatmapGrid, vertex: VHeatmapGrid },
@@ -42,7 +42,7 @@ export class HeatmapGridRenderer extends PrimitivesRenderer {
                 type: gl.FLOAT,
                 normalized: false,
                 stride: gridStride,
-                offset: 0
+                offset: 2 * floatSize
             },
             {
                 name: 'a_color',
@@ -50,7 +50,14 @@ export class HeatmapGridRenderer extends PrimitivesRenderer {
                 type: gl.FLOAT,
                 normalized: false,
                 stride: gridStride,
-                offset: 2 * floatSize
+                offset: 4 * floatSize
+            },
+            {
+                name: 'a_hitsFlow',
+                size: 1,
+                type: gl.UNSIGNED_INT,
+                stride: gridStride,
+                offset: 8 * floatSize
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
@@ -63,12 +70,15 @@ export class HeatmapGridRenderer extends PrimitivesRenderer {
 
     Draw(): void {
         this.shader.SetUniform1f('u_time', Date.now() / 1000 - this.startTime);
-
         super.Draw();
     }
 }
+interface HeatmapCellAttributes {
+    color: Rgba;
+    hitsFlow: number;
+}
 
-type HeatmapColorInput = Array2D<Rgba>;
+export type HeatmapRenderInfo = Array2D<HeatmapCellAttributes>;
 
 @injectable()
 class HeatmapGridRendererBuilder {
@@ -79,23 +89,20 @@ class HeatmapGridRendererBuilder {
         @inject(AppSettings) private settings: AppSettings
     ) { }
 
-    Build(heatmap: HeatmapColorInput): HeatmapGridRenderer {
-        const width = this.settings.MemoryLimit.Width * this.CellSize;
-        const height = this.settings.MemoryLimit.Height * this.CellSize;
-        const aspectRatio = width / height;
-        const uvCellSize = { width: this.CellSize / width, height: this.CellSize / height };
+    Build(heatmap: HeatmapRenderInfo): HeatmapGridRenderer {
         const vertexList: number[] = [];
         for (let row = 0; row < this.settings.MemoryLimit.Height; ++row) {
             for (let column = 0; column < this.settings.MemoryLimit.Width; ++column) {
-                const color: Rgba = heatmap.Get({ column, row: this.settings.MemoryLimit.Height - row - 1 });
+                const attributes = heatmap.Get({ column, row: this.settings.MemoryLimit.Height - row - 1 });
 
                 const cell = this.BuildCell(
                     { x: column * this.CellSize, y: row * this.CellSize },
                     {
-                        A: { x: column * this.CellSize / width * aspectRatio, y: row * this.CellSize / height },
-                        B: { x: (column * this.CellSize / width + uvCellSize.width) * aspectRatio, y: row * this.CellSize / height + uvCellSize.height }
+                        A: { x: 0, y: 0 },
+                        B: { x: 1, y: 1 }
                     },
-                    color);
+                    attributes.color,
+                    attributes.hitsFlow);
 
                 vertexList.push(...cell);
             }
@@ -107,7 +114,8 @@ class HeatmapGridRendererBuilder {
     private BuildCell(
         position: Vec2,
         uvCoord: UV,
-        color: Rgba
+        color: Rgba,
+        hitsFlow: number
     ): number[] {
         return PrimitiveBuilder.AABBRectangle(
             position,
@@ -119,7 +127,8 @@ class HeatmapGridRendererBuilder {
                     RightTop: [uvCoord.B.x, uvCoord.B.y],
                     RightBottom: [uvCoord.B.x, uvCoord.A.y]
                 },
-                color
+                color,
+                [hitsFlow]
             ]
         );
     }
@@ -127,8 +136,8 @@ class HeatmapGridRendererBuilder {
 
 Inversify.bind(HeatmapGridRendererBuilder).toSelf().inRequestScope();
 
-export type HeatMapGridFactory = (heatmap: HeatmapColorInput) => HeatmapGridRenderer;
+export type HeatMapGridFactory = (heatmap: HeatmapRenderInfo) => HeatmapGridRenderer;
 
 Inversify
     .bind<interfaces.Factory<HeatMapGridFactory>>(InjectionToken.HeatmapGridRendererFactory)
-    .toFactory<HeatmapGridRenderer, [HeatmapColorInput]>(ctx => (data: HeatmapColorInput) => ctx.container.get(HeatmapGridRendererBuilder).Build(data));
+    .toFactory<HeatmapGridRenderer, [HeatmapRenderInfo]>(ctx => (data: HeatmapRenderInfo) => ctx.container.get(HeatmapGridRendererBuilder).Build(data));

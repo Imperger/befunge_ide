@@ -1,6 +1,6 @@
 import { inject, injectable, interfaces } from "inversify";
 
-import { HeatMapGridFactory, HeatmapGridRenderer } from "./HeatMapGridRenderer";
+import { HeatMapGridFactory, HeatmapGridRenderer, HeatmapRenderInfo } from "./HeatMapGridRenderer";
 
 import { AppSettings } from "@/app/AppSettings";
 import { CodeEditorExtension } from "@/app/CodeEditor/CodeEditorExtension";
@@ -8,12 +8,12 @@ import { CodeEditorService } from "@/app/CodeEditor/CodeEditorService";
 import { TooltipPosition, TooltipReleaser } from "@/app/CodeEditor/CodeEditorTooltipService";
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
+import { CellHitsFlow } from "@/lib/befunge/Profiler";
 import { Array2D } from "@/lib/containers/Array2D";
 import { Rgb, Rgba } from "@/lib/Primitives";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 
-type HeatmapHitStats = Array2D<number>;
-
+type HeatmapHitStats = Array2D<CellHitsFlow>;
 
 class HeatmapExtension implements CodeEditorExtension {
     constructor(
@@ -58,9 +58,10 @@ export class HeatmapExtensionBuilder {
 
         const releasers = this.DrawHitsOnCell();
 
-        const colors = this.heatmap.Map(x => this.HitsToColor(x));
+        const renderInfo: HeatmapRenderInfo = this.heatmap
+            .Map(x => ({ color: this.HitsToColor(x.Total), hitsFlow: this.PackHitsFlow(x.Normalized) }));
 
-        const renderer = this.heatmapGridRendererFactory(colors);
+        const renderer = this.heatmapGridRendererFactory(renderInfo);
 
         return new HeatmapExtension(renderer, releasers)
     }
@@ -80,8 +81,22 @@ export class HeatmapExtensionBuilder {
         ]
     }
 
+    private PackHitsFlow(normalizedHitsFlow: number[]): number {
+        return normalizedHitsFlow.reduce((packed, x, n) => {
+            if (x >= 0.66) {
+                return packed | 3 << 2 * n;
+            } else if (x >= 0.33) {
+                return packed | 2 << 2 * n;
+            } else if (x > 0) {
+                return packed | 1 << 2 * n;
+            }
+
+            return packed;
+        }, 0);
+    }
+
     private Setup(): void {
-        this.heatmap.ForEach(x => this.maxHits = Math.max(this.maxHits, x));
+        this.heatmap.ForEach(x => this.maxHits = Math.max(this.maxHits, x.Total));
 
         this.hitsColorsDiff = [
             this.highHitsColor[0] - this.lowHitsColor[0],
@@ -96,9 +111,8 @@ export class HeatmapExtensionBuilder {
         for (let row = 0; row < this.settings.MemoryLimit.Height; ++row) {
             for (let column = 0; column < this.settings.MemoryLimit.Width; ++column) {
                 const hits = this.heatmap.Get({ column, row });
-                if (hits > 0) {
-                    const releaser = this.codeEditor.Tooltip(column, row, hits.toString(), TooltipPosition.LeftBottom);
-
+                if (hits.Total > 0) {
+                    const releaser = this.codeEditor.Tooltip(column, row, hits.Total.toString(), TooltipPosition.LeftBottom);
                     releasers.push(releaser);
                 }
             }
