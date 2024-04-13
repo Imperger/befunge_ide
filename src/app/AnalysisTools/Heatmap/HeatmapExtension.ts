@@ -58,12 +58,21 @@ export class HeatmapExtensionBuilder {
 
         const releasers = this.DrawHitsOnCell();
 
+        const max = this.MaxHits(this.heatmap);
         const renderInfo: HeatmapRenderInfo = this.heatmap
-            .Map(x => ({ color: this.HitsToColor(x.Total), hitsFlow: this.PackHitsFlow(x.Normalized) }));
+            .Map(x => ({ color: this.HitsToColor(x.Total), hitsFlow: this.PackHitsFlow(x.Normalized(max)) }));
 
         const renderer = this.heatmapGridRendererFactory(renderInfo);
 
         return new HeatmapExtension(renderer, releasers)
+    }
+
+    private MaxHits(stats: HeatmapHitStats): number {
+        let max = 0;
+
+        stats.ForEach(x => max = Math.max(max, x.Max));
+
+        return max;
     }
 
     private HitsToColor(hits: number): Rgba {

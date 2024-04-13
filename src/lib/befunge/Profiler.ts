@@ -1,3 +1,4 @@
+import { ArrayHelper } from "../ArrayHelper";
 import { Array2D, Index2D } from "../containers/Array2D";
 import { EnumSize } from "../EnumSize";
 
@@ -16,6 +17,10 @@ export class CellHitsFlow {
         this.stats.Update(index, updater);
     }
 
+    get Max(): number {
+        return ArrayHelper.Max(this.stats.RawRef, (a, b) => a < b)
+    }
+
     get Total(): number {
         let totalHits = 0;
         this.stats.ForEach(x => totalHits += x);
@@ -23,10 +28,8 @@ export class CellHitsFlow {
         return totalHits;
     }
 
-    get Normalized(): number[] {
-        const total = this.Total;
-
-        return this.stats.Map(x => x / total).RawRef;
+    Normalized(max: number): number[] {
+        return this.stats.Map(x => x / max).RawRef;
     }
 }
 
