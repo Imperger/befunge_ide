@@ -12,23 +12,15 @@ import { UIObservableEditableTextList, UIObservableEditableTextListDeleter } fro
 
 import { InjectionToken } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
-import { EnumSize } from "@/lib/EnumSize";
 import { Vec2 } from "@/lib/Primitives";
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
-import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
-
-
-enum UIEditableTextListCursorComponent { X, Y, Z };
 
 @injectable()
 export class UIEditableTextListRenderer extends PrimitivesRenderer {
     private uiRenderer!: UICreator;
 
     constructor(@inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UIEditableTextListCursorComponent);
-        const indicesPerPrimitive = 6;
 
         super(gl,
             { fragment: FEditableTextListCursor, vertex: VEditableTextListCursor },
@@ -36,11 +28,9 @@ export class UIEditableTextListRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
     }
 
     Create(position: Vec2,

@@ -7,15 +7,11 @@ import FSelection from './Selection.frag';
 import VSelection from './Selection.vert';
 
 import { Inversify } from '@/Inversify';
-import { EnumSize } from '@/lib/EnumSize';
 import { MathUtil } from '@/lib/math/MathUtil';
 import { Rgb, Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
-import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
-
-enum SelectionComponent { X, Y, R, G, B };
 
 interface SelectionBoundaryPoint {
     x: number;
@@ -36,9 +32,6 @@ export class SelectionRenderer extends PrimitivesRenderer {
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
         @inject(EditorGridRenderer) private editorGridRenderer: EditorGridRenderer) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-
-        const selectionStride = floatSize * EnumSize(SelectionComponent);
 
         super(
             gl,
@@ -48,17 +41,13 @@ export class SelectionRenderer extends PrimitivesRenderer {
                     name: 'a_vertex',
                     size: 2,
                     type: gl.FLOAT,
-                    normalized: false,
-                    stride: selectionStride,
-                    offset: 0
+                    normalized: false
                 },
                 {
                     name: 'a_color',
                     size: 3,
                     type: gl.FLOAT,
-                    normalized: false,
-                    stride: selectionStride,
-                    offset: 2 * floatSize
+                    normalized: false
                 }
             ],
             { indicesPerPrimitive: SelectionRenderer.IndicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
@@ -81,17 +70,16 @@ export class SelectionRenderer extends PrimitivesRenderer {
         if (selectionIdx !== -1) {
             const colorOffset = 2;
             const attrs = this.PrimitiveComponents(selectionIdx);
-            const componentsPerVertex = EnumSize(SelectionComponent);
 
             for (let n = 0; n < SelectionRenderer.IndicesPerPrimitive; ++n) {
-                const colorStart = colorOffset + n * componentsPerVertex;
+                const colorStart = colorOffset + n * this.ComponentsPerVertex;
 
                 attrs[colorStart] = color[0];
                 attrs[colorStart + 1] = color[1];
                 attrs[colorStart + 2] = color[2];
             }
 
-            this.UpdatePrimitiveComponents(attrs, selectionIdx * componentsPerVertex * SelectionRenderer.IndicesPerPrimitive)
+            this.UpdatePrimitiveComponents(attrs, selectionIdx * this.ComponentsPerVertex * SelectionRenderer.IndicesPerPrimitive)
         } else {
             this.selected.push({ a: region.min, b: region.max });
 

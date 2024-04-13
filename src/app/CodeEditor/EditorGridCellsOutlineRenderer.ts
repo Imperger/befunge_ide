@@ -7,14 +7,11 @@ import VCellsOutline from './CellsOutline.vert';
 import { EditorGridRenderer } from "./EditorGridRenderer";
 
 import { Inversify } from '@/Inversify';
-import { EnumSize } from '@/lib/EnumSize';
 import { Rgb } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
-import { TypeSizeResolver } from '@/lib/renderer/TypeSizeResolver';
 
-enum CodeCellOutlineComponent { X, Y, R, G, B };
 
 @injectable()
 export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
@@ -27,8 +24,6 @@ export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) protected gl: WebGL2RenderingContext,
         @inject(EditorGridRenderer) private gridRenderer: EditorGridRenderer) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const gridStride = floatSize * EnumSize(CodeCellOutlineComponent);
 
         super(
             gl,
@@ -37,17 +32,13 @@ export class EditorGridCellsOutlineRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_color',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 2 * floatSize
+                normalized: false
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES }
         );

@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 
 import { UIIconAtlas } from '../UIIcon';
-import { Dimension } from '../UIIconButton/UIIconButton';
 import { UILabel } from '../UILabel/UILabel';
 import { UIObservablePositioningGroup } from '../UIObservablePositioningGroup';
 import { UICreator } from '../UIRenderer';
@@ -17,21 +16,16 @@ import { AppSettings } from '@/app/AppSettings';
 import { InjectionToken } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
 import { ArrayHelper } from '@/lib/ArrayHelper';
-import { EnumSize } from "@/lib/EnumSize";
 import { MemoryPoolTracker } from '@/lib/MemoryPoolTracker';
 import { Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
-import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 
-enum UIAlertPanelComponent { X, Y, Z, R, G, B };
 
 @injectable()
 class UIAlertIconRenderer extends PrimitivesRenderer {
     constructor(@inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UIAlertPanelComponent);
 
         super(gl,
             { fragment: FUIALertIcon, vertex: VUIAlertIcon },
@@ -39,33 +33,25 @@ class UIAlertIconRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_fillColor',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 3 * floatSize
+                normalized: false
             },
             {
                 name: 'a_iconColor',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 6 * floatSize
+                normalized: false
             },
             {
                 name: 'a_icon',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 9 * floatSize
+                normalized: false
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
     }
@@ -98,26 +84,19 @@ export class UIAlertRenderer extends PrimitivesRenderer {
         @inject(InjectionToken.IconAtlasTexture) private iconAtlasTexture: WebGLTexture,
         @inject(AppSettings) private settings: AppSettings) {
 
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UIAlertPanelComponent);
-
         super(gl,
             { fragment: FUIAlertPanel, vertex: VUIAlertPanel },
             [{
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_color',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 3 * floatSize
+                normalized: false
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 

@@ -14,10 +14,6 @@ import { Rgb, Rgba, Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
-import { TypeSizeResolver } from '@/lib/renderer/TypeSizeResolver';
-
-
-enum CodeCellComponent { X, Y, R, G, B, Ux, Uy };
 
 export interface EditorGridDimension {
     Columns: number;
@@ -33,8 +29,6 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
         @inject(InjectionToken.FontAtlas) private fontAtlas: FontAtlas,
         @inject(InjectionToken.FontAtlasTexture) private fontAtlasTexture: WebGLTexture) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const gridStride = floatSize * EnumSize(CodeCellComponent);
 
         super(gl,
             { fragment: FGrid, vertex: VGrid },
@@ -42,25 +36,19 @@ export class EditorGridRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_color',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 2 * floatSize
+                normalized: false
             },
             {
                 name: 'a_glyph',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 2 * floatSize + 3 * floatSize
+                normalized: false
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
@@ -96,27 +84,25 @@ export class EditorGridRenderer extends PrimitivesRenderer {
         cellAttrs[UVStartOffset] = symbolUV.A.x;
         cellAttrs[UVStartOffset + 1] = symbolUV.B.y;
 
-        const stride = EnumSize(CodeCellComponent);
-
         // Right top
-        cellAttrs[UVStartOffset + stride] = symbolUV.B.x;
-        cellAttrs[UVStartOffset + stride + 1] = symbolUV.A.y;
+        cellAttrs[UVStartOffset + this.ComponentsPerVertex] = symbolUV.B.x;
+        cellAttrs[UVStartOffset + this.ComponentsPerVertex + 1] = symbolUV.A.y;
 
         // Left top
-        cellAttrs[UVStartOffset + 2 * stride] = symbolUV.A.x;
-        cellAttrs[UVStartOffset + 2 * stride + 1] = symbolUV.A.y;
+        cellAttrs[UVStartOffset + 2 * this.ComponentsPerVertex] = symbolUV.A.x;
+        cellAttrs[UVStartOffset + 2 * this.ComponentsPerVertex + 1] = symbolUV.A.y;
 
         // Left bottom
-        cellAttrs[UVStartOffset + 3 * stride] = symbolUV.A.x;
-        cellAttrs[UVStartOffset + 3 * stride + 1] = symbolUV.B.y;
+        cellAttrs[UVStartOffset + 3 * this.ComponentsPerVertex] = symbolUV.A.x;
+        cellAttrs[UVStartOffset + 3 * this.ComponentsPerVertex + 1] = symbolUV.B.y;
 
         // Right bottom
-        cellAttrs[UVStartOffset + 4 * stride] = symbolUV.B.x;
-        cellAttrs[UVStartOffset + 4 * stride + 1] = symbolUV.B.y;
+        cellAttrs[UVStartOffset + 4 * this.ComponentsPerVertex] = symbolUV.B.x;
+        cellAttrs[UVStartOffset + 4 * this.ComponentsPerVertex + 1] = symbolUV.B.y;
 
         // Right top
-        cellAttrs[UVStartOffset + 5 * stride] = symbolUV.B.x;
-        cellAttrs[UVStartOffset + 5 * stride + 1] = symbolUV.A.y;
+        cellAttrs[UVStartOffset + 5 * this.ComponentsPerVertex] = symbolUV.B.x;
+        cellAttrs[UVStartOffset + 5 * this.ComponentsPerVertex + 1] = symbolUV.A.y;
 
         this.UpdatePrimitiveComponents(cellAttrs, cellIdx * this.ComponentsPerPrimitive);
     }

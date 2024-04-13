@@ -38,10 +38,6 @@ interface SplitedLine {
  */
 @injectable()
 export class UILabelRenderer extends PrimitivesRenderer {
-    private readonly IndicesPerPrimitive;
-
-    private readonly AttributesPerComponent;
-
     private readonly zFarIncluded = 0.1;
 
     private labels = new Map<Offset, UIObservableLabel>();
@@ -53,9 +49,6 @@ export class UILabelRenderer extends PrimitivesRenderer {
         @inject(AppSettings) private settings: AppSettings,
         @inject(InjectionToken.FontAtlasTexture) private fontTexture: WebGLTexture,
         @inject(InjectionToken.FontGlyphCollectionFactory) private fontGlyphCollectionFactory: FontGlyphCollectionFactory) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UILabelComponent);
-        const indicesPerPrimitive = 6;
 
         super(gl,
             { fragment: FUILabel, vertex: VUILabel },
@@ -63,49 +56,40 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_color',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 3 * floatSize
+                normalized: false
             },
             {
                 name: 'a_glyph',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 6 * floatSize
+                normalized: false
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
-
-        this.IndicesPerPrimitive = indicesPerPrimitive;
-        this.AttributesPerComponent = EnumSize(UILabelComponent) * this.IndicesPerPrimitive;
+            { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
         this.vertexAttributesTracker = new (class extends MemoryPoolTracker {
             constructor(private renderer: UILabelRenderer) {
                 const initialCapacity = 256;
                 super(initialCapacity);
 
-                renderer.UploadAttributes(Array.from({ length: renderer.AttributesPerComponent * initialCapacity }, () => 0));
+                renderer.UploadAttributes(Array.from({ length: renderer.ComponentsPerPrimitive * initialCapacity }, () => 0));
             }
 
             Free(index: number): void {
-                const emptyAttrs = new Array(this.renderer.AttributesPerComponent).fill(0);
+                const emptyAttrs = new Array(this.renderer.ComponentsPerPrimitive).fill(0);
 
-                this.renderer.UpdatePrimitiveComponents(emptyAttrs, index * this.renderer.AttributesPerComponent);
+                this.renderer.UpdatePrimitiveComponents(emptyAttrs, index * this.renderer.ComponentsPerPrimitive);
 
                 super.Free(index);
             }
 
             OnShrink(inUseIndices: number[]): void {
-                const labelAttrs = new Array(this.renderer.AttributesPerComponent * inUseIndices.length).fill(0);
+                const labelAttrs = new Array(this.renderer.ComponentsPerPrimitive * inUseIndices.length).fill(0);
 
                 for (let n = 0; n < inUseIndices.length; ++n) {
                     const offset = inUseIndices[n];
@@ -113,7 +97,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
                     const components = this.renderer.PrimitiveComponents(offset);
                     ArrayHelper.Copy(
                         labelAttrs,
-                        n * this.renderer.AttributesPerComponent,
+                        n * this.renderer.ComponentsPerPrimitive,
                         components,
                         0,
                         components.length);
@@ -253,7 +237,7 @@ export class UILabelRenderer extends PrimitivesRenderer {
                         }
                     ]);
 
-                this.UpdatePrimitiveComponents(attributes, offset * this.AttributesPerComponent);
+                this.UpdatePrimitiveComponents(attributes, offset * this.ComponentsPerPrimitive);
 
                 x += glyphBlueprint.width * component.Scale;
 

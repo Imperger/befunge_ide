@@ -16,36 +16,24 @@ import { AppSettings } from "@/app/AppSettings";
 import { InjectionToken, UILabelRendererTargetName } from "@/app/InjectionToken";
 import { Inversify } from "@/Inversify";
 import { ArrayHelper } from "@/lib/ArrayHelper";
-import { EnumSize } from "@/lib/EnumSize";
 import { MemoryPoolTracker } from "@/lib/MemoryPoolTracker";
 import { Vec2 } from "@/lib/Primitives";
 import { PrimitiveBuilder } from "@/lib/renderer/PrimitiveBuilder";
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
-import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 
-
-enum UITextListBorderComponent { X, Y, Z };
-
-enum UITextListStencilComponent { X, Y, Z, Fr, Fg, Fb };
 
 class UITextListBorderRenderer extends PrimitivesRenderer {
     constructor(gl: WebGL2RenderingContext) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UITextListBorderComponent);
-        const indicesPerPrimitive = 24;
-
         super(gl,
             { fragment: FTextListBorder, vertex: VTextListBorder },
             [{
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive: 24, basePrimitiveType: gl.TRIANGLES });
     }
 
     set ViewProjection(mat: Mat4 | Float32Array) {
@@ -68,29 +56,21 @@ export class UITextListRenderer extends PrimitivesRenderer {
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
         @inject(UILabelRenderer) @named(UILabelRendererTargetName.Unique) private labelRenderer: UILabelRenderer) {
 
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UITextListStencilComponent);
-        const indicesPerPrimitive = 6;
-
         super(gl,
             { fragment: FUITextListStencil, vertex: VUITextListStencil },
             [{
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_fill_color',
                 size: 4,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 3
+                normalized: false
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 
         this.borderRenderer = new UITextListBorderRenderer(this.gl);
 

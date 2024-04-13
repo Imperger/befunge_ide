@@ -8,56 +8,41 @@ import VHeatmapGrid from './HeatmapGrid.vert';
 
 import { Inversify } from "@/Inversify";
 import { Array2D } from "@/lib/containers/Array2D";
-import { EnumSize } from "@/lib/EnumSize";
 import { Rgba, Vec2 } from "@/lib/Primitives";
 import { PrimitiveBuilder } from "@/lib/renderer/PrimitiveBuilder";
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from "@/lib/renderer/ShaderProgram";
 import { UV } from "@/lib/renderer/TextureAtlas";
-import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
-
-enum HeatmapCellComponent { X, Y, Fx, Fy, R, G, B };
 
 
 export class HeatmapGridRenderer extends PrimitivesRenderer {
     private readonly startTime = Date.now() / 1000;
 
     constructor(gl: WebGL2RenderingContext, attributes: number[]) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const gridStride = floatSize * EnumSize(HeatmapCellComponent) + 4;
-
         super(gl,
             { fragment: FHeatmapGrid, vertex: VHeatmapGrid },
             [{
                 name: 'a_vertex',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_uvCoord',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 2 * floatSize
+                normalized: false
             },
             {
                 name: 'a_color',
                 size: 4,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: gridStride,
-                offset: 4 * floatSize
+                normalized: false
             },
             {
                 name: 'a_hitsFlow',
                 size: 1,
-                type: gl.UNSIGNED_INT,
-                stride: gridStride,
-                offset: 8 * floatSize
+                type: gl.UNSIGNED_INT
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
 

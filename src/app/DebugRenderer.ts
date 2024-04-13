@@ -3,12 +3,10 @@ import VDebugRenderer from './DebugRenderer.vert';
 
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
-import { TypeSizeResolver } from '@/lib/renderer/TypeSizeResolver';
 
 export class DebugRenderer extends PrimitivesRenderer {
     constructor(gl: WebGL2RenderingContext) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        
+
         super(
             gl,
             { vertex: VDebugRenderer, fragment: FDebugRenderer },
@@ -16,9 +14,7 @@ export class DebugRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride: 3 * floatSize,
-                offset: 0
+                normalized: false
             }],
             { indicesPerPrimitive: 3, basePrimitiveType: gl.LINES });
     }

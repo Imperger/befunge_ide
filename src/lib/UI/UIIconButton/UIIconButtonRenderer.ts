@@ -1,13 +1,11 @@
 
 import { inject, injectable } from "inversify";
 
-import { EnumSize } from "../../EnumSize";
 import { MemoryPoolTracker } from "../../MemoryPoolTracker";
 import { Rgb, Vec2 } from "../../Primitives";
 import { PrimitiveBuilder } from "../../renderer/PrimitiveBuilder";
 import { PrimitivesRenderer } from "../../renderer/PrimitivesRenderer";
 import { Mat4 } from "../../renderer/ShaderProgram";
-import { TypeSizeResolver } from "../../renderer/TypeSizeResolver";
 import { UIIconAtlas, UVExtra } from "../UIIcon";
 import { UIObservablePositioningGroup } from "../UIObservablePositioningGroup";
 
@@ -24,14 +22,9 @@ import { Inversify } from "@/Inversify";
 import { ArrayHelper } from "@/lib/ArrayHelper";
 import { TextureAtlas } from "@/lib/renderer/TextureAtlas";
 
-enum UIIconButtonComponent { X, Y, Z, fillR, fillG, fillB, iconR, iconG, iconB, Ux, Uy };
-
-enum UIIconButtonOutlineComponent { X, Y, Z, R, G, B };
 
 class UIButtonOutlineRenderer extends PrimitivesRenderer {
     constructor(gl: WebGL2RenderingContext) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
-        const stride = floatSize * EnumSize(UIIconButtonOutlineComponent);
 
         super(gl,
             { fragment: FUIIconButtonOutline, vertex: VUIIconButtonOutline },
@@ -39,17 +32,13 @@ class UIButtonOutlineRenderer extends PrimitivesRenderer {
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_color',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 3 * floatSize
+                normalized: false
             }],
             { indicesPerPrimitive: 24, basePrimitiveType: gl.TRIANGLES });
     }
@@ -83,45 +72,34 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
         @inject(InjectionToken.IconAtlas) private iconAtlas: UIIconAtlas,
         @inject(InjectionToken.IconAtlasTexture) private iconAtlasTexture: WebGLTexture) {
-        const floatSize = TypeSizeResolver.Resolve(gl.FLOAT);
 
-        const stride = floatSize * EnumSize(UIIconButtonComponent);
-        const indicesPerPrimitive = 18;
         super(gl,
             { fragment: FUIIconButton, vertex: VUIIconButton },
             [{
                 name: 'a_vertex',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 0
+                normalized: false
             },
             {
                 name: 'a_fillColor',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 3 * floatSize
+                normalized: false
             },
             {
                 name: 'a_iconColor',
                 size: 3,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 6 * floatSize
+                normalized: false
             },
             {
                 name: 'a_icon',
                 size: 2,
                 type: gl.FLOAT,
-                normalized: false,
-                stride,
-                offset: 9 * floatSize
+                normalized: false
             }],
-            { indicesPerPrimitive, basePrimitiveType: gl.TRIANGLES });
+            { indicesPerPrimitive: 18, basePrimitiveType: gl.TRIANGLES });
 
         this.settings = Inversify.get(AppSettings);
 

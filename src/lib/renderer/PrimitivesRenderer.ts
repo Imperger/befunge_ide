@@ -30,16 +30,12 @@ interface FloatAttributeDescription {
   size: GLint;
   type: FloatTypes;
   normalized: GLboolean;
-  stride: GLsizei;
-  offset: GLintptr;
 }
 
 interface IntegerAttributeDescription {
   name: string;
   size: GLint;
   type: IntegerTypes;
-  stride: GLsizei;
-  offset: GLintptr;
 }
 
 type AttributeDescription = FloatAttributeDescription | IntegerAttributeDescription;
@@ -224,6 +220,13 @@ export class PrimitivesRenderer {
    */
   get TotalPrimitives(): number {
     return this.vertexCount / this.primitiveDescription.indicesPerPrimitive;
+  }
+
+  /**
+     * Returns the count of components per vertex
+     */
+  get ComponentsPerVertex(): number {
+    return this.componentsPerVertex;
   }
 
   /**
