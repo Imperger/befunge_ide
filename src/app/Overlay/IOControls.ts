@@ -108,6 +108,10 @@ export class IOControls {
         return this.inputEditableTextList.Text;
     }
 
+    set Input(text: string) {
+        this.inputEditableTextList.Text = text;;
+    }
+
     Resize(): void {
         this.inputEditableTextList.Dimension = {
             width: this.PanelWidth,

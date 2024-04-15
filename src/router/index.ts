@@ -10,7 +10,7 @@ const routes: Array<RouteRecordRaw> = [
     component: CodeEditor
   },
   {
-    path: '/share/:encoded',
+    path: '/share/:source_code/:settings?',
     name: 'Share',
     props: true,
     component: CodeEditor

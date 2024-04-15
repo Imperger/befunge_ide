@@ -117,6 +117,10 @@ export class DebugControls {
         this.debugMenuGroup?.Resize();
     }
 
+    ClickOnHeatmap(): void {
+        this.heatmapButton.Touch();
+    }
+
     get DebugMode(): boolean {
         return this.debugMode;
     }

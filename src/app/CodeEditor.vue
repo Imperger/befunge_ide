@@ -2,6 +2,7 @@
 import { onBeforeUnmount } from 'vue';
 
 import { AppService } from './AppService';
+import { AppSettingsCodec } from './AppSettingsCodec';
 import { GlobalDependencies } from './GlobalDependencies';
 import { InjectionToken } from './InjectionToken';
 
@@ -11,7 +12,10 @@ import Webgl2Canvas from '@/lib/VueComponents/WebglCanvas.vue';
 
 let service!: AppService;
 
-const props = defineProps({ encoded: { required: false, type: String, default: '' } });
+const props = defineProps({
+  source_code: { required: false, type: String, default: '' },
+  settings: { required: false, type: String, default: '' }
+});
 
 onBeforeUnmount(() => service.Dispose());
 
@@ -65,10 +69,15 @@ function OnTouchEnd(e: TouchEvent): void {
 }
 
 function OnSharedCode() {
-  if (props.encoded.length > 0) {
+  if (props.source_code.length > 0) {
     try {
-      const sourceCode = BefungeSourceCodeCodec.Decode(props.encoded);
+      const sourceCode = BefungeSourceCodeCodec.Decode(props.source_code);
       service.LoadSourceCodeToEditor(sourceCode);
+
+      if (props.settings.length > 0) {
+        const settings = AppSettingsCodec.Decode(props.settings);
+        service.LoadSettings(settings);
+      }
     } catch (e) {
       if (e instanceof Error) {
         service.Snackbar.ShowError(e.message);

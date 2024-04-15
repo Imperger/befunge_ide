@@ -3,6 +3,7 @@ import { inject, injectable, named } from 'inversify';
 
 import { AppEventTransformer, MouseMovementEvent, MouseSelectEvent } from './AppEventTransformer';
 import { AppSettings } from './AppSettings';
+import { AppSettingsCodec, ShareableAppSettings } from './AppSettingsCodec';
 import { CameraService } from './CameraService';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
@@ -359,9 +360,26 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
     }
 
     private ShareSourceCode(): void {
-        const encoded = BefungeSourceCodeCodec.Encode(this.SourceCodeString());
+        const source_code = BefungeSourceCodeCodec.Encode(this.SourceCodeString());
 
-        router.replace({ name: 'Share', params: { encoded } });
+        const shareableSettings = this.ShareableSettings();
+        const settings = shareableSettings ? AppSettingsCodec.Encode(shareableSettings) : '';
+
+        router.replace({ name: 'Share', params: { source_code, settings } });
+    }
+
+    private ShareableSettings(): ShareableAppSettings | null {
+        const settings: ShareableAppSettings = {};
+
+        if (this.overlay.DebugControls.IsHeatmapShown) {
+            settings.heatmap = true;
+        }
+
+        if (this.overlay.IOControls.Input.length > 0) {
+            settings.input = this.overlay.IOControls.Input;
+        }
+
+        return Object.keys(settings).length > 0 ? settings : null;
     }
 
     LoadSourceCodeToEditor(sourceCode: string): void {
@@ -377,6 +395,16 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         }
 
         this.overlay.FileControls.ShareDisabled = this.editorSourceCode.Empty;
+    }
+
+    LoadSettings(settings: ShareableAppSettings): void {
+        if (settings.input !== undefined) {
+            this.overlay.IOControls.Input = settings.input;
+        }
+
+        if (settings.heatmap !== undefined) {
+            this.overlay.DebugControls.ClickOnHeatmap();
+        }
     }
 
     private OnSourceCodeChanged(): void {
