@@ -26,6 +26,7 @@ export class ExecutionService {
         try {
             if (this.befungeToolbox.Interpreter.RunFor(this.settings.ExecutionTimeout)) {
                 this.overlay.Snackbar.ShowSuccess(`Ok\nInstructions executed: ${this.befungeToolbox.Interpreter.InstructionsExecuted}`, 1000);
+                this.overlay.IOControls.SwitchTab(false);
             } else {
                 this.overlay.Snackbar.ShowWarning('Terminated due timeout');
             }

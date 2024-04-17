@@ -82,7 +82,11 @@ export class IOControls {
         this.inputEditableTextList.Visible = false;
     }
 
-    private SwitchTab(inputTab: boolean): void {
+    SwitchTab(inputTab: boolean): void {
+        if (this.inputButton.Disable === inputTab) {
+            return;
+        }
+
         this.inputButton.Disable = inputTab;
         this.outputButton.Disable = !inputTab;
 
@@ -125,7 +129,6 @@ export class IOControls {
 
         this.group.Resize();
     }
-
 
     get PanelWidth(): number {
         const widthToFit = this.settings.ViewDimension.Width - this.group.AbsolutePosition.x;
