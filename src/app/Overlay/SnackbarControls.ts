@@ -19,8 +19,6 @@ export class SnackbarControls {
 
     private lineHeight = 24;
 
-    private showTime = 5000;
-
     private hideTimer = -1;
 
     constructor(
@@ -31,7 +29,7 @@ export class SnackbarControls {
             { vertical: VerticalAnchor.Bottom, horizontal: HorizontalAnchor.Middle });
     }
 
-    Show(icon: UIAlertIconStyle, text: UIAlertText, style: UIAlertStyle): void {
+    Show(icon: UIAlertIconStyle, text: UIAlertText, style: UIAlertStyle, timeout: number): void {
         if (this.snackbar !== null) {
             this.Hide();
         }
@@ -46,7 +44,7 @@ export class SnackbarControls {
 
         this.LimitToViewportWidth();
 
-        this.hideTimer = setTimeout(() => this.Hide(), this.showTime);
+        this.hideTimer = setTimeout(() => this.Hide(), timeout);
     }
 
     private LimitToViewportWidth(): void {
@@ -57,35 +55,39 @@ export class SnackbarControls {
         }
     }
 
-    ShowError(msg: string): void {
+    ShowError(msg: string, timeout = 5000): void {
         this.Show(
             { icon: UIIcon.ExclamationCircle, color: this.contentColor },
             { text: msg, lineHeight: this.lineHeight, color: this.contentColor },
-            { fillColor: [0.83, 0.18, 0.18] }
+            { fillColor: [0.83, 0.18, 0.18] },
+            timeout
         );
     }
 
-    ShowWarning(msg: string): void {
+    ShowWarning(msg: string, timeout = 5000): void {
         this.Show(
             { icon: UIIcon.ExclamationTriangle, color: this.contentColor },
             { text: msg, lineHeight: this.lineHeight, color: this.contentColor },
-            { fillColor: [0.93, 0.42, 0.01] }
+            { fillColor: [0.93, 0.42, 0.01] },
+            timeout
         );
     }
 
-    ShowInformation(msg: string): void {
+    ShowInformation(msg: string, timeout = 5000): void {
         this.Show(
             { icon: UIIcon.ExclamationCircle, color: this.contentColor },
             { text: msg, lineHeight: this.lineHeight, color: this.contentColor },
-            { fillColor: [0.1, 0.53, 0.82] }
+            { fillColor: [0.1, 0.53, 0.82] },
+            timeout
         );
     }
 
-    ShowSuccess(msg: string): void {
+    ShowSuccess(msg: string, timeout = 5000): void {
         this.Show(
             { icon: UIIcon.ExclamationCircle, color: this.contentColor },
             { text: msg, lineHeight: this.lineHeight, color: this.contentColor },
-            { fillColor: [0.18, 0.49, 0.2] }
+            { fillColor: [0.18, 0.49, 0.2] },
+            timeout
         );
     }
 
