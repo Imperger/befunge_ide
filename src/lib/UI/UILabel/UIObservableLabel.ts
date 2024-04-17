@@ -13,6 +13,9 @@ export interface GlyphAllocator {
     Free: (idx: number) => void;
 }
 
+export enum UpdatedProperty { Position = 0, Style, Text, LineHeight, ZIndex, Scale };
+type ComponentsToUpdate = [boolean, boolean, boolean, boolean, boolean, boolean];
+
 export class UIObservableLabel implements UIComponent, UILabel {
     public static readonly NonPrintableOffset = -1;
 
@@ -33,6 +36,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
     private parentDetacher: ObserverDetacher | null = null;
 
     private updateNeeded = false;
+
+    private changedProperties: ComponentsToUpdate = [false, false, false, false, false, false];
 
     constructor(
         private position: Vec2,
@@ -55,6 +60,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
             this.symbolsStyle[n] = { ...style };
         }
 
+        this.changedProperties[UpdatedProperty.Style] = true;
+
         this.DeferredNotify();
     }
 
@@ -72,6 +79,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     set Position(position: Vec2) {
         this.position = position;
+
+        this.changedProperties[UpdatedProperty.Position] = true;
 
         this.DeferredNotify();
     }
@@ -96,6 +105,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
         this.ResizeSymbolStyles();
         this.AdjustPoolMemory();
 
+        this.changedProperties[UpdatedProperty.Text] = true;
+
         this.DeferredNotify();
     }
 
@@ -105,6 +116,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     set LineHeight(lineHeight: number) {
         this.lineHeight = lineHeight;
+
+        this.changedProperties[UpdatedProperty.LineHeight] = true;
 
         this.DeferredNotify();
     }
@@ -116,6 +129,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
     set ZIndex(zIndex: number) {
         this.zIndex = zIndex;
 
+        this.changedProperties[UpdatedProperty.ZIndex] = true;
+
         this.DeferredNotify();
     }
 
@@ -125,6 +140,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     set Scale(scale: number) {
         this.scale = scale;
+
+        this.changedProperties[UpdatedProperty.Scale] = true;
 
         this.DeferredNotify();
     }
@@ -143,6 +160,10 @@ export class UIObservableLabel implements UIComponent, UILabel {
 
     get Observable(): Observable<UIObservableLabel> {
         return this.observable;
+    }
+
+    get ChangedProperties(): ComponentsToUpdate {
+        return this.changedProperties;
     }
 
     private get PrintableTextLength(): number {
@@ -178,6 +199,8 @@ export class UIObservableLabel implements UIComponent, UILabel {
     private Notify(): void {
         this.observable.Notify(this);
         this.updateNeeded = false;
+
+        this.changedProperties.fill(false);
     }
 
     private Uninitialize(): void {

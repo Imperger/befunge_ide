@@ -1,3 +1,4 @@
+import { mat4 } from 'gl-matrix';
 import { inject, injectable } from 'inversify';
 
 import { UIObservablePositioningGroup } from '../UIObservablePositioningGroup';
@@ -5,13 +6,12 @@ import { UIObservablePositioningGroup } from '../UIObservablePositioningGroup';
 import { UILabel } from './UILabel';
 import FUILabel from './UILabel.frag';
 import VUILabel from './UILabel.vert';
-import { UIObservableLabel } from './UIObservableLabel';
+import { UIObservableLabel, UpdatedProperty } from './UIObservableLabel';
 
 import { AppSettings } from '@/app/AppSettings';
 import { InjectionToken, UILabelRendererTargetName } from '@/app/InjectionToken';
 import { Inversify } from '@/Inversify';
 import { ArrayHelper } from '@/lib/ArrayHelper';
-import { EnumSize } from "@/lib/EnumSize";
 import { ExceptionTrap } from '@/lib/ExceptionTrap';
 import { FontGlyphCollection, FontGlyphCollectionFactory, GlyphMeshBlueprint } from '@/lib/font/FontGlyphCollection';
 import { MemoryPoolTracker } from '@/lib/MemoryPoolTracker';
@@ -19,11 +19,7 @@ import { Vec2 } from '@/lib/Primitives';
 import { PrimitiveBuilder } from '@/lib/renderer/PrimitiveBuilder';
 import { PrimitivesRenderer } from "@/lib/renderer/PrimitivesRenderer";
 import { Mat4 } from '@/lib/renderer/ShaderProgram';
-import { TypeSizeResolver } from "@/lib/renderer/TypeSizeResolver";
 import { SelfBind } from '@/lib/SelfBind';
-
-
-enum UILabelComponent { X, Y, Z, R, G, B, Ux, Uy };
 
 type Offset = number;
 
@@ -43,6 +39,8 @@ export class UILabelRenderer extends PrimitivesRenderer {
     private labels = new Map<Offset, UIObservableLabel>();
 
     private vertexAttributesTracker: MemoryPoolTracker;
+
+    public Unique = false;
 
     constructor(
         @inject(InjectionToken.WebGLRenderingContext) gl: WebGL2RenderingContext,
@@ -71,6 +69,9 @@ export class UILabelRenderer extends PrimitivesRenderer {
                 normalized: false
             }],
             { indicesPerPrimitive: 6, basePrimitiveType: gl.TRIANGLES });
+
+        this.shader.SetUniformMatrix4fv('u_world', mat4.create());
+
 
         this.vertexAttributesTracker = new (class extends MemoryPoolTracker {
             constructor(private renderer: UILabelRenderer) {
@@ -182,10 +183,14 @@ export class UILabelRenderer extends PrimitivesRenderer {
         this.vertexAttributesTracker.Free(idx);
     }
 
-    private UpdateAttributes(component: UIObservableLabel): void {
-        const fontGlyphCollection = this.fontGlyphCollectionFactory({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
+    private OnlyPositionChanged(component: UIObservableLabel): boolean {
+        return component.ChangedProperties.every((x, n) => n === UpdatedProperty.Position ? x : !x);
+    }
 
+    private UpdateAttributes(component: UIObservableLabel): void {
         let width = 0;
+        let { x, y } = { x: 0, y: 0 };
+        const fontGlyphCollection = this.fontGlyphCollectionFactory({ ASCIIRange: { Start: ' ', End: '~' }, Font: { Name: 'Roboto', Size: component.LineHeight } });
         const lines = UILabelRenderer.SplitString(component.Text);
 
         if (lines.length === 0) {
@@ -195,16 +200,28 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
         const minBaseOffset = UILabelRenderer.MinBaseOffset(lines[lines.length - 1].text, component, fontGlyphCollection);
 
-        let { x, y } = {
-            x: component.AbsolutePosition.x,
-            y: component.AbsolutePosition.y - minBaseOffset
-        };
+        if (this.Unique) {
+            const world = mat4.create();
+            const p = component.AbsolutePosition;
+            mat4.translate(world, world, [p.x, p.y, 0]);
+
+            this.shader.SetUniformMatrix4fv('u_world', world);
+
+            if (this.OnlyPositionChanged(component)) {
+                return;
+            }
+        } else {
+            x = component.AbsolutePosition.x;
+            y = component.AbsolutePosition.y - minBaseOffset;
+        }
+
+        const xOffset = this.Unique ? 0 : component.AbsolutePosition.x;
 
         for (let n = lines.length - 1; n >= 0; --n) {
             const line = lines[n];
 
             if (line.text.length === 0) {
-                x = component.AbsolutePosition.x;
+                x = xOffset;
                 y += component.LineHeight * component.Scale;
                 continue;
             }
@@ -241,10 +258,10 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
                 x += glyphBlueprint.width * component.Scale;
 
-                width = Math.max(width, x - component.AbsolutePosition.x);
+                width = Math.max(width, x - xOffset);
             }
 
-            x = component.AbsolutePosition.x;
+            x = xOffset;
             y += component.LineHeight * component.Scale + minBaseOffset;
         }
 
@@ -295,4 +312,4 @@ export class UILabelRenderer extends PrimitivesRenderer {
 
 Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetIsDefault();
 Inversify.bind(UILabelRenderer).toSelf().inSingletonScope().whenTargetNamed(UILabelRendererTargetName.Perspective);
-Inversify.bind(UILabelRenderer).toSelf().inTransientScope().whenTargetNamed(UILabelRendererTargetName.Unique);
+Inversify.bind(UILabelRenderer).toSelf().inTransientScope().whenTargetNamed(UILabelRendererTargetName.Unique).onActivation((ctx, instance) => (instance.Unique = true, instance));

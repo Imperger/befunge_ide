@@ -9,10 +9,10 @@ out vec3 v_color;
 out vec2 v_glyph;
 
 uniform mat4 u_viewProject;
+uniform mat4 u_world;
 
-void main() 
-{
-  gl_Position =  u_viewProject * vec4(a_vertex, 1.0);
+void main() {
+  gl_Position = u_viewProject * u_world * vec4(a_vertex, 1.0f);
 
   v_color = a_color;
   v_glyph = a_glyph;
