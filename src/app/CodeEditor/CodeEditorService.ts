@@ -33,30 +33,40 @@ export interface EditableCellRect {
 
 interface TouchBehavior {
     Touch(cell: Vec2): TouchBehavior;
+    get PivotTouch(): Vec2;
 }
 
 class SelectCellBehaiver implements TouchBehavior {
-    constructor(private editableCell: EditableTarget) { }
+    constructor(
+        private editableCell: EditableTarget,
+        private pivotTouch: Vec2) { }
 
     Touch(cell: Vec2): TouchBehavior {
         this.editableCell.Select(cell);
 
+        this.pivotTouch = cell;
+
         return this;
+    }
+
+    get PivotTouch(): Vec2 {
+        return this.pivotTouch;
     }
 }
 
 class SelectCellsRegion implements TouchBehavior {
-    private firstTouch: Vec2;
-
     constructor(
-        private editableCell: EditableTarget) {
-        this.firstTouch = { ...editableCell.Target.lt };
-    }
+        private editableCell: EditableTarget,
+        private pivotTouch: Vec2) { }
 
     Touch(cell: Vec2): TouchBehavior {
-        this.editableCell.SelectRegion(this.firstTouch, cell);
+        this.editableCell.SelectRegion(this.pivotTouch, cell);
 
-        return new SelectCellBehaiver(this.editableCell);
+        return new SelectCellBehaiver(this.editableCell, this.pivotTouch);
+    }
+
+    get PivotTouch(): Vec2 {
+        return this.pivotTouch;
     }
 }
 
@@ -77,7 +87,7 @@ export class CodeEditorService {
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService) {
-        this.touchBehavior = new SelectCellBehaiver(this.editableCell);
+        this.touchBehavior = new SelectCellBehaiver(this.editableCell, { x: 0, y: 0 });
         this.overlay.EditControls.SelectObservable.Attach(() => this.OnSetEditableRegion());
         this.overlay.EditControls.CutObservable.Attach(() => this.OnCut());
         this.overlay.EditControls.CopyObservable.Attach(() => this.OnCopyEditableRegion());
@@ -259,7 +269,12 @@ export class CodeEditorService {
     }
 
     private OnSetEditableRegion(): void {
-        this.touchBehavior = new SelectCellsRegion(this.editableCell);
+        if (this.editableCell.Target.lt.x === this.touchBehavior.PivotTouch.x && this.editableCell.Target.lt.y === this.touchBehavior.PivotTouch.y ||
+            this.editableCell.Target.rb.x === this.touchBehavior.PivotTouch.x && this.editableCell.Target.rb.y === this.touchBehavior.PivotTouch.y) {
+            this.touchBehavior = new SelectCellsRegion(this.editableCell, this.touchBehavior.PivotTouch);
+        } else {
+            this.touchBehavior = new SelectCellsRegion(this.editableCell, this.editableCell.Target.lt);
+        }
     }
 
     private OnCut(): void {
