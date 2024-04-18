@@ -8,7 +8,6 @@ import { CameraService } from './CameraService';
 import { CodeEditorService } from './CodeEditor/CodeEditorService';
 import { CodeEditorServiceInputReceiverFactory } from './CodeEditorServiceInputReceiver';
 import { CodeExecutionService } from './CodeExecution/CodeExecutionService';
-import { DebugRenderer } from './DebugRenderer';
 import { SmoothCameraMove } from './Effects/SmoothCameraMove';
 import { SmoothCameraZoom } from './Effects/SmoothCameraZoom';
 import { AppHistory } from './History/AppHistory';
@@ -36,11 +35,6 @@ import { UILabelRenderer } from '@/lib/UI/UILabel/UILabelRenderer';
 import './History/Commands';
 import router from '@/router';
 
-
-async function Delay(delay: number): Promise<void> {
-    return new Promise(ok => setTimeout(ok, delay));
-}
-
 @injectable()
 export class AppService extends AppEventTransformer implements AsyncConstructable {
     private isRunning = true;
@@ -49,9 +43,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
     private inFocusOnVanishReleaser: ObserverDetacher;
     private inFocus: InputReceiver;
-
-    private debugRenderer: DebugRenderer;
-    private debugPoints: number[] = [5, 5, 0.2, 0, 0, 0];
 
     private lastFrameTime = Date.now();
 
@@ -89,50 +80,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.inFocus = this.codeEditorServiceInputReceiverFactory();
         this.inFocus.Focus();
         this.inFocusOnVanishReleaser = this.inFocus.OnVanish.Attach(() => 0);
-
-        this.debugRenderer = new DebugRenderer(gl);
-        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
-        this.debugRenderer.UploadAttributes(this.debugPoints);
-
-        const label = this.perspectiveLabelRenderer.Create({ x: 0, y: 0 }, 499, 'TESTING (d) \n 1234567890', 8, null);
-        label.Scale = 0.2;
-        const Debug = async () => {
-            const text = 'Hello world! 1234567890$@';
-
-            for (let n = 0; n < text.length; ++n) {
-
-                this.codeEditor.EditCell(text[n], n, 1);
-
-                await Delay(10);
-            }
-
-            const startCode = ' '.charCodeAt(0);
-            const endCode = '~'.charCodeAt(0);
-            const startRow = 3;
-            for (let n = 0; n < endCode - startCode; ++n) {
-                this.codeEditor.EditCell(String.fromCharCode(n + startCode), n % 80, startRow + Math.floor(n / 80));
-
-                await Delay(10);
-            }
-
-            let x = true;
-            while (x) {
-                for (let n = 0; n < 80; ++n) {
-                    this.codeEditor.Select(n, 6, [0, 0, n / 80]);
-
-                    await Delay(50);
-                }
-
-                /* for (let n = 79; n >= 0; --n) {
-                    this.codeEditorRenderer.Unselect(n, 6);
-
-                    await Delay(50);
-                } */
-                x = false;
-            }
-        }
-
-        //Debug();
     }
 
     async AsyncConstructor(): Promise<void> {
@@ -166,7 +113,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         this.overlay.Resize();
 
         this.codeEditor.ViewProjection = this.camera.ViewProjection;
-        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
         this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 
@@ -186,7 +132,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
             this.camera.Translate({ x: delta.x, y: delta.y });
 
             this.codeEditor.ViewProjection = this.camera.ViewProjection;
-            this.debugRenderer.ViewProjection = this.camera.ViewProjection;
             this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
         }
     }
@@ -204,17 +149,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         } else if (IsInputReceiver(touchResult)) {
             this.SwitchFocus(touchResult);
         }
-
-        const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.camera.ViewProjection, this.gl.canvas);
-        const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.camera.ViewProjection, this.gl.canvas);
-
-        const intersection = Intersection.PlaneLine(
-            { a: 0, b: 0, c: 1, d: 0 },
-            { a: [posNear[0], posNear[1], posNear[2]], b: [posFar[0], posFar[1], posFar[2]] });
-
-        this.debugPoints.push(posNear[0], posNear[1], posNear[2], intersection[0], intersection[1], intersection[2]);
-
-        this.debugRenderer.UploadAttributes(this.debugPoints);
     }
 
     OnWheel(e: WheelEvent): void {
@@ -245,7 +179,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
         });
 
         this.codeEditor.ViewProjection = this.camera.ViewProjection;
-        this.debugRenderer.ViewProjection = this.camera.ViewProjection;
         this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
     }
 
@@ -266,7 +199,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         if (this.effectRunner.Draw(elapsed)) {
             this.codeEditor.ViewProjection = this.camera.ViewProjection;
-            this.debugRenderer.ViewProjection = this.camera.ViewProjection;
             this.perspectiveLabelRenderer.ViewProjection = this.camera.ViewProjection;
         }
 
