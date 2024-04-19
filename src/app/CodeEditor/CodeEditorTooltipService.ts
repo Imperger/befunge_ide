@@ -28,6 +28,8 @@ export class CodeEditorTooltipService {
         @inject(UILabelRenderer) @named(UILabelRendererTargetName.Perspective) private perspectiveLabelRenderer: UILabelRenderer) { }
 
     Tooltip(column: number, row: number, text: string, position: TooltipPosition): TooltipReleaser {
+        this.ValidateLocation(column, row);
+
         const tooltipIdx = this.FindIndex(column, row, position);
 
         if (tooltipIdx !== -1) {
@@ -84,6 +86,13 @@ export class CodeEditorTooltipService {
     ReleaseAll(): void {
         while (this.tooltips.length > 0) {
             this.ReleaseTooltip(this.tooltips.length - 1);
+        }
+    }
+
+    private ValidateLocation(column: number, row: number): void {
+        const dimension = this.codeEditorRenderer.Dimension;
+        if (!this.codeEditorRenderer.IsValidLocation(column, row)) {
+            throw new Error(`Invalid location ${column}:${row}. Valid column: [0, ${dimension.Columns}); row: [0, ${dimension.Rows})`);
         }
     }
 

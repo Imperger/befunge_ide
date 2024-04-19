@@ -11,6 +11,7 @@ import { SourceCodeMemory } from "../SourceCodeMemory";
 
 import { CodeEditorRenderer } from "./CodeEditorRenderer";
 import { EditionDirection } from "./CodeEditorService";
+import { CodeEditorTooltipService, TooltipPosition, TooltipReleaser } from "./CodeEditorTooltipService";
 
 import { Inversify } from "@/Inversify";
 import { Array2D } from "@/lib/containers/Array2D";
@@ -38,9 +39,12 @@ export class EditableTarget {
 
     private editionDirection: EditionDirection = EditionDirection.Right;
 
+    private tooltipReleaser: TooltipReleaser[] = [];
+
     constructor(
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
+        @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService,
         @inject(AppCommandInjectionToken.EditCellCommandFactory) private editCellCommandFactory: EditCellCommandFactory,
         @inject(EditCellCommandPostAction.MoveNext) private cellMoveNextPostActionFactory: interfaces.AutoFactory<CellMoveNextAction>,
         @inject(AppCommandInjectionToken.EditCellsRegionFactory) private editCellsRegionCommandFactory: EditCellsRegionCommandFactory,
@@ -133,6 +137,7 @@ export class EditableTarget {
             return;
         }
 
+        this.ShowTooltips([cell]);
         this.Unselect();
 
         this.editableRegion.lt.x = cell.x;
@@ -148,6 +153,7 @@ export class EditableTarget {
             return;
         }
 
+        this.ShowTooltips([p0, p1]);
         this.Unselect();
 
         const normalized = MathUtil.Extremum([p0, p1]);
@@ -284,6 +290,18 @@ export class EditableTarget {
 
     set EditionDirection(direction: EditionDirection) {
         this.editionDirection = direction;
+    }
+
+    private ShowTooltips(locations: Vec2[]): void {
+        this.tooltipReleaser.forEach(x => x());
+        this.tooltipReleaser.length = 0;
+
+        locations
+            .forEach(loc => this.tooltipReleaser.push(this.tooltipService.Tooltip(loc.x, loc.y, this.FormatCellLocation(loc), TooltipPosition.RightBottom)));
+    }
+
+    private FormatCellLocation(location: Vec2): string {
+        return `${location.x}:${location.y}`;
     }
 }
 

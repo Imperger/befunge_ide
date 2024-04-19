@@ -63,6 +63,10 @@ export class CodeEditorRenderer {
         }
     }
 
+    IsValidLocation(column: number, row: number): boolean {
+        return column >= 0 && column < this.Dimension.Columns && row >= 0 && row < this.Dimension.Rows;
+    }
+
     get Dimension(): EditorGridDimension {
         return this.editorGridRenderer.Dimension;
     }
