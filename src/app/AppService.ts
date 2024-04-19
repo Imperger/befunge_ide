@@ -204,7 +204,6 @@ export class AppService extends AppEventTransformer implements AsyncConstructabl
 
         this.codeEditor.Draw();
         this.perspectiveLabelRenderer.Draw();
-        //this.debugRenderer.Draw();
 
         this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
 
