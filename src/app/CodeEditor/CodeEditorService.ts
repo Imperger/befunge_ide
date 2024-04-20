@@ -269,8 +269,8 @@ export class CodeEditorService {
     }
 
     private OnSetEditableRegion(): void {
-        if (this.editableCell.Target.lt.x === this.touchBehavior.PivotTouch.x && this.editableCell.Target.lt.y === this.touchBehavior.PivotTouch.y ||
-            this.editableCell.Target.rb.x === this.touchBehavior.PivotTouch.x && this.editableCell.Target.rb.y === this.touchBehavior.PivotTouch.y) {
+        if ((this.editableCell.Target.lt.x === this.touchBehavior.PivotTouch.x || this.editableCell.Target.rb.x === this.touchBehavior.PivotTouch.x) &&
+            (this.editableCell.Target.lt.y === this.touchBehavior.PivotTouch.y || this.editableCell.Target.rb.y === this.touchBehavior.PivotTouch.y)) {
             this.touchBehavior = new SelectCellsRegion(this.editableCell, this.touchBehavior.PivotTouch);
         } else {
             this.touchBehavior = new SelectCellsRegion(this.editableCell, this.editableCell.Target.lt);
