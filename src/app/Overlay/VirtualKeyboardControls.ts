@@ -316,7 +316,7 @@ export class VirtualKeyboardControls {
 
         const asciiCodes = this.uiRenderer.CreateTextButton(
             {
-                x: this.shiftWidth + this.thirdSymbolRow.length * this.buttonDimension.width + (this.thirdSymbolRow.length + 1) * this.symbolMargin,
+                x: 0,
                 y: this.symbolMargin
             },
             { width: this.shiftWidth, height: this.buttonDimension.height },
@@ -327,6 +327,21 @@ export class VirtualKeyboardControls {
             this.keyboardGroup);
 
         this.buttonDeleter.push(() => asciiCodes.Destroy());
+
+
+        const enter = this.uiRenderer.CreateIconButton(
+            {
+                x: this.shiftWidth + this.thirdSymbolRow.length * this.buttonDimension.width + (this.thirdSymbolRow.length + 1) * this.symbolMargin,
+                y: this.symbolMargin
+            },
+            { width: this.shiftWidth, height: this.buttonDimension.height },
+            this.zIndex,
+            { fillColor: this.fillColor, outlineColor: this.outlineColor },
+            { icon: UIIcon.Enter, color: this.buttonContentColor },
+            (_sender: UIIconButton) => this.observable.Notify('Enter'),
+            this.keyboardGroup);
+
+        this.buttonDeleter.push(() => enter.Destroy());
     }
 
     private ToggleShift(sender: UIIconButton): void {

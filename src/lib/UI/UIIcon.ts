@@ -11,7 +11,7 @@ export enum UIIcon {
     ExclamationCircle, ExclamationTriangle, QuestionMark, CheckCircle,
     Breakpoint, ArrowThinAll, ArrowThinRight, ArrowThinDown, ArrowThinLeft, ArrowThinUp,
     Delete, Stop, Heatmap, Undo, Redo, Settings, Select, Copy, Cut, Paste, EditDelete, Share,
-    Input, Output, Keyboard, Shift, Backspace
+    Input, Output, Keyboard, Shift, Backspace, Enter
 };
 
 export interface UVExtra extends UV {
@@ -259,6 +259,11 @@ export class UIIconAtlas implements AsyncConstructable {
             {
                 id: UIIcon.Backspace,
                 filename: 'ui_icons/backspace.svg',
+                dimension: { width: 128, height: 128 }
+            },
+            {
+                id: UIIcon.Enter,
+                filename: 'ui_icons/enter.svg',
                 dimension: { width: 128, height: 128 }
             }
         ];
