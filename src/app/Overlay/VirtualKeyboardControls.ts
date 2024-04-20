@@ -199,7 +199,7 @@ export class VirtualKeyboardControls {
 
         this.thirdSymbolRow = [
             new KeyboardButtonLayout(keyboardStateFetcher, 'z', '_'),
-            new KeyboardButtonLayout(keyboardStateFetcher, 's', '$'),
+            new KeyboardButtonLayout(keyboardStateFetcher, 'x', '$'),
             new KeyboardButtonLayout(keyboardStateFetcher, 'c', '"'),
             new KeyboardButtonLayout(keyboardStateFetcher, 'v', '\''),
             new KeyboardButtonLayout(keyboardStateFetcher, 'b', ':'),
