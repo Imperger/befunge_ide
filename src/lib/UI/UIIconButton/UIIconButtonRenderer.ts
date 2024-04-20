@@ -129,9 +129,9 @@ export class UIIconButtonRenderer extends PrimitivesRenderer {
                         0,
                         buttonComponents.length);
 
-                    const buttonOutlineComponents = this.renderer.PrimitiveComponents(offset);
+                    const buttonOutlineComponents = this.renderer.outline.PrimitiveComponents(offset);
                     ArrayHelper.Copy(
-                        buttonAttrs,
+                        buttonOutlineAttrs,
                         n * this.renderer.outline.ComponentsPerPrimitive,
                         buttonOutlineComponents,
                         0,
