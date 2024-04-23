@@ -78,17 +78,7 @@ export class DebuggingService {
         const debug = this.befungeToolbox.Debugger;
         const interpreter = this.befungeToolbox.Interpreter;
 
-
-        this.activeCellBreakpoints.forEach(brk => {
-            if (this.editableCell.IsSingleCell &&
-                brk.Location.x === this.codeEditor.EditableCell.x &&
-                brk.Location.y === this.codeEditor.EditableCell.y) {
-                this.codeEditor.Select(brk.Location.x, brk.Location.y, this.settings.Visual.editableCellStyle);
-            } else {
-                this.codeEditor.Unselect(brk.Location.x, brk.Location.y);
-            }
-        });
-
+        this.UnselectActiveBreakpoint();
 
         let executionResult: BreakpointCondition[] | null;
         try {
@@ -179,7 +169,7 @@ export class DebuggingService {
         this.DebugMode = false;
         this.overlay.DebugControls.DebugMode = false;
 
-        this.activeCellBreakpoints.forEach(brk => this.codeEditor.Unselect(brk.Location.x, brk.Location.y));
+        this.UnselectActiveBreakpoint();
         this.activeCellBreakpoints = [];
 
         this.RestoreCellBreakpointsSelection();
@@ -271,8 +261,26 @@ export class DebuggingService {
 
     private RestoreCellBreakpointsSelection(): void {
         for (const brk of this.befungeToolbox.Debugger.PCBreakpoints) {
-            this.codeEditor.Select(brk.Location.x, brk.Location.y, this.inactiveBreakpointColor);
+            if (this.editableCell.IsSingleCell &&
+                brk.Location.x === this.codeEditor.EditableCell.x &&
+                brk.Location.y === this.codeEditor.EditableCell.y) {
+                this.codeEditor.Select(brk.Location.x, brk.Location.y, this.settings.Visual.editableCellStyle);
+            } else {
+                this.codeEditor.Select(brk.Location.x, brk.Location.y, this.inactiveBreakpointColor);
+            }
         }
+    }
+
+    private UnselectActiveBreakpoint(): void {
+        this.activeCellBreakpoints.forEach(brk => {
+            if (this.editableCell.IsSingleCell &&
+                brk.Location.x === this.codeEditor.EditableCell.x &&
+                brk.Location.y === this.codeEditor.EditableCell.y) {
+                this.codeEditor.Select(brk.Location.x, brk.Location.y, this.settings.Visual.editableCellStyle);
+            } else {
+                this.codeEditor.Unselect(brk.Location.x, brk.Location.y);
+            }
+        });
     }
 
     private OnMemoryWrite(ptr: Pointer, value: number): void {
