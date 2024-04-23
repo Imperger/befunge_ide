@@ -151,10 +151,6 @@ export class CodeEditorService {
         return this.tooltipService.Tooltip(column, row, text, position);
     }
 
-    HideAllTooltips(): void {
-        this.tooltipService.ReleaseAll();
-    }
-
     Touch(e: MouseSelectEvent): void {
         const posNear = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 0 }, this.ViewProjection, this.gl.canvas);
         const posFar = Camera.Unproject({ x: e.offsetX, y: e.offsetY, z: 1 }, this.ViewProjection, this.gl.canvas);

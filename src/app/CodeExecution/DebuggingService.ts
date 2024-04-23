@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { AppSettings } from "../AppSettings";
 import { BefungeToolbox } from "../BefungeToolbox";
 import { CodeEditorService } from "../CodeEditor/CodeEditorService";
-import { TooltipPosition } from "../CodeEditor/CodeEditorTooltipService";
+import { TooltipPosition, TooltipReleaser } from "../CodeEditor/CodeEditorTooltipService";
 import { DebugAction, PCDirectionCondition } from "../Overlay/DebugControls";
 import { OverlayService } from "../Overlay/OverlayService";
 import { SourceCodeMemory } from "../SourceCodeMemory";
@@ -24,6 +24,7 @@ export class DebuggingService {
     private activeCellBreakpoints: PcLocationCondition[] = [];
     private activeBreakpointColor: Rgb = [0.8980392156862745, 0.2235294117647059, 0.20784313725490197];
     private inactiveBreakpointColor: Rgb = [0.9764705882352941, 0.6588235294117647, 0.1450980392156863];
+    private memoryWritesTooltipsReleasers: TooltipReleaser[] = [];
 
     constructor(
         @inject(AppSettings) private settings: AppSettings,
@@ -113,7 +114,7 @@ export class DebuggingService {
             this.overlay.DebugControls.DebugMode = false;
             this.activeCellBreakpoints = [];
 
-            this.codeEditor.HideAllTooltips();
+            this.HideMemoryWriteTooltips();
         } else {
             breakpoints = executionResult;
         }
@@ -155,7 +156,7 @@ export class DebuggingService {
 
             this.RestoreCellBreakpointsSelection();
 
-            this.codeEditor.HideAllTooltips();
+            this.HideMemoryWriteTooltips();
 
             this.overlay.Snackbar.ShowSuccess(`Completed`);
 
@@ -173,7 +174,7 @@ export class DebuggingService {
         this.RestoreCellBreakpointsSelection();
 
 
-        this.codeEditor.HideAllTooltips();
+        this.HideMemoryWriteTooltips();
 
         this.overlay.StackControls.Stack = [];
     }
@@ -264,11 +265,17 @@ export class DebuggingService {
     }
 
     private OnMemoryWrite(ptr: Pointer, value: number): void {
-        this.codeEditor.Tooltip(
+        const releaser = this.codeEditor.Tooltip(
             ptr.x,
             ptr.y,
             `${value.toString()}(${String.fromCharCode(value)})`,
             TooltipPosition.RightTop);
+
+        this.memoryWritesTooltipsReleasers.push(releaser);
+    }
+
+    private HideMemoryWriteTooltips(): void {
+        this.memoryWritesTooltipsReleasers.forEach(x => x());
     }
 }
 
