@@ -4,6 +4,7 @@ import { AppSettings } from "../AppSettings";
 import { BefungeToolbox } from "../BefungeToolbox";
 import { CodeEditorService } from "../CodeEditor/CodeEditorService";
 import { TooltipPosition, TooltipReleaser } from "../CodeEditor/CodeEditorTooltipService";
+import { EditableTarget } from "../CodeEditor/EditableTarget";
 import { DebugAction, PCDirectionCondition } from "../Overlay/DebugControls";
 import { OverlayService } from "../Overlay/OverlayService";
 import { SourceCodeMemory } from "../SourceCodeMemory";
@@ -31,7 +32,8 @@ export class DebuggingService {
         @inject(OverlayService) private overlay: OverlayService,
         @inject(CodeEditorService) private codeEditor: CodeEditorService,
         @inject(BefungeToolbox) private befungeToolbox: BefungeToolbox,
-        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory
+        @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
+        @inject(EditableTarget) private editableCell: EditableTarget
     ) {
         this.overlay.DebugControls.Debug.Attach((action: DebugAction) => this.DebugCodeAction(action));
         this.overlay.DebugControls.CellBreakopint.Attach((cond: PCDirectionCondition) => this.OnCellBreakpointAction(cond));
@@ -77,7 +79,16 @@ export class DebuggingService {
         const interpreter = this.befungeToolbox.Interpreter;
 
 
-        this.activeCellBreakpoints.forEach(brk => this.codeEditor.Unselect(brk.Location.x, brk.Location.y));
+        this.activeCellBreakpoints.forEach(brk => {
+            if (this.editableCell.IsSingleCell &&
+                brk.Location.x === this.codeEditor.EditableCell.x &&
+                brk.Location.y === this.codeEditor.EditableCell.y) {
+                this.codeEditor.Select(brk.Location.x, brk.Location.y, this.settings.Visual.editableCellStyle);
+            } else {
+                this.codeEditor.Unselect(brk.Location.x, brk.Location.y);
+            }
+        });
+
 
         let executionResult: BreakpointCondition[] | null;
         try {

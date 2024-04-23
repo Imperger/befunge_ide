@@ -1,5 +1,6 @@
 import { inject, injectable, interfaces } from "inversify";
 
+import { AppSettings } from "../AppSettings";
 import { AppHistory } from "../History/AppHistory";
 import type { EditCellCommandFactory } from "../History/Commands/EditCellCommand/EditCellCommand";
 import { MoveNextAction as CellMoveNextAction } from "../History/Commands/EditCellCommand/PostActions/MoveNextAction";
@@ -30,7 +31,7 @@ export interface RegionDimension {
 
 @injectable()
 export class EditableTarget {
-    private readonly editableCellStyle: Rgb = [0.21568627450980393, 0.2784313725490196, 0.30980392156862746];
+    private readonly editableCellStyle: Rgb;
 
     private editableRegion: EditableRegion = {
         lt: { x: 0, y: 0 },
@@ -42,6 +43,7 @@ export class EditableTarget {
     private tooltipReleaser: TooltipReleaser[] = [];
 
     constructor(
+        @inject(AppSettings) settings: AppSettings,
         @inject(SourceCodeMemory) private editorSourceCode: SourceCodeMemory,
         @inject(CodeEditorRenderer) private codeEditorRenderer: CodeEditorRenderer,
         @inject(CodeEditorTooltipService) private tooltipService: CodeEditorTooltipService,
@@ -51,6 +53,7 @@ export class EditableTarget {
         @inject(EditCellsRegionCommandPostAction.MoveNext) private regionMoveNextPostActionFactory: interfaces.AutoFactory<RegionMoveNextAction>,
         @inject(EditCellsRegionCommandPostAction.StayLeftTop) private regionStayLeftTopPostActionFactory: interfaces.AutoFactory<StayLeftTopAction>,
         @inject(AppHistory) private history: AppHistory) {
+        this.editableCellStyle = settings.Visual.editableCellStyle;
         if (this.IsSingleCell) {
             this.codeEditorRenderer.Select(this.editableRegion.lt.x, this.editableRegion.lt.y, this.editableCellStyle);
         } else {

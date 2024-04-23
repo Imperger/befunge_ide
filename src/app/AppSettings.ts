@@ -4,6 +4,7 @@ import { InjectionToken } from "./InjectionToken";
 
 import { Inversify } from "@/Inversify";
 import { MemoryLimit } from "@/lib/befunge/memory/MemoryLimit";
+import { Rgb } from "@/lib/Primitives";
 
 interface Dimension {
     Width: number;
@@ -13,6 +14,10 @@ interface Dimension {
 export interface ZCameraBoundary {
     min: number;
     max: number;
+}
+
+export interface Visual {
+    editableCellStyle: Rgb;
 }
 
 @injectable()
@@ -42,6 +47,8 @@ export class AppSettings {
     public MaxOutputLength = 1000;
 
     public MemoryLimit: MemoryLimit = { Width: 80, Height: 25 };
+
+    public Visual: Visual = { editableCellStyle: [0.21568627450980393, 0.2784313725490196, 0.30980392156862746] };
 }
 
 Inversify.bind(AppSettings).toSelf().inSingletonScope();
