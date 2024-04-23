@@ -11,6 +11,8 @@ import { Pointer } from "@/lib/befunge/memory/Memory";
 
 @injectable()
 export class MoveNextAction implements PostAction {
+    private codeFlowHelperEnabled = true;
+
     constructor(@inject(CodeEditorService) private codeEditorService: CodeEditorService) { }
 
     Apply(target: EditCellCommand): void {
@@ -20,6 +22,12 @@ export class MoveNextAction implements PostAction {
         }
 
         this.codeEditorService.SetEditableCell(this.GetNextEditableCell(target, codeFlowEditDirection));
+    }
+
+    get DisableCodeFlowHelper(): this {
+        this.codeFlowHelperEnabled = false;
+
+        return this;
     }
 
     private GetNextEditableCell(target: EditCellCommand, overriddenDirection: EditionDirection): Pointer {
@@ -52,6 +60,10 @@ export class MoveNextAction implements PostAction {
     }
 
     private FollowCodeFlowHelper(target: EditCellCommand): EditionDirection {
+        if (!this.codeFlowHelperEnabled) {
+            return target.EditDirection;
+        }
+
         if (target.NewValue === '<') {
             return EditionDirection.Left;
         } else if (target.NewValue === '^') {

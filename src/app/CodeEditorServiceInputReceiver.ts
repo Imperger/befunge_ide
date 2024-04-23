@@ -21,10 +21,12 @@ export class CodeEditorServiceInputReceiver implements InputReceiver {
     OnInput(e: MyInputEvent): void {
         const keyCode = e.key.charCodeAt(0);
 
-        if (e.key.length === 1 && keyCode >= ' '.charCodeAt(0) && keyCode <= '~'.charCodeAt(0) || e.key === 'Backspace') {
-            if (this.overlay.DebugControls.DebugMode) {
+        const isNavigation = this.IsNavigationEvent(e.key);
+
+        if (e.key.length === 1 && keyCode >= ' '.charCodeAt(0) && keyCode <= '~'.charCodeAt(0) || e.key === 'Backspace' || isNavigation) {
+            if (!isNavigation && this.overlay.DebugControls.DebugMode) {
                 this.overlay.Snackbar.ShowInformation('Editing is disabled during the debugging');
-            } else if (this.overlay.DebugControls.IsHeatmapShown) {
+            } else if (!isNavigation && this.overlay.DebugControls.IsHeatmapShown) {
                 this.overlay.Snackbar.ShowInformation('Editing is disabled while heatmap is active');
             } else {
                 const prevEditableCell = { ...this.codeEditor.EditableCell };
@@ -34,6 +36,10 @@ export class CodeEditorServiceInputReceiver implements InputReceiver {
                 this.codeExecutionService.Debugging.OnCellInput(prevEditableCell);
             }
         }
+    }
+
+    private IsNavigationEvent(keycode: string): boolean {
+        return ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown'].includes(keycode);
     }
 
     Focus(): void {

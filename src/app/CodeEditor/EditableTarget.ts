@@ -66,6 +66,10 @@ export class EditableTarget {
     }
 
     private CellInputSingle(keyCode: string): void {
+        if (this.ProcessNavigationSingle(keyCode)) {
+            return;
+        }
+
         const oldValue = String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt));
 
         const command = keyCode === 'Backspace' ?
@@ -88,6 +92,36 @@ export class EditableTarget {
             keyCode === 'Backspace' && oldValue === ' ')) {
             this.history.Push(command);
         }
+    }
+
+    private ProcessNavigationSingle(keyCode: string): boolean {
+        const dirMap = [
+            ['ArrowLeft', EditionDirection.Left] as const,
+            ['ArrowUp', EditionDirection.Up] as const,
+            ['ArrowRight', EditionDirection.Right] as const,
+            ['ArrowDown', EditionDirection.Down] as const
+        ];
+
+        const dir = dirMap.find(x => keyCode === x[0]);
+
+        if (dir === undefined) {
+            return false;
+        }
+
+        const prevDir = this.EditionDirection;
+        this.EditionDirection = dir[1];
+
+        const value = String.fromCharCode(this.editorSourceCode.Read(this.editableRegion.lt));
+        this.editCellCommandFactory(
+            this.editableRegion.lt,
+            value,
+            value,
+            this.editionDirection,
+            this.cellMoveNextPostActionFactory().DisableCodeFlowHelper).Apply();
+
+        this.EditionDirection = prevDir;
+
+        return true;
     }
 
     private CellInputRegion(keyCode: string): void {
