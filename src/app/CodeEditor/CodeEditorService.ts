@@ -93,6 +93,7 @@ export class CodeEditorService {
         this.overlay.EditControls.CopyObservable.Attach(() => this.OnCopyEditableRegion());
         this.overlay.EditControls.PasteObservable.Attach(() => this.OnPaste());
         this.overlay.EditControls.DeleteObservable.Attach(() => this.OnDelete());
+        this.editableCell.Select({ x: 0, y: 0 });
     }
 
     get EditDirectionObservable(): Observable<EditionDirection> {
