@@ -112,7 +112,7 @@ export class CPUImpl implements CPU {
     this.io.OutputWrite(symbol);
   }
 
-  ReadCharacter(): string {
+  ReadCharacter(): number {
     return this.io.InputReadCharacter();
   }
 

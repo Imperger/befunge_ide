@@ -7,12 +7,12 @@ export class IOPort {
     this.input.push(...data);
   }
 
-  InputReadCharacter(): string {
+  InputReadCharacter(): number {
     if (this.input.length === 0) {
-      throw new Error('Failed to read from IO port');
+      return -1;
     }
 
-    return this.input.shift()!;
+    return this.input.shift()!.charCodeAt(0);
   }
 
   InputReadNumber(): number {
@@ -31,7 +31,7 @@ export class IOPort {
 
 
     if (numberEnd === nonSpaceIdx) {
-      throw new Error('Failed to read number from IO port');
+      return -1;
     }
 
     return Number.parseInt(this.input.splice(0, numberEnd).join(''));

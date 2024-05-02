@@ -8,6 +8,6 @@ export class InputASCII implements Instruction {
   }
 
   Execute(cpu: CPU): void {
-    cpu.StackPush(cpu.ReadCharacter().charCodeAt(0));
+    cpu.StackPush(cpu.ReadCharacter());
   }
 }
