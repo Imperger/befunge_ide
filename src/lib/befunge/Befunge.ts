@@ -50,9 +50,9 @@ class MemoryWriteInstructionInterceptor implements Instruction {
   }
 
   Execute(cpu: CPU): void {
-    const [value, x, y] = cpu.Stack.slice(-3);
+    const [value, x, y] = [...new Array(Math.max(3 - cpu.Stack.length, 0)).fill(0), ...cpu.Stack.slice(-3)];
 
-    this.interceptor({ x: x, y: y }, value);
+    this.interceptor({ x, y }, value);
 
     this.origin.Execute(cpu);
   }
